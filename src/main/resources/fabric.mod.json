@@ -3,9 +3,9 @@
 	"id": "blocky-outline",
 	"version": "${version}",
 	"name": "Blocky Outline",
-	"description": "A highly customizable Minecraft Fabric mod to personalize block targeting outlines and face fills with vibrant, dynamic HSL colors and smooth rainbow transitions.",
+	"description": "A mod that adds a blocky outline to blocks when you look at them.",
 	"authors": [
-		"Eliteclockman-ctrl"
+		"CharaZ"
 	],
 	"contact": {
 		"sources": "https://github.com/EliteClockman-ctrl/blocky-outline"
