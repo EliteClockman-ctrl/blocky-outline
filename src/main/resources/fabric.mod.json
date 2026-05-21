@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "blocky-outline",
+	"version": "${version}",
+	"name": "Blocky Outline",
+	"description": "The mods let you customize your block outline",
+	"authors": [
+		"CharaZ"
+	],
+	"contact": {
+		"homepage": "https://github.com/Eliteclockman-ctrl/blocky-outline/",
+		"sources": "https://github.com/Eliteclockman-ctrl/blocky-outline"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/blocky-outline/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"charaz.blockoutline.BlockyOutlineMod"
+		],
+		"client": [
+			"charaz.blockoutline.client.BlockyOutlineClient"
+		]
+	},
+
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
