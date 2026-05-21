@@ -3,13 +3,12 @@
 	"id": "blocky-outline",
 	"version": "${version}",
 	"name": "Blocky Outline",
-	"description": "The mods let you customize your block outline",
+	"description": "A highly customizable Minecraft Fabric mod to personalize block targeting outlines and face fills with vibrant, dynamic HSL colors and smooth rainbow transitions.",
 	"authors": [
-		"CharaZ"
+		"Eliteclockman-ctrl"
 	],
 	"contact": {
-		"homepage": "https://github.com/Eliteclockman-ctrl/blocky-outline/",
-		"sources": "https://github.com/Eliteclockman-ctrl/blocky-outline"
+		"sources": "https://github.com/EliteClockman-ctrl/blocky-outline"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/blocky-outline/icon.png",
@@ -25,7 +24,7 @@
 
 	"depends": {
 		"fabricloader": ">=0.19.2",
-		"minecraft": "~1.21.11",
+		"minecraft": ">=1.21",
 		"java": ">=21",
 		"fabric-api": "*"
 	}
