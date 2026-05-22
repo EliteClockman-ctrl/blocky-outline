@@ -48,7 +48,7 @@ To compile the mod yourself, follow these standard Gradle commands:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/blocky-outline.git
+git clone https://github.com/Eliteclockman-ctrl/blocky-outline.git
 cd blocky-outline
 ```
 
