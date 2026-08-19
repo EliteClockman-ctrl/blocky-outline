@@ -1,0 +1,23 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        maven { url = 'https://maven.minecraftforge.net' }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'blocky-outline'
+
+include 'forge'
+
+// Fabric 26.2 requires Java 25, while Forge 1.21.11 targets Java 21.
+// Avoid configuring Fabric when the requested tasks belong only to Forge.
+def requestedTasks = gradle.startParameter.taskNames
+def forgeOnly = !requestedTasks.isEmpty() && requestedTasks.every { task ->
+    task == ':forge' || task == 'forge' || task.startsWith(':forge:') || task.startsWith('forge:')
+}
+if (!forgeOnly) {
+    include 'fabric'
+}

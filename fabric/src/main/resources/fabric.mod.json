@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "blocky-outline",
+	"version": "${version}",
+	"name": "Blocky Outline",
+	"description": "A mod that adds a blocky outline to blocks when you look at them.",
+	"authors": [
+		"CharaZ"
+	],
+	"contact": {
+		"sources": "https://github.com/EliteClockman-ctrl/blocky-outline"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/blocky-outline/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"charaz.blockoutline.BlockyOutlineMod"
+		],
+		"client": [
+			"charaz.blockoutline.client.BlockyOutlineClient"
+		]
+	},
+
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": ">=26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

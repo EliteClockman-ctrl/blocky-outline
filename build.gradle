@@ -1,0 +1,6 @@
+// Root build script for multi-loader project
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+}
