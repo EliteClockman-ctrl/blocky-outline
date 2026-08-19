@@ -1,29 +1,30 @@
-# Blocky Outline 1.0.7 — Mã nguồn và tài liệu
+# Blocky Outline v1.1.0 — Official Source Code
 
-Thư mục này là bản khôi phục mã nguồn của `blocky-outline-1.0.7.jar` (Fabric client mod), kèm theo toàn bộ tài nguyên có trong JAR gốc.
+A lightweight, modern client-side mod that customizes the block selection outline and fill in Minecraft 26.2. Built for Fabric Loader & Fabric API.
 
-## Chức năng
+## Features
 
-- Thay thế viền chọn block mặc định bằng viền có màu, độ mờ và độ dày tùy chỉnh.
-- Tô phần khối đang được chọn bằng một lớp màu trong suốt tùy chọn.
-- Màu tĩnh theo HSV hoặc hiệu ứng cầu vồng chuyển động độc lập cho viền và phần tô.
-- Mở giao diện tùy chỉnh bằng phím **M**; nhấn M lần nữa để đóng.
-- Chỉnh màu bằng thanh hue, bảng saturation/brightness, hoặc nhập mã màu hex.
-- Năm preset: Minimalist Silver, Classic Executive, Vibrant Gold, Rainbow Corporate và Dark Slate.
-- Tự lưu cấu hình dạng JSON tại thư mục `config` của instance Minecraft: `blocky-outline.json`.
+- **Custom Outline & Fill**: Customize block outline color, opacity, and width, with optional transparent block face fill.
+- **Dynamic HSV & Rainbow RGB**: Static HSV color tuning (via Hue bar, Saturation/Value box, or Hex input) or independent animated Rainbow RGB modes.
+- **Ultra-Responsive Smooth Movement**: High-performance exponential decay LERP interpolation algorithm with instant auto-snapping when switching between blocks.
+- **Zero-GC Executive Engine**: Optimized color conversion engine eliminating per-frame memory allocation for smooth, stutter-free FPS.
+- **In-Game Executive UI**: Press **M** anywhere in-game to toggle the configuration screen. Includes 5 built-in presets (Minimalist Silver, Executive Purple, Vibrant Gold, Rainbow Corporate, Dark Slate).
+- **Auto Configuration Persistence**: Automatically saves settings to `.minecraft/config/blocky-outline.json`.
 
-## Cấu trúc
+## Requirements
 
-- `src/main/java`: sáu lớp Java đã khôi phục toàn bộ logic mod.
-- `src/main/resources`: `fabric.mod.json`, mixin descriptor, icon, bản dịch và giấy phép gốc.
-- `FEATURES.md`: tài liệu tính năng, cấu hình và kiến trúc.
-- `RECOVERY_NOTES.md`: phạm vi và lưu ý của mã dịch ngược.
-
-## Yêu cầu theo manifest gốc
-
-- Fabric Loader >= 0.19.3
+- Minecraft `26.2` (1.21.11 / Fabric)
+- Fabric Loader `>=0.19.3`
 - Fabric API
-- Minecraft >= 26.2
-- Java >= 25
 
-Đây là mã Java được dịch ngược trực tiếp từ JAR phát hành, vì vậy tên biến cục bộ và một vài biểu thức có thể khác mã tác giả ban đầu; hành vi logic được giữ theo bytecode của bản 1.0.7.
+## Building
+
+To build the mod JAR file, run:
+```bash
+./gradlew build
+```
+The output JAR file will be generated in `build/libs/blocky-outline-1.1.0.jar`.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE_blocky-outline) file for details.
