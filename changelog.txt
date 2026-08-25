@@ -1,8 +1,5 @@
-**Blocky Outline v1.1.1** for **Minecraft 1.21.x** (Fabric). Lightweight and built with Fabric API.
+**Blocky Outline v1.1.2** for **Minecraft 26.1.x** (Fabric). Lightweight and built with Fabric API.
 
-**What's new in version 1.1.1:**
+**What's new in version 1.1.2:**
 
-- **Compatibility**: Built for **Minecraft 1.21 - 1.21.11** on **Java 21+**.
-- **Smooth Transition**: Ultra-responsive LERP interpolation with smart auto-snap logic.
-- **Zero-GC Math**: Eliminated per-frame allocations with independent clamp & bitwise HSV engine.
-- **Dynamic Decoupling**: Reflection-based menu invocation preventing classloader incompatibilities.
+- **Version Update**: Updated and built specifically for **Minecraft 26.1.x**.
