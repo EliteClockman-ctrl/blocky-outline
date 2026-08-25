@@ -1,15 +1,15 @@
-A simple client-side mod that customizes the block outline in Minecraft 1.21 - 26.2. Lightweight and built with Fabric API.
+**A simple client-side mod** that customizes the block outline in **Minecraft 1.21 - 26.2**. Lightweight and built with Fabric API.
 
-What's new in version 1.1.1:
+**What's new in version 1.1.1:**
 
-- Two-Tone Gradient Fill: Added smooth vertical Top-Bottom color blending using GPU vertex color interpolation with independent controls for Color 1 and Color 2.
+- **Two-Tone Gradient Fill**: Added smooth vertical Top-Bottom color blending using GPU vertex color interpolation with independent controls for Color 1 and Color 2.
 
-- Dedicated Color 2 Customization: Full support for Color 2 in the Fill tab with an interactive 2D color picker, Hue slider, Hex code input, and expandable controls.
+- **Dedicated Color 2 Customization**: Full support for Color 2 in the Fill tab with an interactive 2D color picker, Hue slider, Hex code input, and expandable controls.
 
-- Extreme Zero-GC & Direct Vertex Streaming: Completely removed per-frame allocations in the renderer and optimized the HSV bitwise arithmetic engine for maximum FPS boost and zero RAM spikes.
+- **Extreme Zero-GC & Direct Vertex Streaming**: Completely removed per-frame allocations in the renderer and optimized the HSV bitwise arithmetic engine for maximum FPS boost and zero RAM spikes.
 
-- Universal Multi-Version Compatibility: Automatically adapts and runs seamlessly across Minecraft versions from 1.21, 1.21.1 - 1.21.11, to 26.2 (Fabric).
+- **Universal Multi-Version Compatibility**: Automatically adapts and runs seamlessly across Minecraft versions from 1.21, 1.21.1 - 1.21.11, to 26.2 (Fabric).
 
-- Sodium & Iris Shader Pipeline Ready: Fully optimized to work directly alongside Sodium, Embeddium, Iris Shaders, and Indium with zero visual conflicts.
+- **Sodium & Iris Shader Pipeline Ready**: Fully optimized to work directly alongside Sodium, Embeddium, Iris Shaders, and Indium with zero visual conflicts.
 
-- UI & Layout Enhancements: Polished menu row layout, updated version badges, and added live 3D block preview reflecting the two-tone gradient in real time.
+- **UI & Layout Enhancements**: Polished menu row layout, updated version badges, and added live 3D block preview reflecting the two-tone gradient in real time.
