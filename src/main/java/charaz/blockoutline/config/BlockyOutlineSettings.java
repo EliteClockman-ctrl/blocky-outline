@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Mth;
 
 public final class BlockyOutlineSettings {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -85,27 +84,31 @@ public final class BlockyOutlineSettings {
         }
     }
 
+    public static float clamp(float val, float min, float max) {
+        return val < min ? min : (val > max ? max : val);
+    }
+
     public void copyFrom(BlockyOutlineSettings other) {
         this.rainbowOutline = other.rainbowOutline;
-        this.outlineRgbSpeed = Mth.clamp(other.outlineRgbSpeed, 0.1f, 5.0f);
-        this.outlineHue = Mth.clamp(other.outlineHue, 0.0f, 1.0f);
-        this.outlineSaturation = Mth.clamp(other.outlineSaturation, 0.0f, 1.0f);
-        this.outlineValue = Mth.clamp(other.outlineValue, 0.0f, 1.0f);
-        this.outlineOpacity = Mth.clamp(other.outlineOpacity, 0.0f, 1.0f);
-        this.outlineWidth = Mth.clamp(other.outlineWidth, 0.5f, 10.0f);
+        this.outlineRgbSpeed = clamp(other.outlineRgbSpeed, 0.1f, 5.0f);
+        this.outlineHue = clamp(other.outlineHue, 0.0f, 1.0f);
+        this.outlineSaturation = clamp(other.outlineSaturation, 0.0f, 1.0f);
+        this.outlineValue = clamp(other.outlineValue, 0.0f, 1.0f);
+        this.outlineOpacity = clamp(other.outlineOpacity, 0.0f, 1.0f);
+        this.outlineWidth = clamp(other.outlineWidth, 0.5f, 10.0f);
         this.smoothTransition = other.smoothTransition;
 
         this.fillEnabled = other.fillEnabled;
         this.rainbowFill = other.rainbowFill;
         this.fillTwoColor = other.fillTwoColor;
-        this.fillRgbSpeed = Mth.clamp(other.fillRgbSpeed, 0.1f, 5.0f);
-        this.fillHue = Mth.clamp(other.fillHue, 0.0f, 1.0f);
-        this.fillSaturation = Mth.clamp(other.fillSaturation, 0.0f, 1.0f);
-        this.fillValue = Mth.clamp(other.fillValue, 0.0f, 1.0f);
-        this.fillHue2 = Mth.clamp(other.fillHue2, 0.0f, 1.0f);
-        this.fillSaturation2 = Mth.clamp(other.fillSaturation2, 0.0f, 1.0f);
-        this.fillValue2 = Mth.clamp(other.fillValue2, 0.0f, 1.0f);
-        this.fillOpacity = Mth.clamp(other.fillOpacity, 0.0f, 1.0f);
+        this.fillRgbSpeed = clamp(other.fillRgbSpeed, 0.1f, 5.0f);
+        this.fillHue = clamp(other.fillHue, 0.0f, 1.0f);
+        this.fillSaturation = clamp(other.fillSaturation, 0.0f, 1.0f);
+        this.fillValue = clamp(other.fillValue, 0.0f, 1.0f);
+        this.fillHue2 = clamp(other.fillHue2, 0.0f, 1.0f);
+        this.fillSaturation2 = clamp(other.fillSaturation2, 0.0f, 1.0f);
+        this.fillValue2 = clamp(other.fillValue2, 0.0f, 1.0f);
+        this.fillOpacity = clamp(other.fillOpacity, 0.0f, 1.0f);
     }
 
     public float[] getOutlineRgb(long nowMs) {
