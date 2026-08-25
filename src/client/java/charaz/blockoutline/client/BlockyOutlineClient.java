@@ -28,92 +28,95 @@ public class BlockyOutlineClient implements ClientModInitializer {
         BlockyOutlineSettings.load();
         this.registerMenuHotkey();
 
-        LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, renderState) -> {
-            if (renderState == null) {
-                return true;
-            }
-            BlockPos pos = renderState.pos();
-            VoxelShape shape = renderState.shape();
-            if (pos == null || shape == null || shape.isEmpty()) {
-                initializedPos = false;
-                return true;
-            }
-            BlockyOutlineSettings s = BlockyOutlineSettings.get();
-            PoseStack matrices = context.poseStack();
-            if (matrices == null) {
-                return true;
-            }
-            if (context.levelState() == null || context.levelState().cameraRenderState == null) {
-                return true;
-            }
-            Vec3 cam = context.levelState().cameraRenderState.pos;
-            if (cam == null) {
-                return true;
-            }
+        try {
+            LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, renderState) -> {
+                if (renderState == null) {
+                    return true;
+                }
+                BlockPos pos = renderState.pos();
+                VoxelShape shape = renderState.shape();
+                if (pos == null || shape == null || shape.isEmpty()) {
+                    initializedPos = false;
+                    return true;
+                }
+                BlockyOutlineSettings s = BlockyOutlineSettings.get();
+                PoseStack matrices = context.poseStack();
+                if (matrices == null) {
+                    return true;
+                }
+                if (context.levelState() == null || context.levelState().cameraRenderState == null) {
+                    return true;
+                }
+                Vec3 cam = context.levelState().cameraRenderState.pos;
+                if (cam == null) {
+                    return true;
+                }
 
-            double targetX = (double) pos.getX();
-            double targetY = (double) pos.getY();
-            double targetZ = (double) pos.getZ();
+                double targetX = (double) pos.getX();
+                double targetY = (double) pos.getY();
+                double targetZ = (double) pos.getZ();
 
-            long now = System.currentTimeMillis();
+                long now = System.currentTimeMillis();
 
-            if (s.smoothTransition) {
-                if (!initializedPos) {
+                if (s.smoothTransition) {
+                    if (!initializedPos) {
+                        smoothedX = targetX;
+                        smoothedY = targetY;
+                        smoothedZ = targetZ;
+                        initializedPos = true;
+                        lastRenderTimeMs = now;
+                    } else {
+                        long dt = Math.max(1L, Math.min(100L, now - lastRenderTimeMs));
+                        lastRenderTimeMs = now;
+                        double distSq = (targetX - smoothedX) * (targetX - smoothedX) +
+                                        (targetY - smoothedY) * (targetY - smoothedY) +
+                                        (targetZ - smoothedZ) * (targetZ - smoothedZ);
+                        if (distSq > 25.0) {
+                            smoothedX = targetX;
+                            smoothedY = targetY;
+                            smoothedZ = targetZ;
+                        } else if (distSq < 0.0001) {
+                            smoothedX = targetX;
+                            smoothedY = targetY;
+                            smoothedZ = targetZ;
+                        } else {
+                            double step = 1.0 - Math.exp(-0.120 * (double) dt);
+                            smoothedX += (targetX - smoothedX) * step;
+                            smoothedY += (targetY - smoothedY) * step;
+                            smoothedZ += (targetZ - smoothedZ) * step;
+                        }
+                    }
+                } else {
                     smoothedX = targetX;
                     smoothedY = targetY;
                     smoothedZ = targetZ;
                     initializedPos = true;
-                    lastRenderTimeMs = now;
-                } else {
-                    long dt = Math.max(1L, Math.min(100L, now - lastRenderTimeMs));
-                    lastRenderTimeMs = now;
-                    double distSq = (targetX - smoothedX) * (targetX - smoothedX) +
-                                    (targetY - smoothedY) * (targetY - smoothedY) +
-                                    (targetZ - smoothedZ) * (targetZ - smoothedZ);
-                    if (distSq > 25.0) {
-                        smoothedX = targetX;
-                        smoothedY = targetY;
-                        smoothedZ = targetZ;
-                    } else if (distSq < 0.0001) {
-                        smoothedX = targetX;
-                        smoothedY = targetY;
-                        smoothedZ = targetZ;
-                    } else {
-                        double step = 1.0 - Math.exp(-0.120 * (double) dt);
-                        smoothedX += (targetX - smoothedX) * step;
-                        smoothedY += (targetY - smoothedY) * step;
-                        smoothedZ += (targetZ - smoothedZ) * step;
-                    }
                 }
-            } else {
-                smoothedX = targetX;
-                smoothedY = targetY;
-                smoothedZ = targetZ;
-                initializedPos = true;
-            }
 
-            double dx = smoothedX - cam.x;
-            double dy = smoothedY - cam.y;
-            double dz = smoothedZ - cam.z;
+                double dx = smoothedX - cam.x;
+                double dy = smoothedY - cam.y;
+                double dz = smoothedZ - cam.z;
 
-            matrices.pushPose();
-            matrices.translate(dx, dy, dz);
+                matrices.pushPose();
+                matrices.translate(dx, dy, dz);
 
-            int outlineColor = s.getOutlineArgb(now);
-            context.submitNodeCollector().submitShapeOutline(matrices, shape, RenderTypes.lines(), outlineColor, s.outlineWidth, false);
+                int outlineColor = s.getOutlineArgb(now);
+                context.submitNodeCollector().submitShapeOutline(matrices, shape, RenderTypes.lines(), outlineColor, s.outlineWidth, false);
 
-            if (s.fillEnabled) {
-                int fillColor = s.getFillArgb(now);
-                context.submitNodeCollector().submitCustomGeometry(
-                        matrices,
-                        RenderTypes.debugFilledBox(),
-                        (pose, consumer) -> OutlineRenderer.renderFilledBox(consumer, pose, shape, fillColor)
-                );
-            }
+                if (s.fillEnabled) {
+                    int fillColor = s.getFillArgb(now);
+                    context.submitNodeCollector().submitCustomGeometry(
+                            matrices,
+                            RenderTypes.debugFilledBox(),
+                            (pose, consumer) -> OutlineRenderer.renderFilledBox(consumer, pose, shape, fillColor)
+                    );
+                }
 
-            matrices.popPose();
-            return false;
-        });
+                matrices.popPose();
+                return false;
+            });
+        } catch (Throwable ignored) {
+        }
     }
 
     private void registerMenuHotkey() {
