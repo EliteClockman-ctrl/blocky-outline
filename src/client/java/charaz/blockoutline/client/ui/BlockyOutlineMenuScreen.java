@@ -13,7 +13,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 
 public class BlockyOutlineMenuScreen extends Screen {
     private static final String[] TAB_LABELS = {"Outline", "Fill", "Presets", "About"};
@@ -864,8 +863,8 @@ public class BlockyOutlineMenuScreen extends Screen {
     private void update2DPicker(int col, double mx, double my, int boxX, int boxY, int boxW, int boxH) {
         float sat = (float) (mx - boxX) / (float) boxW;
         float val = 1.0f - (float) (my - boxY) / (float) boxH;
-        sat = Mth.clamp(sat, 0.0f, 1.0f);
-        val = Mth.clamp(val, 0.0f, 1.0f);
+        sat = BlockyOutlineSettings.clamp(sat, 0.0f, 1.0f);
+        val = BlockyOutlineSettings.clamp(val, 0.0f, 1.0f);
 
         if (col == 0) {
             this.settings.outlineSaturation = sat;
@@ -878,7 +877,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
     private void updateHueSlider(int col, double mx, int sliderX, int sliderW) {
         float hue = (float) (mx - sliderX) / (float) sliderW;
-        hue = Mth.clamp(hue, 0.0f, 1.0f);
+        hue = BlockyOutlineSettings.clamp(hue, 0.0f, 1.0f);
 
         if (col == 0) {
             this.settings.outlineHue = hue;
@@ -1246,7 +1245,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
     private void updateSliderValue(int col, int row, double mx, int sliderX) {
         float pct = (float)(mx - sliderX) / (float)this.sliderW;
-        pct = Mth.clamp(pct, 0.0f, 1.0f);
+        pct = BlockyOutlineSettings.clamp(pct, 0.0f, 1.0f);
 
         if (col == 0) {
             switch (row) {
