@@ -18,7 +18,7 @@ import net.minecraft.util.Mth;
 public class BlockyOutlineMenuScreen extends Screen {
     private static final String[] TAB_LABELS = {"Outline", "Fill", "Presets", "About"};
     private static final String[] OUTLINE_ROW_LABELS = {"Rainbow outline", "RGB speed", "Colors", "Opacity", "Width", "Smooth movement"};
-    private static final String[] FILL_ROW_LABELS = {"Enable fill", "Rainbow fill", "Two-tone fill", "RGB speed", "Color 1", "Color 2", "Opacity"};
+    private static final String[] FILL_ROW_LABELS = {"Enable fill", "Rainbow fill", "RGB speed", "Colors", "Opacity"};
 
     private static final String[] PRESET_NAMES = {
             "Minimalist silver", "Executive purple", "Vibrant gold", "Rainbow corporate", "Dark slate"
@@ -65,7 +65,6 @@ public class BlockyOutlineMenuScreen extends Screen {
     private int activeTab = 0;
     private boolean outlineColorExpanded = false;
     private boolean fillColorExpanded = false;
-    private boolean fillColor2Expanded = false;
     private boolean isDraggingSlider = false;
     private int dragCol = -1;
     private int dragRow = -1;
@@ -176,7 +175,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.text(this.font, "Blocky", logoX, logoY + 4, COLOR_TEXT_WHITE, true);
         guiGraphics.text(this.font, "Outline", logoX + this.font.width("Blocky") + 4, logoY + 4, COLOR_PURPLE_LIGHT, false);
 
-        String vTag = "v1.1.1";
+        String vTag = "v1.1.0";
         int vW = this.font.width(vTag);
         int vX = this.px + this.panelW - vW - 12;
         guiGraphics.fillGradient(vX - 4, this.py + 9, vX + vW + 4, this.py + 24, COLOR_PURPLE_PRIMARY, 0xFF7E22CE);
@@ -198,7 +197,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         if (this.activeTab == 0 || this.activeTab == 1) {
             int col = this.activeTab;
             int currentY = contentY;
-            int numRows = (col == 0) ? 6 : 7;
+            int numRows = (col == 0) ? 6 : 5;
             for (int row = 0; row < numRows; ++row) {
                 int height = this.getRowHeight(col, row);
                 this.renderRow(guiGraphics, this.contentX, currentY, col, row, height, mouseX, mouseY);
@@ -247,13 +246,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private int getRowHeight(int col, int row) {
-        if (col == 0 && row == 2 && this.outlineColorExpanded) {
-            return 80;
-        }
-        if (col == 1 && row == 4 && this.fillColorExpanded) {
-            return 80;
-        }
-        if (col == 1 && row == 5 && this.fillColor2Expanded) {
+        if ((col == 0 && row == 2 && this.outlineColorExpanded) || (col == 1 && row == 3 && this.fillColorExpanded)) {
             return 80;
         }
         return this.rowH;
@@ -279,8 +272,8 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         if (this.isCheckboxRow(col, row)) {
             this.renderToggleSwitch(guiGraphics, rx, ry, col, row, disabled, settingsW);
-        } else if ((col == 0 && row == 2) || (col == 1 && (row == 4 || row == 5))) {
-            boolean expanded = (col == 0) ? this.outlineColorExpanded : (row == 4 ? this.fillColorExpanded : this.fillColor2Expanded);
+        } else if ((col == 0 && row == 2) || (col == 1 && row == 3)) {
+            boolean expanded = (col == 0) ? this.outlineColorExpanded : this.fillColorExpanded;
             if (expanded) {
                 this.renderColorPicker2D(guiGraphics, rx, ry, col, row, height, disabled, mx, my, settingsW);
             } else {
@@ -327,7 +320,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int sliderY = ry + (this.rowH - 4) / 2;
         int filled = (int)((float)this.sliderW * pct);
 
-        boolean isHueSlider = (col == 0 && row == 2) || (col == 1 && row == 4);
+        boolean isHueSlider = (col == 0 && row == 2) || (col == 1 && row == 3);
 
         if (isHueSlider) {
             for (int i = 0; i < this.sliderW; ++i) {
@@ -375,8 +368,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         long now = System.currentTimeMillis();
         int outlineColor = this.settings.getOutlineArgb(now);
         int fillColor = this.settings.getFillArgb(now);
-        int fillColor2 = this.settings.getFillArgb2(now);
-        boolean twoColor = this.settings.fillTwoColor;
 
         int centerX = cx + cw / 2;
         int centerY = cy + (ch - 40) / 2 + 10;
@@ -401,8 +392,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int lw = Math.max(1, (int)this.settings.outlineWidth);
 
         if (this.settings.fillEnabled) {
-            int topFaceCol = twoColor ? fillColor2 : fillColor;
-            this.drawQuadScanlines(guiGraphics, vTopX, vTopY, vRightX, vRightY, vMidX, vMidY, vLeftX, vLeftY, topFaceCol);
+            this.drawQuadScanlines(guiGraphics, vTopX, vTopY, vRightX, vRightY, vMidX, vMidY, vLeftX, vLeftY, fillColor);
             this.drawQuadScanlines(guiGraphics, vLeftX, vLeftY, vMidX, vMidY, vBotX, vBotY, vBotLeftX, vBotLeftY, fillColor);
             this.drawQuadScanlines(guiGraphics, vMidX, vMidY, vRightX, vRightY, vBotRightX, vBotRightY, vBotX, vBotY, fillColor);
         }
@@ -541,8 +531,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.text(this.font, "Outline", ax + 16 + this.font.width("Blocky") + 4, ay + 12, COLOR_PURPLE_LIGHT, false);
         guiGraphics.text(this.font, "Next-generation block outline & fill customizer", ax + 16, ay + 26, COLOR_TEXT_MUTED, false);
 
-        String vStr = "v1.1.1";
-        String envStr = "Fabric 1.21 - 26.2";
+        String vStr = "v1.1.0";
+        String envStr = "Fabric 26.2";
         int vW = this.font.width(vStr);
         int envW = this.font.width(envStr);
         int badge2X = ax + cardW - envW - 16;
@@ -588,7 +578,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         int logoWidthArea = 14 + this.font.width("Blocky Outline") + 16;
         int tabStartX = this.px + logoWidthArea;
-        String vTag = "v1.1.1";
+        String vTag = "v1.1.0";
         int vW = this.font.width(vTag);
         int vX = this.px + this.panelW - vW - 12;
         int tabAvailableW = vX - 8 - tabStartX;
@@ -611,7 +601,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             int col = this.activeTab;
             int settingsW = this.contentW - 185;
             int currentY = contentY;
-            int numRows = (col == 0) ? 6 : 7;
+            int numRows = (col == 0) ? 6 : 5;
 
             for (int row = 0; row < numRows; ++row) {
                 int height = this.getRowHeight(col, row);
@@ -629,8 +619,8 @@ public class BlockyOutlineMenuScreen extends Screen {
                             this.playClickSound();
                             return true;
                         }
-                    } else if ((col == 0 && row == 2) || (col == 1 && (row == 4 || row == 5))) {
-                        boolean expanded = (col == 0) ? this.outlineColorExpanded : (row == 4 ? this.fillColorExpanded : this.fillColor2Expanded);
+                    } else if ((col == 0 && row == 2) || (col == 1 && row == 3)) {
+                        boolean expanded = (col == 0) ? this.outlineColorExpanded : this.fillColorExpanded;
                         if (expanded) {
                             int boxX = this.contentX + settingsW - this.sliderW - 12;
                             int boxY = currentY + 4;
@@ -641,7 +631,7 @@ public class BlockyOutlineMenuScreen extends Screen {
                                 this.isDragging2DPicker = true;
                                 this.active2DCol = col;
                                 this.active2DRow = row;
-                                this.update2DPicker(col, row, mx, my, boxX, boxY, boxW, boxH);
+                                this.update2DPicker(col, mx, my, boxX, boxY, boxW, boxH);
                                 return true;
                             }
 
@@ -654,7 +644,7 @@ public class BlockyOutlineMenuScreen extends Screen {
                                 this.isDraggingHueSlider = true;
                                 this.active2DCol = col;
                                 this.active2DRow = row;
-                                this.updateHueSlider(col, row, mx, sliderX, sliderW_local);
+                                this.updateHueSlider(col, mx, sliderX, sliderW_local);
                                 return true;
                             }
 
@@ -665,7 +655,7 @@ public class BlockyOutlineMenuScreen extends Screen {
                             int hexBoxY = sliderY + (sliderH - hexBoxH) / 2;
 
                             if (mx >= hexBoxX && mx <= hexBoxX + hexBoxW && my >= hexBoxY && my <= hexBoxY + hexBoxH) {
-                                this.focusedHexCol = (col == 0) ? 0 : (row == 4 ? 1 : 2);
+                                this.focusedHexCol = col;
                                 this.typingHex = "";
                                 return true;
                             }
@@ -678,8 +668,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
                             if (mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH) {
                                 if (col == 0) this.outlineColorExpanded = false;
-                                else if (row == 4) this.fillColorExpanded = false;
-                                else this.fillColor2Expanded = false;
+                                else this.fillColorExpanded = false;
                                 this.playClickSound();
                                 return true;
                             }
@@ -692,8 +681,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
                             if (mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH) {
                                 if (col == 0) this.outlineColorExpanded = true;
-                                else if (row == 4) this.fillColorExpanded = true;
-                                else this.fillColor2Expanded = true;
+                                else this.fillColorExpanded = true;
                                 this.playClickSound();
                                 return true;
                             }
@@ -773,7 +761,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             int boxX = this.contentX + settingsW - this.sliderW - 12;
             int contentY = this.py + this.topPad;
             int currentY = contentY;
-            int numRows = (this.active2DCol == 0) ? 6 : 7;
+            int numRows = (this.active2DCol == 0) ? 6 : 5;
 
             for (int r = 0; r < numRows; ++r) {
                 if (r == this.active2DRow) break;
@@ -783,14 +771,14 @@ public class BlockyOutlineMenuScreen extends Screen {
             int boxY = currentY + 4;
             int boxW = this.sliderW;
             int boxH = 48;
-            this.update2DPicker(this.active2DCol, this.active2DRow, mx, my, boxX, boxY, boxW, boxH);
+            this.update2DPicker(this.active2DCol, mx, my, boxX, boxY, boxW, boxH);
             return true;
         }
 
         if (this.isDraggingHueSlider && this.active2DCol != -1) {
             int settingsW = this.contentW - 185;
             int sliderX = this.contentX + settingsW - this.sliderW - 12;
-            this.updateHueSlider(this.active2DCol, this.active2DRow, mx, sliderX, this.sliderW);
+            this.updateHueSlider(this.active2DCol, mx, sliderX, this.sliderW);
             return true;
         }
 
@@ -864,20 +852,16 @@ public class BlockyOutlineMenuScreen extends Screen {
                 this.settings.outlineHue = h;
                 this.settings.outlineSaturation = s;
                 this.settings.outlineValue = v;
-            } else if (col == 1) {
+            } else {
                 this.settings.fillHue = h;
                 this.settings.fillSaturation = s;
                 this.settings.fillValue = v;
-            } else {
-                this.settings.fillHue2 = h;
-                this.settings.fillSaturation2 = s;
-                this.settings.fillValue2 = v;
             }
             BlockyOutlineSettings.save();
         } catch (NumberFormatException ignored) {}
     }
 
-    private void update2DPicker(int col, int row, double mx, double my, int boxX, int boxY, int boxW, int boxH) {
+    private void update2DPicker(int col, double mx, double my, int boxX, int boxY, int boxW, int boxH) {
         float sat = (float) (mx - boxX) / (float) boxW;
         float val = 1.0f - (float) (my - boxY) / (float) boxH;
         sat = Mth.clamp(sat, 0.0f, 1.0f);
@@ -886,32 +870,27 @@ public class BlockyOutlineMenuScreen extends Screen {
         if (col == 0) {
             this.settings.outlineSaturation = sat;
             this.settings.outlineValue = val;
-        } else if (row == 4) {
+        } else {
             this.settings.fillSaturation = sat;
             this.settings.fillValue = val;
-        } else {
-            this.settings.fillSaturation2 = sat;
-            this.settings.fillValue2 = val;
         }
     }
 
-    private void updateHueSlider(int col, int row, double mx, int sliderX, int sliderW) {
+    private void updateHueSlider(int col, double mx, int sliderX, int sliderW) {
         float hue = (float) (mx - sliderX) / (float) sliderW;
         hue = Mth.clamp(hue, 0.0f, 1.0f);
 
         if (col == 0) {
             this.settings.outlineHue = hue;
-        } else if (row == 4) {
-            this.settings.fillHue = hue;
         } else {
-            this.settings.fillHue2 = hue;
+            this.settings.fillHue = hue;
         }
     }
 
     private void renderColorPicker2D(GuiGraphicsExtractor guiGraphics, int rx, int ry, int col, int row, int height, boolean disabled, int mx, int my, int containerW) {
-        float hue = (col == 0) ? this.settings.outlineHue : (row == 4 ? this.settings.fillHue : this.settings.fillHue2);
-        float saturation = (col == 0) ? this.settings.outlineSaturation : (row == 4 ? this.settings.fillSaturation : this.settings.fillSaturation2);
-        float value = (col == 0) ? this.settings.outlineValue : (row == 4 ? this.settings.fillValue : this.settings.fillValue2);
+        float hue = (col == 0) ? this.settings.outlineHue : this.settings.fillHue;
+        float saturation = (col == 0) ? this.settings.outlineSaturation : this.settings.fillSaturation;
+        float value = (col == 0) ? this.settings.outlineValue : this.settings.fillValue;
 
         int boxX = rx + containerW - this.sliderW - 12;
         int boxW = this.sliderW;
@@ -1045,9 +1024,9 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void renderColorPickerCollapsed(GuiGraphicsExtractor guiGraphics, int rx, int ry, int col, int row, int height, boolean disabled, int mx, int my, int containerW) {
-        float hue = (col == 0) ? this.settings.outlineHue : (row == 4 ? this.settings.fillHue : this.settings.fillHue2);
-        float saturation = (col == 0) ? this.settings.outlineSaturation : (row == 4 ? this.settings.fillSaturation : this.settings.fillSaturation2);
-        float value = (col == 0) ? this.settings.outlineValue : (row == 4 ? this.settings.fillValue : this.settings.fillValue2);
+        float hue = (col == 0) ? this.settings.outlineHue : this.settings.fillHue;
+        float saturation = (col == 0) ? this.settings.outlineSaturation : this.settings.fillSaturation;
+        float value = (col == 0) ? this.settings.outlineValue : this.settings.fillValue;
 
         int sliderX = rx + containerW - this.sliderW - 12;
         int sliderY = ry + (this.rowH - 4) / 2;
@@ -1192,7 +1171,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
     private boolean isCheckboxRow(int col, int row) {
         if (col == 0) return row == 0 || row == 5;
-        return row == 0 || row == 1 || row == 2;
+        return row == 0 || row == 1;
     }
 
     private boolean getCheckboxValue(int col, int row) {
@@ -1202,7 +1181,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         } else {
             if (row == 0) return this.settings.fillEnabled;
             if (row == 1) return this.settings.rainbowFill;
-            if (row == 2) return this.settings.fillTwoColor;
         }
         return false;
     }
@@ -1212,13 +1190,8 @@ public class BlockyOutlineMenuScreen extends Screen {
             if (row == 0) this.settings.rainbowOutline = !this.settings.rainbowOutline;
             if (row == 5) this.settings.smoothTransition = !this.settings.smoothTransition;
         } else {
-            if (row == 0) {
-                this.settings.fillEnabled = !this.settings.fillEnabled;
-            } else if (row == 1) {
-                this.settings.rainbowFill = !this.settings.rainbowFill;
-            } else if (row == 2) {
-                this.settings.fillTwoColor = !this.settings.fillTwoColor;
-            }
+            if (row == 0) this.settings.fillEnabled = !this.settings.fillEnabled;
+            if (row == 1) this.settings.rainbowFill = !this.settings.rainbowFill;
         }
         BlockyOutlineSettings.save();
     }
@@ -1229,9 +1202,8 @@ public class BlockyOutlineMenuScreen extends Screen {
             if (!this.settings.rainbowOutline && (row == 1)) return true;
         } else {
             if (!this.settings.fillEnabled && row > 0) return true;
-            if (this.settings.rainbowFill && (row == 4 || row == 5)) return true;
-            if (!this.settings.rainbowFill && row == 3) return true;
-            if (!this.settings.fillTwoColor && row == 5) return true;
+            if (this.settings.rainbowFill && row == 3) return true;
+            if (!this.settings.rainbowFill && row == 2) return true;
         }
         return false;
     }
@@ -1247,10 +1219,9 @@ public class BlockyOutlineMenuScreen extends Screen {
             };
         } else {
             return switch (row) {
-                case 3 -> (this.settings.fillRgbSpeed - 0.1f) / 4.9f;
-                case 4 -> this.settings.fillHue;
-                case 5 -> this.settings.fillHue2;
-                case 6 -> this.settings.fillOpacity;
+                case 2 -> (this.settings.fillRgbSpeed - 0.1f) / 4.9f;
+                case 3 -> this.settings.fillHue;
+                case 4 -> this.settings.fillOpacity;
                 default -> 0.0f;
             };
         }
@@ -1266,8 +1237,8 @@ public class BlockyOutlineMenuScreen extends Screen {
             };
         } else {
             return switch (row) {
-                case 3 -> String.format("%.1fx", this.settings.fillRgbSpeed);
-                case 6 -> String.format("%d%%", (int)(this.settings.fillOpacity * 100));
+                case 2 -> String.format("%.1fx", this.settings.fillRgbSpeed);
+                case 4 -> String.format("%d%%", (int)(this.settings.fillOpacity * 100));
                 default -> "";
             };
         }
@@ -1286,10 +1257,9 @@ public class BlockyOutlineMenuScreen extends Screen {
             }
         } else {
             switch (row) {
-                case 3 -> this.settings.fillRgbSpeed = 0.1f + pct * 4.9f;
-                case 4 -> this.settings.fillHue = pct;
-                case 5 -> this.settings.fillHue2 = pct;
-                case 6 -> this.settings.fillOpacity = pct;
+                case 2 -> this.settings.fillRgbSpeed = 0.1f + pct * 4.9f;
+                case 3 -> this.settings.fillHue = pct;
+                case 4 -> this.settings.fillOpacity = pct;
             }
         }
         BlockyOutlineSettings.save();

@@ -9,71 +9,34 @@ public final class OutlineRenderer {
     private OutlineRenderer() {
     }
 
-    public static void renderFilledBox(VertexConsumer vertexConsumer, PoseStack.Pose pose, VoxelShape shape, int colorARGB, int colorARGB2, boolean isTwoColor) {
-        int a1 = (colorARGB >>> 24) & 0xFF;
-        if (a1 == 0) return;
-        int r1 = (colorARGB >>> 16) & 0xFF;
-        int g1 = (colorARGB >>> 8) & 0xFF;
-        int b1 = colorARGB & 0xFF;
+    public static void renderFilledBox(VertexConsumer vertexConsumer, PoseStack.Pose pose, VoxelShape shape, int colorARGB) {
+        float r = (float)(colorARGB >> 16 & 0xFF) / 255.0f;
+        float g = (float)(colorARGB >> 8 & 0xFF) / 255.0f;
+        float b = (float)(colorARGB & 0xFF) / 255.0f;
+        float a = (float)(colorARGB >> 24 & 0xFF) / 255.0f;
 
-        int a2 = isTwoColor ? ((colorARGB2 >>> 24) & 0xFF) : a1;
-        int r2 = isTwoColor ? ((colorARGB2 >>> 16) & 0xFF) : r1;
-        int g2 = isTwoColor ? ((colorARGB2 >>> 8) & 0xFF) : g1;
-        int b2 = isTwoColor ? (colorARGB2 & 0xFF) : b1;
+        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
+            double inflate = 0.003;
+            float x0 = (float)(minX - inflate);
+            float y0 = (float)(minY - inflate);
+            float z0 = (float)(minZ - inflate);
+            float x1 = (float)(maxX + inflate);
+            float y1 = (float)(maxY + inflate);
+            float z1 = (float)(maxZ + inflate);
 
-        Matrix4fc matrix = pose.pose();
-        final float inflate = 0.0025f;
-
-        var boxList = shape.toAabbs();
-        int size = boxList.size();
-        for (int i = 0; i < size; ++i) {
-            var box = boxList.get(i);
-            float x0 = (float) box.minX - inflate;
-            float y0 = (float) box.minY - inflate;
-            float z0 = (float) box.minZ - inflate;
-            float x1 = (float) box.maxX + inflate;
-            float y1 = (float) box.maxY + inflate;
-            float z1 = (float) box.maxZ + inflate;
-
-            // Bottom Face (Pure Color 1)
-            vertexConsumer.addVertex(matrix, x0, y0, z1).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x1, y0, z1).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x1, y0, z0).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x0, y0, z0).setColor(r1, g1, b1, a1);
-
-            // Top Face (Pure Color 2)
-            vertexConsumer.addVertex(matrix, x0, y1, z1).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x1, y1, z1).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x1, y1, z0).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x0, y1, z0).setColor(r2, g2, b2, a2);
-
-            // North Face (y0 = Color 1 -> y1 = Color 2)
-            vertexConsumer.addVertex(matrix, x1, y0, z0).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x0, y0, z0).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x0, y1, z0).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x1, y1, z0).setColor(r2, g2, b2, a2);
-
-            // South Face (y0 = Color 1 -> y1 = Color 2)
-            vertexConsumer.addVertex(matrix, x0, y0, z1).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x1, y0, z1).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x1, y1, z1).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x0, y1, z1).setColor(r2, g2, b2, a2);
-
-            // West Face (y0 = Color 1 -> y1 = Color 2)
-            vertexConsumer.addVertex(matrix, x0, y0, z0).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x0, y0, z1).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x0, y1, z1).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x0, y1, z0).setColor(r2, g2, b2, a2);
-
-            // East Face (y0 = Color 1 -> y1 = Color 2)
-            vertexConsumer.addVertex(matrix, x1, y0, z1).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x1, y0, z0).setColor(r1, g1, b1, a1);
-            vertexConsumer.addVertex(matrix, x1, y1, z0).setColor(r2, g2, b2, a2);
-            vertexConsumer.addVertex(matrix, x1, y1, z1).setColor(r2, g2, b2, a2);
-        }
+            addQuad(vertexConsumer, pose, x0, y0, z1, x1, y0, z1, x1, y0, z0, x0, y0, z0, r, g, b, a);
+            addQuad(vertexConsumer, pose, x0, y1, z1, x1, y1, z1, x1, y1, z0, x0, y1, z0, r, g, b, a);
+            addQuad(vertexConsumer, pose, x1, y0, z0, x0, y0, z0, x0, y1, z0, x1, y1, z0, r, g, b, a);
+            addQuad(vertexConsumer, pose, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1, r, g, b, a);
+            addQuad(vertexConsumer, pose, x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0, r, g, b, a);
+            addQuad(vertexConsumer, pose, x1, y0, z1, x1, y0, z0, x1, y1, z0, x1, y1, z1, r, g, b, a);
+        });
     }
 
-    public static void renderFilledBox(VertexConsumer vertexConsumer, PoseStack.Pose pose, VoxelShape shape, int colorARGB) {
-        renderFilledBox(vertexConsumer, pose, shape, colorARGB, colorARGB, false);
+    private static void addQuad(VertexConsumer vertexConsumer, PoseStack.Pose pose, float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float r, float g, float b, float a) {
+        vertexConsumer.addVertex((Matrix4fc)pose.pose(), x0, y0, z0).setColor(r, g, b, a);
+        vertexConsumer.addVertex((Matrix4fc)pose.pose(), x1, y1, z1).setColor(r, g, b, a);
+        vertexConsumer.addVertex((Matrix4fc)pose.pose(), x2, y2, z2).setColor(r, g, b, a);
+        vertexConsumer.addVertex((Matrix4fc)pose.pose(), x3, y3, z3).setColor(r, g, b, a);
     }
 }
