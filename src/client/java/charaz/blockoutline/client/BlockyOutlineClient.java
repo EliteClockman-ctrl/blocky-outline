@@ -1,7 +1,6 @@
 package charaz.blockoutline.client;
 
 import charaz.blockoutline.client.renderer.OutlineRenderer;
-import charaz.blockoutline.client.ui.BlockyOutlineMenuScreen;
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -136,10 +135,23 @@ public class BlockyOutlineClient implements ClientModInitializer {
 
     private static void openScreen(net.minecraft.client.Minecraft client) {
         try {
-            if (client.gui.screen() instanceof BlockyOutlineMenuScreen) {
-                client.setScreenAndShow(null);
+            Class<?> menuClass = Class.forName("charaz.blockoutline.client.ui.BlockyOutlineMenuScreen");
+            Object currentScreen = client.gui.getClass().getMethod("screen").invoke(client.gui);
+            if (currentScreen != null && menuClass.isInstance(currentScreen)) {
+                for (java.lang.reflect.Method m : client.getClass().getMethods()) {
+                    if (m.getName().equals("setScreenAndShow") || m.getName().equals("setScreen")) {
+                        m.invoke(client, new Object[]{null});
+                        return;
+                    }
+                }
             } else {
-                client.setScreenAndShow(new BlockyOutlineMenuScreen());
+                Object newScreen = menuClass.getDeclaredConstructor().newInstance();
+                for (java.lang.reflect.Method m : client.getClass().getMethods()) {
+                    if (m.getName().equals("setScreenAndShow") || m.getName().equals("setScreen")) {
+                        m.invoke(client, newScreen);
+                        return;
+                    }
+                }
             }
         } catch (Throwable ignored) {
         }
