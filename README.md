@@ -1,17 +1,26 @@
-# Blocky Outline v1.1.1 — Official Source Code
+# Blocky Outline v1.1.2 — Official Source Code
 
-A lightweight, modern client-side mod that customizes the block selection outline and fill in Minecraft (compatible with Fabric 1.21, 1.21.1 - 1.21.11, and 26.2).
+A lightweight, modern client-side mod that customizes the block selection outline and fill in Minecraft (compatible with Fabric 26.1.x).
 
 ## Features
 
-- **Custom Outline & Fill**: Customize block outline color, opacity, and width, with optional transparent block face fill.
-- **Two-Tone Gradient Fill**: Top-Bottom vertical 2-tone color blend with independent Color 1 and Color 2 pickers.
-- **Dynamic HSV & Rainbow RGB**: Static HSV color tuning (via Hue bar, Saturation/Value box, or Hex input) or independent animated Rainbow RGB modes.
-- **Universal Multi-Version Compatibility**: Automatically adapts and runs seamlessly across Minecraft 1.21 - 26.2.
-- **Ultra-Responsive Smooth Movement**: High-performance exponential decay LERP interpolation algorithm with instant auto-snapping (fixed at 60% optimal speed).
-- **Zero-GC Executive Engine**: Bitwise color conversion and GPU-direct rendering eliminating per-frame memory allocation for stutter-free FPS.
-- **In-Game Executive UI**: Press **M** anywhere in-game to toggle the configuration screen. Includes 5 built-in presets (Minimalist Silver, Executive Purple, Vibrant Gold, Rainbow Corporate, Dark Slate).
-- **Auto Configuration Persistence**: Automatically saves settings to `.minecraft/config/blocky-outline.json`.
+- **Custom Outline & Fill**: Choose your favorite RGB/HEX colors or toggle dynamic RGB Rainbow mode.
+- **Dedicated Sliders**: Intuitive sliders for adjusting RGB cycling speed, opacity, and line thickness in real time.
+- **Smooth Transition**: Ultra-responsive LERP camera-tracking animation as your crosshair moves between blocks.
+- **Zero-GC Executive Engine**: Completely allocation-free rendering loop maintaining peak FPS and minimal memory footprint.
+- **Interactive UI**: Futuristic dark glassmorphic configuration menu with live 3D preview and built-in preset manager.
+
+## Controls
+
+Press **`M`** anywhere in-game to open the configuration menu.
+
+## Build Instructions
+
+```bash
+./gradlew build
+```
+
+The output JAR file will be generated in `build/libs/blocky-outline-1.1.2.jar`.
 
 ## Requirements
 

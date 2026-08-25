@@ -174,7 +174,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.text(this.font, "Blocky", logoX, logoY + 4, COLOR_TEXT_WHITE, true);
         guiGraphics.text(this.font, "Outline", logoX + this.font.width("Blocky") + 4, logoY + 4, COLOR_PURPLE_LIGHT, false);
 
-        String vTag = "v1.1.1";
+        String vTag = "v1.1.2";
         int vW = this.font.width(vTag);
         int vX = this.px + this.panelW - vW - 12;
         guiGraphics.fillGradient(vX - 4, this.py + 9, vX + vW + 4, this.py + 24, COLOR_PURPLE_PRIMARY, 0xFF7E22CE);
@@ -530,8 +530,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.text(this.font, "Outline", ax + 16 + this.font.width("Blocky") + 4, ay + 12, COLOR_PURPLE_LIGHT, false);
         guiGraphics.text(this.font, "Next-generation block outline & fill customizer", ax + 16, ay + 26, COLOR_TEXT_MUTED, false);
 
-        String vStr = "v1.1.1";
-        String envStr = "Fabric 1.21.x";
+        String vStr = "v1.1.2";
+        String envStr = "Fabric 26.1.x";
         int vW = this.font.width(vStr);
         int envW = this.font.width(envStr);
         int badge2X = ax + cardW - envW - 16;
@@ -577,7 +577,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         int logoWidthArea = 14 + this.font.width("Blocky Outline") + 16;
         int tabStartX = this.px + logoWidthArea;
-        String vTag = "v1.1.0";
+        String vTag = "v1.1.2";
         int vW = this.font.width(vTag);
         int vX = this.px + this.panelW - vW - 12;
         int tabAvailableW = vX - 8 - tabStartX;
