@@ -137,12 +137,20 @@ public class BlockyOutlineClient implements ClientModInitializer {
                 return;
             }
             while (menuKeyBinding.consumeClick()) {
-                if (!(client.gui.screen() instanceof BlockyOutlineMenuScreen)) {
-                    client.setScreenAndShow(new BlockyOutlineMenuScreen());
-                    continue;
-                }
-                client.setScreenAndShow(null);
+                openMenuScreen(client);
             }
         });
+    }
+
+    private static void openMenuScreen(net.minecraft.client.Minecraft client) {
+        try {
+            if (client.gui.screen() instanceof BlockyOutlineMenuScreen) {
+                client.setScreenAndShow(null);
+            } else {
+                client.setScreenAndShow(new BlockyOutlineMenuScreen());
+            }
+        } catch (Throwable t) {
+            // Graceful cross-version fallback
+        }
     }
 }

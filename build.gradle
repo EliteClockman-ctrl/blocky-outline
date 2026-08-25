@@ -47,8 +47,9 @@ java {
 }
 
 tasks.register('distModJar', Copy) {
-    dependsOn tasks.named('jar')
-    from tasks.named('jar').flatMap { it.archiveFile }
+    def jarTask = tasks.findByName('remapJar') ?: tasks.named('jar').get()
+    dependsOn jarTask
+    from jarTask.archiveFile
     into layout.projectDirectory.dir('dist')
 }
 
