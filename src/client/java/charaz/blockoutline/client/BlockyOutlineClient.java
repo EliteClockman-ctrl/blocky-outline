@@ -2,7 +2,6 @@ package charaz.blockoutline.client;
 
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 public class BlockyOutlineClient implements ClientModInitializer {
     private static Object menuKeyBinding = null;
@@ -10,7 +9,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
-        this.registerMenuHotkey();
+        registerMenuHotkey();
         initRenderEvents();
     }
 
@@ -23,7 +22,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
         }
     }
 
-    private void registerMenuHotkey() {
+    private static void registerMenuHotkey() {
         try {
             Class<?> keyClass = null;
             try {
@@ -90,10 +89,47 @@ public class BlockyOutlineClient implements ClientModInitializer {
         } catch (Throwable ignored) {
         }
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null) {
-                return;
+        try {
+            Class<?> clientTickEventsClass = Class.forName("net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents");
+            Object endClientTickEvent = clientTickEventsClass.getField("END_CLIENT_TICK").get(null);
+            
+            // Register reflection listener to avoid baking net.minecraft.client.Minecraft into LambdaMetafactory
+            Class<?> endTickClass = Class.forName("net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndTick");
+            Object listenerProxy = java.lang.reflect.Proxy.newProxyInstance(
+                    BlockyOutlineClient.class.getClassLoader(),
+                    new Class<?>[]{endTickClass},
+                    (proxy, method, args) -> {
+                        if (method.getName().equals("onEndTick") && args != null && args.length > 0) {
+                            Object client = args[0];
+                            onTick(client);
+                        }
+                        return null;
+                    }
+            );
+
+            for (java.lang.reflect.Method m : endClientTickEvent.getClass().getMethods()) {
+                if (m.getName().equals("register")) {
+                    m.invoke(endClientTickEvent, listenerProxy);
+                    break;
+                }
             }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static void onTick(Object client) {
+        if (client == null) return;
+        try {
+            Object player = null;
+            try {
+                player = client.getClass().getField("player").get(client);
+            } catch (Throwable e) {
+                try {
+                    player = client.getClass().getMethod("getPlayer").invoke(client);
+                } catch (Throwable ignored) {}
+            }
+            if (player == null) return;
+
             if (menuKeyBinding != null) {
                 try {
                     java.lang.reflect.Method consumeMethod = menuKeyBinding.getClass().getMethod("consumeClick");
@@ -109,27 +145,44 @@ public class BlockyOutlineClient implements ClientModInitializer {
                     } catch (Throwable err2) {}
                 }
             }
-        });
+        } catch (Throwable ignored) {}
     }
 
-    private static void openScreen(net.minecraft.client.Minecraft client) {
+    private static void openScreen(Object client) {
+        if (client == null) return;
         try {
             Class<?> menuClass = Class.forName("charaz.blockoutline.client.ui.BlockyOutlineMenuScreen");
-            Object currentScreen = client.gui.getClass().getMethod("screen").invoke(client.gui);
-            if (currentScreen != null && menuClass.isInstance(currentScreen)) {
-                for (java.lang.reflect.Method m : client.getClass().getMethods()) {
-                    if (m.getName().equals("setScreenAndShow") || m.getName().equals("setScreen")) {
-                        m.invoke(client, new Object[]{null});
-                        return;
+            Object gui = null;
+            try {
+                gui = client.getClass().getField("gui").get(client);
+            } catch (Throwable e) {
+                try {
+                    gui = client.getClass().getMethod("getGui").invoke(client);
+                } catch (Throwable ignored) {}
+            }
+            if (gui != null) {
+                Object currentScreen = null;
+                for (java.lang.reflect.Method m : gui.getClass().getMethods()) {
+                    if (m.getName().equals("screen") || m.getName().equals("getScreen")) {
+                        currentScreen = m.invoke(gui);
+                        break;
                     }
                 }
-            } else {
-                Object newScreen = menuClass.getDeclaredConstructor().newInstance();
-                for (java.lang.reflect.Method m : client.getClass().getMethods()) {
-                    if (m.getName().equals("setScreenAndShow") || m.getName().equals("setScreen")) {
-                        m.invoke(client, newScreen);
-                        return;
+                if (currentScreen != null && menuClass.isInstance(currentScreen)) {
+                    for (java.lang.reflect.Method m : client.getClass().getMethods()) {
+                        if (m.getName().equals("setScreenAndShow") || m.getName().equals("setScreen")) {
+                            m.invoke(client, new Object[]{null});
+                            return;
+                        }
                     }
+                }
+            }
+
+            Object newScreen = menuClass.getDeclaredConstructor().newInstance();
+            for (java.lang.reflect.Method m : client.getClass().getMethods()) {
+                if (m.getName().equals("setScreenAndShow") || m.getName().equals("setScreen")) {
+                    m.invoke(client, newScreen);
+                    return;
                 }
             }
         } catch (Throwable ignored) {
