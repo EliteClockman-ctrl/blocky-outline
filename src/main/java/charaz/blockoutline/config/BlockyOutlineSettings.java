@@ -26,14 +26,17 @@ public final class BlockyOutlineSettings {
     public float outlineOpacity = 1.0f;
     public float outlineWidth = 2.0f;
     public boolean smoothTransition = true;
-    public float smoothSpeed = 0.60f;
 
     public boolean fillEnabled = false;
     public boolean rainbowFill = false;
+    public boolean fillTwoColor = false;
     public float fillRgbSpeed = 1.0f;
     public float fillHue = 0.16f;
     public float fillSaturation = 1.0f;
     public float fillValue = 1.0f;
+    public float fillHue2 = 0.75f;
+    public float fillSaturation2 = 1.0f;
+    public float fillValue2 = 1.0f;
     public float fillOpacity = 0.25f;
 
     public static BlockyOutlineSettings get() {
@@ -91,14 +94,17 @@ public final class BlockyOutlineSettings {
         this.outlineOpacity = Mth.clamp(other.outlineOpacity, 0.0f, 1.0f);
         this.outlineWidth = Mth.clamp(other.outlineWidth, 0.5f, 10.0f);
         this.smoothTransition = other.smoothTransition;
-        this.smoothSpeed = Mth.clamp(other.smoothSpeed, 0.05f, 1.0f);
 
         this.fillEnabled = other.fillEnabled;
         this.rainbowFill = other.rainbowFill;
+        this.fillTwoColor = other.fillTwoColor;
         this.fillRgbSpeed = Mth.clamp(other.fillRgbSpeed, 0.1f, 5.0f);
         this.fillHue = Mth.clamp(other.fillHue, 0.0f, 1.0f);
         this.fillSaturation = Mth.clamp(other.fillSaturation, 0.0f, 1.0f);
         this.fillValue = Mth.clamp(other.fillValue, 0.0f, 1.0f);
+        this.fillHue2 = Mth.clamp(other.fillHue2, 0.0f, 1.0f);
+        this.fillSaturation2 = Mth.clamp(other.fillSaturation2, 0.0f, 1.0f);
+        this.fillValue2 = Mth.clamp(other.fillValue2, 0.0f, 1.0f);
         this.fillOpacity = Mth.clamp(other.fillOpacity, 0.0f, 1.0f);
     }
 
@@ -128,25 +134,43 @@ public final class BlockyOutlineSettings {
         return (a << 24) | hsvToRgbPacked(this.fillHue, this.fillSaturation, this.fillValue);
     }
 
-    public static int hsvToRgbPacked(float h, float s, float v) {
-        h = Mth.clamp(h, 0.0f, 1.0f);
-        s = Mth.clamp(s, 0.0f, 1.0f);
-        v = Mth.clamp(v, 0.0f, 1.0f);
+    public int getFillArgb2(long nowMs) {
+        int a = (int)(this.fillOpacity * 255.0f);
+        if (this.rainbowFill) {
+            float hue = (float)((nowMs + 1000L) % (long)(4000.0f / this.fillRgbSpeed)) / (4000.0f / this.fillRgbSpeed);
+            return (a << 24) | hsvToRgbPacked(hue, 1.0f, 1.0f);
+        }
+        return (a << 24) | hsvToRgbPacked(this.fillHue2, this.fillSaturation2, this.fillValue2);
+    }
 
-        if (s == 0.0f) {
+    public static int lerpHsvPacked(float h1, float s1, float v1, float h2, float s2, float v2, float t) {
+        float hDiff = h2 - h1;
+        if (hDiff > 0.5f) hDiff -= 1.0f;
+        else if (hDiff < -0.5f) hDiff += 1.0f;
+        float h = (h1 + hDiff * t) % 1.0f;
+        if (h < 0.0f) h += 1.0f;
+        float s = s1 + (s2 - s1) * t;
+        float v = v1 + (v2 - v1) * t;
+        return hsvToRgbPacked(h, s, v);
+    }
+
+    public static int hsvToRgbPacked(float h, float s, float v) {
+        if (s <= 0.0001f) {
             int val = (int)(v * 255.0f);
+            if (val < 0) val = 0; else if (val > 255) val = 255;
             return (val << 16) | (val << 8) | val;
         }
 
-        float h6 = h * 6.0f;
-        int i = (int)Math.floor(h6);
-        float f = h6 - (float)i;
+        float h6 = (h - (int)h) * 6.0f;
+        if (h6 < 0.0f) h6 += 6.0f;
+        int i = (int)h6;
+        float f = h6 - i;
         float p = v * (1.0f - s);
         float q = v * (1.0f - s * f);
         float t = v * (1.0f - s * (1.0f - f));
 
         int r, g, b;
-        switch (i % 6) {
+        switch (i) {
             case 0 -> { r = (int)(v * 255.0f); g = (int)(t * 255.0f); b = (int)(p * 255.0f); }
             case 1 -> { r = (int)(q * 255.0f); g = (int)(v * 255.0f); b = (int)(p * 255.0f); }
             case 2 -> { r = (int)(p * 255.0f); g = (int)(v * 255.0f); b = (int)(t * 255.0f); }
@@ -160,9 +184,9 @@ public final class BlockyOutlineSettings {
     public static float[] hsvToRgb(float h, float s, float v) {
         int packed = hsvToRgbPacked(h, s, v);
         return new float[]{
-            (float)((packed >> 16) & 0xFF) / 255.0f,
-            (float)((packed >> 8) & 0xFF) / 255.0f,
-            (float)(packed & 0xFF) / 255.0f
+            (float)((packed >> 16) & 0xFF) * (1.0f / 255.0f),
+            (float)((packed >> 8) & 0xFF) * (1.0f / 255.0f),
+            (float)(packed & 0xFF) * (1.0f / 255.0f)
         };
     }
 
