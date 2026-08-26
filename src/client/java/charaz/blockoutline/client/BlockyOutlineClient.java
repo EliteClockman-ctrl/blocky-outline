@@ -2,11 +2,15 @@ package charaz.blockoutline.client;
 
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import net.fabricmc.api.ClientModInitializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockyOutlineClient implements ClientModInitializer {
+    private static final Logger LOGGER = LoggerFactory.getLogger("blocky-outline");
     private static Object menuKeyBinding = null;
 
     @Override
@@ -14,6 +18,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
         BlockyOutlineSettings.load();
         registerMenuHotkey();
         initRenderEvents();
+        LOGGER.info("[Blocky Outline] Client initialization complete!");
     }
 
     private static void initRenderEvents() {
@@ -21,6 +26,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
             Class.forName("charaz.blockoutline.client.ModernRenderHandler")
                  .getMethod("register")
                  .invoke(null);
+            LOGGER.info("[Blocky Outline] ModernRenderHandler registered.");
         } catch (Throwable ignored) {
         }
 
@@ -28,6 +34,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
             Class.forName("charaz.blockoutline.client.LegacyRenderHandler")
                  .getMethod("register")
                  .invoke(null);
+            LOGGER.info("[Blocky Outline] LegacyRenderHandler registered.");
         } catch (Throwable ignored) {
         }
     }
@@ -108,9 +115,11 @@ public class BlockyOutlineClient implements ClientModInitializer {
                     if (menuKeyBinding == null) {
                         menuKeyBinding = keyInstance;
                     }
+                    LOGGER.info("[Blocky Outline] KeyBinding registered successfully.");
                 }
             }
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            LOGGER.error("[Blocky Outline] Failed to register keybind: " + t);
         }
 
         try {
@@ -121,22 +130,26 @@ public class BlockyOutlineClient implements ClientModInitializer {
             Object listenerProxy = Proxy.newProxyInstance(
                     BlockyOutlineClient.class.getClassLoader(),
                     new Class<?>[]{endTickClass},
-                    (proxy, method, args) -> {
-                        if (method.getName().equals("onEndTick") && args != null && args.length > 0) {
-                            Object client = args[0];
-                            onTick(client);
+                    new InvocationHandler() {
+                        @Override
+                        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                            if (args != null && args.length > 0) {
+                                onTick(args[0]);
+                            }
+                            return null;
                         }
-                        return null;
                     }
             );
 
             for (Method m : endClientTickEvent.getClass().getMethods()) {
                 if (m.getName().equals("register")) {
                     m.invoke(endClientTickEvent, listenerProxy);
+                    LOGGER.info("[Blocky Outline] ClientTickEvents.END_CLIENT_TICK registered.");
                     break;
                 }
             }
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            LOGGER.error("[Blocky Outline] Failed to register ClientTickEvents: " + t);
         }
     }
 
@@ -180,6 +193,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
                     }
                 }
                 if (pressed) {
+                    LOGGER.info("[Blocky Outline] Key M pressed! Attempting to open menu screen...");
                     openScreen(client);
                 }
             }
@@ -208,6 +222,7 @@ public class BlockyOutlineClient implements ClientModInitializer {
                 for (Method m : client.getClass().getMethods()) {
                     if (m.getName().equals("setScreen") || m.getName().equals("method_1507") || m.getName().equals("setScreenAndShow")) {
                         m.invoke(client, new Object[]{null});
+                        LOGGER.info("[Blocky Outline] Closed existing menu screen.");
                         return;
                     }
                 }
@@ -216,11 +231,13 @@ public class BlockyOutlineClient implements ClientModInitializer {
                 for (Method m : client.getClass().getMethods()) {
                     if (m.getName().equals("setScreen") || m.getName().equals("method_1507") || m.getName().equals("setScreenAndShow")) {
                         m.invoke(client, newScreen);
+                        LOGGER.info("[Blocky Outline] Opened menu screen successfully!");
                         return;
                     }
                 }
             }
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            LOGGER.error("[Blocky Outline] Error opening menu screen: " + t, t);
         }
     }
 }
