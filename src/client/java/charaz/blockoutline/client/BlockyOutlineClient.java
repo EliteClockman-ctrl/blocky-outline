@@ -6,12 +6,14 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import net.fabricmc.api.ClientModInitializer;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BlockyOutlineClient implements ClientModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger("blocky-outline");
     private static Object menuKeyBinding = null;
+    private static boolean wasMKeyDown = false;
 
     @Override
     public void onInitializeClient() {
@@ -156,46 +158,83 @@ public class BlockyOutlineClient implements ClientModInitializer {
     private static void onTick(Object client) {
         if (client == null) return;
         try {
-            Object player = null;
-            try {
-                player = client.getClass().getField("field_1724").get(client); // Intermediary for player
-            } catch (Throwable e) {
-                try {
-                    player = client.getClass().getField("player").get(client);
-                } catch (Throwable e2) {
-                    try {
-                        player = client.getClass().getMethod("getPlayer").invoke(client);
-                    } catch (Throwable ignored) {}
-                }
-            }
-            if (player == null) return;
+            boolean triggered = false;
 
+            // Method 1: Check standard KeyBinding
             if (menuKeyBinding != null) {
-                boolean pressed = false;
                 try {
                     Method wasPressed = menuKeyBinding.getClass().getMethod("method_1434"); // Intermediary wasPressed
                     while ((boolean) wasPressed.invoke(menuKeyBinding)) {
-                        pressed = true;
+                        triggered = true;
                     }
                 } catch (Throwable e) {
                     try {
                         Method wasPressed = menuKeyBinding.getClass().getMethod("wasPressed");
                         while ((boolean) wasPressed.invoke(menuKeyBinding)) {
-                            pressed = true;
+                            triggered = true;
                         }
                     } catch (Throwable e2) {
                         try {
                             Method consumeMethod = menuKeyBinding.getClass().getMethod("consumeClick");
                             while ((boolean) consumeMethod.invoke(menuKeyBinding)) {
-                                pressed = true;
+                                triggered = true;
                             }
                         } catch (Throwable ignored) {}
                     }
                 }
-                if (pressed) {
-                    LOGGER.info("[Blocky Outline] Key M pressed! Attempting to open menu screen...");
-                    openScreen(client);
+            }
+
+            // Method 2: Direct GLFW Input check (Fallback if KeyBinding isn't polled by game)
+            try {
+                long windowHandle = 0;
+                Object window = null;
+                try {
+                    window = client.getClass().getMethod("method_22683").invoke(client); // getWindow in Intermediary
+                } catch (Throwable e) {
+                    try {
+                        window = client.getClass().getMethod("getWindow").invoke(client);
+                    } catch (Throwable ignored) {}
                 }
+
+                if (window != null) {
+                    try {
+                        windowHandle = (long) window.getClass().getMethod("method_4490").invoke(window); // getHandle
+                    } catch (Throwable e) {
+                        try {
+                            windowHandle = (long) window.getClass().getMethod("getHandle").invoke(window);
+                        } catch (Throwable ignored) {}
+                    }
+                }
+
+                if (windowHandle != 0) {
+                    Object currentScreen = null;
+                    try {
+                        currentScreen = client.getClass().getField("field_1755").get(client);
+                    } catch (Throwable e) {
+                        try {
+                            currentScreen = client.getClass().getField("screen").get(client);
+                        } catch (Throwable ignored) {}
+                    }
+
+                    // Only poll direct key M when in-game or in our menu
+                    boolean isMDown = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_M) == GLFW.GLFW_PRESS;
+                    if (isMDown && !wasMKeyDown) {
+                        Class<?> menuClass = null;
+                        try {
+                            menuClass = Class.forName("charaz.blockoutline.client.ui.BlockyOutlineMenuScreen");
+                        } catch (Throwable ignored) {}
+
+                        if (currentScreen == null || (menuClass != null && menuClass.isInstance(currentScreen))) {
+                            triggered = true;
+                        }
+                    }
+                    wasMKeyDown = isMDown;
+                }
+            } catch (Throwable ignored) {}
+
+            if (triggered) {
+                LOGGER.info("[Blocky Outline] Key M triggered! Opening/closing menu...");
+                openScreen(client);
             }
         } catch (Throwable ignored) {}
     }
