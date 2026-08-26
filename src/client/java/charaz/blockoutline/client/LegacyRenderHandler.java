@@ -1,5 +1,9 @@
 package charaz.blockoutline.client;
 
+import charaz.blockoutline.config.BlockyOutlineSettings;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
 public final class LegacyRenderHandler {
     private LegacyRenderHandler() {
     }
@@ -10,7 +14,7 @@ public final class LegacyRenderHandler {
             Object beforeOutlineEvent = eventsClass.getField("BEFORE_BLOCK_OUTLINE").get(null);
             Class<?> listenerClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents$BeforeBlockOutline");
 
-            Object listenerProxy = java.lang.reflect.Proxy.newProxyInstance(
+            Object listenerProxy = Proxy.newProxyInstance(
                     LegacyRenderHandler.class.getClassLoader(),
                     new Class<?>[]{listenerClass},
                     (proxy, method, args) -> {
@@ -21,7 +25,7 @@ public final class LegacyRenderHandler {
                     }
             );
 
-            for (java.lang.reflect.Method m : beforeOutlineEvent.getClass().getMethods()) {
+            for (Method m : beforeOutlineEvent.getClass().getMethods()) {
                 if (m.getName().equals("register")) {
                     m.invoke(beforeOutlineEvent, listenerProxy);
                     break;
@@ -36,110 +40,177 @@ public final class LegacyRenderHandler {
             if (context == null || hitResult == null) {
                 return true;
             }
-            charaz.blockoutline.config.BlockyOutlineSettings s = charaz.blockoutline.config.BlockyOutlineSettings.get();
-            
-            // Invoke context.matrixStack()
-            Object matrices = null;
-            for (java.lang.reflect.Method m : context.getClass().getMethods()) {
-                if (m.getName().equals("matrixStack") || m.getName().equals("getMatrices")) {
-                    matrices = m.invoke(context);
-                    break;
-                }
-            }
+
+            BlockyOutlineSettings s = BlockyOutlineSettings.get();
+
+            // 1. Get matrixStack (class_4587)
+            Object matrices = invokeAny(context, "matrixStack", "getMatrices");
             if (matrices == null) return true;
 
-            // Invoke context.consumers()
-            Object consumers = null;
-            for (java.lang.reflect.Method m : context.getClass().getMethods()) {
-                if (m.getName().equals("consumers") || m.getName().equals("getConsumers")) {
-                    consumers = m.invoke(context);
-                    break;
-                }
-            }
+            // 2. Get consumers (class_4597)
+            Object consumers = invokeAny(context, "consumers", "getConsumers");
             if (consumers == null) return true;
 
-            // Invoke context.camera()
-            Object camera = null;
-            for (java.lang.reflect.Method m : context.getClass().getMethods()) {
-                if (m.getName().equals("camera") || m.getName().equals("getCamera")) {
-                    camera = m.invoke(context);
-                    break;
-                }
-            }
+            // 3. Get camera (class_4184)
+            Object camera = invokeAny(context, "camera", "getCamera");
             if (camera == null) return true;
 
-            // Get camera pos
-            Object camPos = null;
-            for (java.lang.reflect.Method m : camera.getClass().getMethods()) {
-                if (m.getName().equals("getPos") || m.getName().equals("pos")) {
-                    camPos = m.invoke(camera);
-                    break;
-                }
-            }
+            // 4. Get camera pos (class_243)
+            Object camPos = invokeAny(camera, "getPos", "pos");
             if (camPos == null) return true;
 
-            double camX = (double) camPos.getClass().getMethod("getX").invoke(camPos);
-            double camY = (double) camPos.getClass().getMethod("getY").invoke(camPos);
-            double camZ = (double) camPos.getClass().getMethod("getZ").invoke(camPos);
+            double camX = getDouble(camPos, "getX", "x");
+            double camY = getDouble(camPos, "getY", "y");
+            double camZ = getDouble(camPos, "getZ", "z");
 
-            // Get BlockPos from hitResult
-            Object blockPos = null;
-            for (java.lang.reflect.Method m : hitResult.getClass().getMethods()) {
-                if (m.getName().equals("getBlockPos")) {
-                    blockPos = m.invoke(hitResult);
-                    break;
-                }
-            }
+            // 5. Get BlockPos (class_2338) from hitResult (class_239 / class_3965)
+            Object blockPos = invokeAny(hitResult, "getBlockPos");
             if (blockPos == null) return true;
 
-            int bx = (int) blockPos.getClass().getMethod("getX").invoke(blockPos);
-            int by = (int) blockPos.getClass().getMethod("getY").invoke(blockPos);
-            int bz = (int) blockPos.getClass().getMethod("getZ").invoke(blockPos);
+            int bx = getInt(blockPos, "getX", "x");
+            int by = getInt(blockPos, "getY", "y");
+            int bz = getInt(blockPos, "getZ", "z");
 
-            // Get world from context
-            Object world = null;
-            for (java.lang.reflect.Method m : context.getClass().getMethods()) {
-                if (m.getName().equals("world") || m.getName().equals("getWorld")) {
-                    world = m.invoke(context);
-                    break;
-                }
-            }
+            // 6. Get world (class_638)
+            Object world = invokeAny(context, "world", "getWorld");
             if (world == null) return true;
 
-            // Get block state & outline shape
-            Object blockState = world.getClass().getMethod("getBlockState", blockPos.getClass()).invoke(world, blockPos);
+            // 7. Get blockState (class_2680)
+            Object blockState = invokeWithArg(world, "getBlockState", blockPos);
             if (blockState == null) return true;
 
-            Object shape = blockState.getClass().getMethod("getOutlineShape", world.getClass(), blockPos.getClass()).invoke(blockState, world, blockPos);
-            if (shape == null || (boolean) shape.getClass().getMethod("isEmpty").invoke(shape)) {
+            // 8. Get outline shape (class_265)
+            Object shape = invokeWithArgs(blockState, "getOutlineShape", world, blockPos);
+            if (shape == null) return true;
+
+            Boolean isEmpty = (Boolean) invokeAny(shape, "isEmpty");
+            if (isEmpty != null && isEmpty) {
                 return true;
             }
 
             long now = System.currentTimeMillis();
             int outlineColor = s.getOutlineArgb(now);
-            float a = (float)(outlineColor >> 24 & 0xFF) / 255.0f;
-            float r = (float)(outlineColor >> 16 & 0xFF) / 255.0f;
-            float g = (float)(outlineColor >> 8 & 0xFF) / 255.0f;
-            float b = (float)(outlineColor & 0xFF) / 255.0f;
+            float a = (float) (outlineColor >> 24 & 0xFF) / 255.0f;
+            float r = (float) (outlineColor >> 16 & 0xFF) / 255.0f;
+            float g = (float) (outlineColor >> 8 & 0xFF) / 255.0f;
+            float b = (float) (outlineColor & 0xFF) / 255.0f;
 
-            // Get lines RenderLayer/RenderType
-            Class<?> renderLayerClass = Class.forName("net.minecraft.client.render.RenderLayer");
-            Object linesLayer = renderLayerClass.getMethod("getLines").invoke(null);
-            Object vertexConsumer = consumers.getClass().getMethod("getBuffer", renderLayerClass).invoke(consumers, linesLayer);
+            // 9. Get RenderLayer lines & VertexConsumer
+            Object linesLayer = null;
+            try {
+                Class<?> renderLayerClass = Class.forName("net.minecraft.class_1921"); // Intermediary for RenderLayer
+                linesLayer = invokeAny(renderLayerClass, "method_23580", "getLines");
+            } catch (Throwable e) {
+                try {
+                    Class<?> renderLayerClass = Class.forName("net.minecraft.client.render.RenderLayer");
+                    linesLayer = invokeAny(renderLayerClass, "getLines");
+                } catch (Throwable ignored) {}
+            }
 
-            // Draw outline via WorldRenderer.drawShapeOutline
-            Class<?> worldRendererClass = Class.forName("net.minecraft.client.render.WorldRenderer");
-            for (java.lang.reflect.Method m : worldRendererClass.getMethods()) {
-                if (m.getName().equals("drawShapeOutline")) {
-                    Class<?>[] p = m.getParameterTypes();
-                    if (p.length == 9) {
-                        m.invoke(null, matrices, vertexConsumer, shape, (double)bx - camX, (double)by - camY, (double)bz - camZ, r, g, b, a);
-                        return false;
+            if (linesLayer == null) return true;
+
+            Object vertexConsumer = invokeWithArg(consumers, "getBuffer", linesLayer);
+            if (vertexConsumer == null) {
+                vertexConsumer = invokeWithArg(consumers, "method_22991", linesLayer); // Intermediary getBuffer
+            }
+            if (vertexConsumer == null) return true;
+
+            // 10. Draw shape outline via WorldRenderer (class_761)
+            Class<?> worldRendererClass = null;
+            try {
+                worldRendererClass = Class.forName("net.minecraft.class_761");
+            } catch (Throwable e) {
+                try {
+                    worldRendererClass = Class.forName("net.minecraft.client.render.WorldRenderer");
+                } catch (Throwable ignored) {}
+            }
+
+            if (worldRendererClass != null) {
+                for (Method m : worldRendererClass.getMethods()) {
+                    if (m.getName().equals("drawShapeOutline") || m.getName().equals("method_22983")) {
+                        Class<?>[] p = m.getParameterTypes();
+                        if (p.length == 9) {
+                            m.invoke(null, matrices, vertexConsumer, shape, (double) bx - camX, (double) by - camY, (double) bz - camZ, r, g, b, a);
+                            return false; // Successfully rendered and cancelled vanilla outline!
+                        }
                     }
                 }
             }
         } catch (Throwable ignored) {
         }
         return true;
+    }
+
+    private static Object invokeAny(Object target, String... names) {
+        if (target == null) return null;
+        Class<?> clazz = (target instanceof Class<?>) ? (Class<?>) target : target.getClass();
+        Object obj = (target instanceof Class<?>) ? null : target;
+        for (String name : names) {
+            try {
+                Method m = clazz.getMethod(name);
+                return m.invoke(obj);
+            } catch (Throwable ignored) {}
+        }
+        // Also check declared methods
+        for (String name : names) {
+            for (Method m : clazz.getMethods()) {
+                if (m.getName().equals(name) && m.getParameterCount() == 0) {
+                    try {
+                        return m.invoke(obj);
+                    } catch (Throwable ignored) {}
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Object invokeWithArg(Object target, String name, Object arg) {
+        if (target == null || arg == null) return null;
+        for (Method m : target.getClass().getMethods()) {
+            if (m.getName().equals(name) && m.getParameterCount() == 1) {
+                try {
+                    return m.invoke(target, arg);
+                } catch (Throwable ignored) {}
+            }
+        }
+        return null;
+    }
+
+    private static Object invokeWithArgs(Object target, String name, Object arg1, Object arg2) {
+        if (target == null) return null;
+        for (Method m : target.getClass().getMethods()) {
+            if (m.getName().equals(name) && m.getParameterCount() == 2) {
+                try {
+                    return m.invoke(target, arg1, arg2);
+                } catch (Throwable ignored) {}
+            }
+        }
+        return null;
+    }
+
+    private static double getDouble(Object target, String... names) {
+        for (String name : names) {
+            try {
+                Method m = target.getClass().getMethod(name);
+                return ((Number) m.invoke(target)).doubleValue();
+            } catch (Throwable ignored) {}
+            try {
+                return target.getClass().getField(name).getDouble(target);
+            } catch (Throwable ignored) {}
+        }
+        return 0.0;
+    }
+
+    private static int getInt(Object target, String... names) {
+        for (String name : names) {
+            try {
+                Method m = target.getClass().getMethod(name);
+                return ((Number) m.invoke(target)).intValue();
+            } catch (Throwable ignored) {}
+            try {
+                return target.getClass().getField(name).getInt(target);
+            } catch (Throwable ignored) {}
+        }
+        return 0;
     }
 }
