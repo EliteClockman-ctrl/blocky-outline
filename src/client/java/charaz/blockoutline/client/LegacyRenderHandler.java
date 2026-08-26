@@ -29,12 +29,9 @@ public final class LegacyRenderHandler {
                     }
             );
 
-            for (Method m : beforeOutlineEvent.getClass().getMethods()) {
-                if (m.getName().equals("register")) {
-                    m.invoke(beforeOutlineEvent, listenerProxy);
-                    break;
-                }
-            }
+            Class<?> eventClass = Class.forName("net.fabricmc.fabric.api.event.Event");
+            Method registerMethod = eventClass.getMethod("register", Object.class);
+            registerMethod.invoke(beforeOutlineEvent, listenerProxy);
         } catch (Throwable ignored) {
         }
     }
