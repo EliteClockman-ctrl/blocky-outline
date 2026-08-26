@@ -20,6 +20,13 @@ public class BlockyOutlineClient implements ClientModInitializer {
                  .invoke(null);
         } catch (Throwable ignored) {
         }
+
+        try {
+            Class.forName("charaz.blockoutline.client.LegacyRenderHandler")
+                 .getMethod("register")
+                 .invoke(null);
+        } catch (Throwable ignored) {
+        }
     }
 
     private static void registerMenuHotkey() {
