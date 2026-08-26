@@ -2,6 +2,7 @@ package charaz.blockoutline.client;
 
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -143,13 +144,10 @@ public class BlockyOutlineClient implements ClientModInitializer {
                     }
             );
 
-            for (Method m : endClientTickEvent.getClass().getMethods()) {
-                if (m.getName().equals("register")) {
-                    m.invoke(endClientTickEvent, listenerProxy);
-                    LOGGER.info("[Blocky Outline] ClientTickEvents.END_CLIENT_TICK registered.");
-                    break;
-                }
-            }
+            Class<?> eventClass = Class.forName("net.fabricmc.fabric.api.event.Event");
+            Method registerMethod = eventClass.getMethod("register", Object.class);
+            registerMethod.invoke(endClientTickEvent, listenerProxy);
+            LOGGER.info("[Blocky Outline] ClientTickEvents.END_CLIENT_TICK registered successfully!");
         } catch (Throwable t) {
             LOGGER.error("[Blocky Outline] Failed to register ClientTickEvents: " + t);
         }
@@ -184,12 +182,12 @@ public class BlockyOutlineClient implements ClientModInitializer {
                 }
             }
 
-            // Method 2: Direct GLFW Input check (Fallback if KeyBinding isn't polled by game)
+            // Method 2: Direct GLFW Input check (Fallback)
             try {
                 long windowHandle = 0;
                 Object window = null;
                 try {
-                    window = client.getClass().getMethod("method_22683").invoke(client); // getWindow in Intermediary
+                    window = client.getClass().getMethod("method_22683").invoke(client); // getWindow
                 } catch (Throwable e) {
                     try {
                         window = client.getClass().getMethod("getWindow").invoke(client);
@@ -216,7 +214,6 @@ public class BlockyOutlineClient implements ClientModInitializer {
                         } catch (Throwable ignored) {}
                     }
 
-                    // Only poll direct key M when in-game or in our menu
                     boolean isMDown = GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_M) == GLFW.GLFW_PRESS;
                     if (isMDown && !wasMKeyDown) {
                         Class<?> menuClass = null;
