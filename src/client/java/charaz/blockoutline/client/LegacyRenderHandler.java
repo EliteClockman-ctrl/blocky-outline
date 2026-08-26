@@ -1,6 +1,7 @@
 package charaz.blockoutline.client;
 
 import charaz.blockoutline.config.BlockyOutlineSettings;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -17,11 +18,14 @@ public final class LegacyRenderHandler {
             Object listenerProxy = Proxy.newProxyInstance(
                     LegacyRenderHandler.class.getClassLoader(),
                     new Class<?>[]{listenerClass},
-                    (proxy, method, args) -> {
-                        if (method.getName().equals("beforeBlockOutline") && args != null && args.length >= 2) {
-                            return handle121Render(args[0], args[1]);
+                    new InvocationHandler() {
+                        @Override
+                        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                            if (args != null && args.length >= 2) {
+                                return handle121Render(args[0], args[1]);
+                            }
+                            return Boolean.TRUE;
                         }
-                        return true;
                     }
             );
 
@@ -59,17 +63,17 @@ public final class LegacyRenderHandler {
             Object camPos = invokeAny(camera, "getPos", "pos");
             if (camPos == null) return true;
 
-            double camX = getDouble(camPos, "getX", "x");
-            double camY = getDouble(camPos, "getY", "y");
-            double camZ = getDouble(camPos, "getZ", "z");
+            double camX = getDouble(camPos, "getX", "x", "field_1352");
+            double camY = getDouble(camPos, "getY", "y", "field_1351");
+            double camZ = getDouble(camPos, "getZ", "z", "field_1350");
 
             // 5. Get BlockPos (class_2338) from hitResult (class_239 / class_3965)
-            Object blockPos = invokeAny(hitResult, "getBlockPos");
+            Object blockPos = invokeAny(hitResult, "getBlockPos", "method_17777");
             if (blockPos == null) return true;
 
-            int bx = getInt(blockPos, "getX", "x");
-            int by = getInt(blockPos, "getY", "y");
-            int bz = getInt(blockPos, "getZ", "z");
+            int bx = getInt(blockPos, "getX", "x", "field_10255");
+            int by = getInt(blockPos, "getY", "y", "field_10254");
+            int bz = getInt(blockPos, "getZ", "z", "field_10253");
 
             // 6. Get world (class_638)
             Object world = invokeAny(context, "world", "getWorld");
@@ -77,13 +81,19 @@ public final class LegacyRenderHandler {
 
             // 7. Get blockState (class_2680)
             Object blockState = invokeWithArg(world, "getBlockState", blockPos);
+            if (blockState == null) {
+                blockState = invokeWithArg(world, "method_8320", blockPos); // Intermediary getBlockState
+            }
             if (blockState == null) return true;
 
             // 8. Get outline shape (class_265)
             Object shape = invokeWithArgs(blockState, "getOutlineShape", world, blockPos);
+            if (shape == null) {
+                shape = invokeWithArgs(blockState, "method_26218", world, blockPos); // Intermediary getOutlineShape
+            }
             if (shape == null) return true;
 
-            Boolean isEmpty = (Boolean) invokeAny(shape, "isEmpty");
+            Boolean isEmpty = (Boolean) invokeAny(shape, "isEmpty", "method_1110");
             if (isEmpty != null && isEmpty) {
                 return true;
             }
@@ -151,7 +161,6 @@ public final class LegacyRenderHandler {
                 return m.invoke(obj);
             } catch (Throwable ignored) {}
         }
-        // Also check declared methods
         for (String name : names) {
             for (Method m : clazz.getMethods()) {
                 if (m.getName().equals(name) && m.getParameterCount() == 0) {
