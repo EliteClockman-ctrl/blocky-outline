@@ -11,27 +11,46 @@ public final class LegacyRenderHandler {
 
     public static void register() {
         try {
-            Class<?> eventsClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents");
-            Object beforeOutlineEvent = eventsClass.getField("BEFORE_BLOCK_OUTLINE").get(null);
-            Class<?> listenerClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents$BeforeBlockOutline");
+            Class<?> eventsClass = null;
+            try {
+                eventsClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents");
+            } catch (Throwable t1) {
+                try {
+                    eventsClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents");
+                } catch (Throwable ignored) {}
+            }
 
-            Object listenerProxy = Proxy.newProxyInstance(
-                    LegacyRenderHandler.class.getClassLoader(),
-                    new Class<?>[]{listenerClass},
-                    new InvocationHandler() {
-                        @Override
-                        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                            if (args != null && args.length >= 2) {
-                                return handle121Render(args[0], args[1]);
+            if (eventsClass != null) {
+                Object beforeOutlineEvent = eventsClass.getField("BEFORE_BLOCK_OUTLINE").get(null);
+                Class<?> listenerClass = null;
+                try {
+                    listenerClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents$BeforeBlockOutline");
+                } catch (Throwable t2) {
+                    try {
+                        listenerClass = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents$BeforeBlockOutline");
+                    } catch (Throwable ignored) {}
+                }
+
+                if (listenerClass != null && beforeOutlineEvent != null) {
+                    Object listenerProxy = Proxy.newProxyInstance(
+                            LegacyRenderHandler.class.getClassLoader(),
+                            new Class<?>[]{listenerClass},
+                            new InvocationHandler() {
+                                @Override
+                                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                                    if (args != null && args.length >= 2) {
+                                        return handle121Render(args[0], args[1]);
+                                    }
+                                    return Boolean.TRUE;
+                                }
                             }
-                            return Boolean.TRUE;
-                        }
-                    }
-            );
+                    );
 
-            Class<?> eventClass = Class.forName("net.fabricmc.fabric.api.event.Event");
-            Method registerMethod = eventClass.getMethod("register", Object.class);
-            registerMethod.invoke(beforeOutlineEvent, listenerProxy);
+                    Class<?> eventClass = Class.forName("net.fabricmc.fabric.api.event.Event");
+                    Method registerMethod = eventClass.getMethod("register", Object.class);
+                    registerMethod.invoke(beforeOutlineEvent, listenerProxy);
+                }
+            }
         } catch (Throwable ignored) {
         }
     }
