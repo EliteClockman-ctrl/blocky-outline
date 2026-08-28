@@ -248,27 +248,40 @@ public class BlockyOutlineClient implements ClientModInitializer {
                     currentScreen = client.getClass().getField("screen").get(client);
                 } catch (Throwable e2) {
                     try {
-                        Object gui = client.getClass().getField("gui").get(client);
-                        currentScreen = gui.getClass().getMethod("screen").invoke(gui);
+                        currentScreen = client.getClass().getField("x").get(client); // Obfuscated 1.21.11 screen field
                     } catch (Throwable ignored) {}
                 }
             }
 
             if (currentScreen != null && menuClass.isInstance(currentScreen)) {
                 for (Method m : client.getClass().getMethods()) {
-                    if (m.getName().equals("setScreen") || m.getName().equals("method_1507") || m.getName().equals("setScreenAndShow")) {
-                        m.invoke(client, new Object[]{null});
-                        LOGGER.info("[Blocky Outline] Closed existing menu screen.");
-                        return;
+                    if (m.getName().equals("setScreen") || m.getName().equals("method_1507") || m.getName().equals("a") || m.getName().equals("setScreenAndShow")) {
+                        if (m.getParameterCount() == 1) {
+                            m.invoke(client, new Object[]{null});
+                            LOGGER.info("[Blocky Outline] Closed existing menu screen.");
+                            return;
+                        }
                     }
                 }
             } else {
                 Object newScreen = menuClass.getDeclaredConstructor().newInstance();
                 for (Method m : client.getClass().getMethods()) {
-                    if (m.getName().equals("setScreen") || m.getName().equals("method_1507") || m.getName().equals("setScreenAndShow")) {
-                        m.invoke(client, newScreen);
-                        LOGGER.info("[Blocky Outline] Opened menu screen successfully!");
-                        return;
+                    if (m.getName().equals("setScreen") || m.getName().equals("method_1507") || m.getName().equals("a") || m.getName().equals("setScreenAndShow")) {
+                        if (m.getParameterCount() == 1 && m.getParameterTypes()[0].isAssignableFrom(newScreen.getClass())) {
+                            m.invoke(client, newScreen);
+                            LOGGER.info("[Blocky Outline] Opened menu screen successfully!");
+                            return;
+                        }
+                    }
+                }
+                // Fallback invoke by name "a"
+                for (Method m : client.getClass().getMethods()) {
+                    if (m.getName().equals("a") && m.getParameterCount() == 1) {
+                        try {
+                            m.invoke(client, newScreen);
+                            LOGGER.info("[Blocky Outline] Opened menu screen via method 'a' successfully!");
+                            return;
+                        } catch (Throwable ignored) {}
                     }
                 }
             }
