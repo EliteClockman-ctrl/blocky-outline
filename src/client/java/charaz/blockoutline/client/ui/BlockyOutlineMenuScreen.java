@@ -577,7 +577,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         int logoWidthArea = 14 + this.font.width("Blocky Outline") + 16;
         int tabStartX = this.px + logoWidthArea;
-        String vTag = "v1.1.0";
+        String vTag = "v1.1.1";
         int vW = this.font.width(vTag);
         int vX = this.px + this.panelW - vW - 12;
         int tabAvailableW = vX - 8 - tabStartX;
