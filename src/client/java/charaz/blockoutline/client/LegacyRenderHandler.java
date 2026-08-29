@@ -139,40 +139,39 @@ public final class LegacyRenderHandler {
             // 4. Get Camera pos
             double camX = 0, camY = 0, camZ = 0;
             boolean camFound = false;
+
+            // Method 1: LocalPlayer eye position / position fallback (most reliable in 1.21.11 client world)
+            try {
+                Class<?> mcClass = Class.forName("net.minecraft.class_310");
+                Object mc = invokeAny(mcClass, "getInstance", "method_1551", "V");
+                if (mc != null) {
+                    Object player = getFieldAny(mc, "player", "s", "field_1724");
+                    if (player != null) {
+                        // In 1.21.11 LocalPlayer (hnh / cgk), dZ() / cj() gives ftm (position)
+                        Object posFtm = invokeAny(player, "dZ", "cj", "bS");
+                        if (posFtm != null) {
+                            camX = getDouble(posFtm, "g", "a", "getX", "x");
+                            camY = getDouble(posFtm, "h", "b", "getY", "y") + 1.62; // Eye height offset fallback
+                            camZ = getDouble(posFtm, "i", "c", "getZ", "z");
+                            camFound = true;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+
+            // Method 2: From Camera object if available
             try {
                 Object camera = invokeAny(context, "camera", "getCamera");
                 if (camera != null) {
                     Object camPos = invokeAny(camera, "getPos", "pos", "d");
                     if (camPos != null) {
-                        camX = getDouble(camPos, "getX", "x", "field_1352", "a");
-                        camY = getDouble(camPos, "getY", "y", "field_1351", "b");
-                        camZ = getDouble(camPos, "getZ", "z", "field_1350", "c");
+                        camX = getDouble(camPos, "getX", "x", "field_1352", "g", "a");
+                        camY = getDouble(camPos, "getY", "y", "field_1351", "h", "b");
+                        camZ = getDouble(camPos, "getZ", "z", "field_1350", "i", "c");
                         camFound = true;
                     }
                 }
             } catch (Throwable ignored) {}
-
-            if (!camFound) {
-                try {
-                    Class<?> mcClass = Class.forName("net.minecraft.class_310");
-                    Object mc = invokeAny(mcClass, "getInstance", "method_1551", "V");
-                    if (mc != null) {
-                        Object gameRenderer = getFieldAny(mc, "gameRenderer", "j", "field_1773");
-                        if (gameRenderer != null) {
-                            Object camera = invokeAny(gameRenderer, "getCamera", "method_3190");
-                            if (camera != null) {
-                                Object camPos = invokeAny(camera, "getPos", "pos", "d");
-                                if (camPos != null) {
-                                    camX = getDouble(camPos, "getX", "x", "field_1352", "a");
-                                    camY = getDouble(camPos, "getY", "y", "field_1351", "b");
-                                    camZ = getDouble(camPos, "getZ", "z", "field_1350", "c");
-                                    camFound = true;
-                                }
-                            }
-                        }
-                    }
-                } catch (Throwable ignored) {}
-            }
 
             // Smooth transition calculation
             double targetX = (double) bx;
@@ -241,7 +240,6 @@ public final class LegacyRenderHandler {
                 }
             }
 
-            // Fallback vertexConsumer via bufferSource method
             if (vertexConsumer == null) {
                 for (Method m : consumers.getClass().getMethods()) {
                     if (m.getParameterCount() == 1) {
