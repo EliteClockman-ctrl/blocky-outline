@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.Mth;
 
 public final class BlockyOutlineSettings {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -25,14 +26,18 @@ public final class BlockyOutlineSettings {
     public float outlineOpacity = 1.0f;
     public float outlineWidth = 2.0f;
     public boolean smoothTransition = true;
-    public float smoothSpeed = 0.60f;
+    public float smoothSpeed = 0.85f;
 
     public boolean fillEnabled = false;
+    public boolean fillGradientEnabled = false;
     public boolean rainbowFill = false;
     public float fillRgbSpeed = 1.0f;
     public float fillHue = 0.16f;
     public float fillSaturation = 1.0f;
     public float fillValue = 1.0f;
+    public float fillHue2 = 0.83f;
+    public float fillSaturation2 = 1.0f;
+    public float fillValue2 = 1.0f;
     public float fillOpacity = 0.25f;
 
     public static BlockyOutlineSettings get() {
@@ -81,28 +86,28 @@ public final class BlockyOutlineSettings {
         }
     }
 
-    public static float clamp(float val, float min, float max) {
-        return val < min ? min : (val > max ? max : val);
-    }
-
     public void copyFrom(BlockyOutlineSettings other) {
         this.rainbowOutline = other.rainbowOutline;
-        this.outlineRgbSpeed = clamp(other.outlineRgbSpeed, 0.1f, 5.0f);
-        this.outlineHue = clamp(other.outlineHue, 0.0f, 1.0f);
-        this.outlineSaturation = clamp(other.outlineSaturation, 0.0f, 1.0f);
-        this.outlineValue = clamp(other.outlineValue, 0.0f, 1.0f);
-        this.outlineOpacity = clamp(other.outlineOpacity, 0.0f, 1.0f);
-        this.outlineWidth = clamp(other.outlineWidth, 0.5f, 10.0f);
+        this.outlineRgbSpeed = Mth.clamp(other.outlineRgbSpeed, 0.1f, 5.0f);
+        this.outlineHue = Mth.clamp(other.outlineHue, 0.0f, 1.0f);
+        this.outlineSaturation = Mth.clamp(other.outlineSaturation, 0.0f, 1.0f);
+        this.outlineValue = Mth.clamp(other.outlineValue, 0.0f, 1.0f);
+        this.outlineOpacity = Mth.clamp(other.outlineOpacity, 0.0f, 1.0f);
+        this.outlineWidth = Mth.clamp(other.outlineWidth, 0.5f, 10.0f);
         this.smoothTransition = other.smoothTransition;
-        this.smoothSpeed = clamp(other.smoothSpeed, 0.05f, 1.0f);
+        this.smoothSpeed = Mth.clamp(other.smoothSpeed, 0.05f, 1.0f);
 
         this.fillEnabled = other.fillEnabled;
+        this.fillGradientEnabled = other.fillGradientEnabled;
         this.rainbowFill = other.rainbowFill;
-        this.fillRgbSpeed = clamp(other.fillRgbSpeed, 0.1f, 5.0f);
-        this.fillHue = clamp(other.fillHue, 0.0f, 1.0f);
-        this.fillSaturation = clamp(other.fillSaturation, 0.0f, 1.0f);
-        this.fillValue = clamp(other.fillValue, 0.0f, 1.0f);
-        this.fillOpacity = clamp(other.fillOpacity, 0.0f, 1.0f);
+        this.fillRgbSpeed = Mth.clamp(other.fillRgbSpeed, 0.1f, 5.0f);
+        this.fillHue = Mth.clamp(other.fillHue, 0.0f, 1.0f);
+        this.fillSaturation = Mth.clamp(other.fillSaturation, 0.0f, 1.0f);
+        this.fillValue = Mth.clamp(other.fillValue, 0.0f, 1.0f);
+        this.fillHue2 = Mth.clamp(other.fillHue2, 0.0f, 1.0f);
+        this.fillSaturation2 = Mth.clamp(other.fillSaturation2, 0.0f, 1.0f);
+        this.fillValue2 = Mth.clamp(other.fillValue2, 0.0f, 1.0f);
+        this.fillOpacity = Mth.clamp(other.fillOpacity, 0.0f, 1.0f);
     }
 
     public float[] getOutlineRgb(long nowMs) {
@@ -131,10 +136,22 @@ public final class BlockyOutlineSettings {
         return (a << 24) | hsvToRgbPacked(this.fillHue, this.fillSaturation, this.fillValue);
     }
 
+    public int getFillArgb2(long nowMs) {
+        if (!this.fillGradientEnabled) {
+            return getFillArgb(nowMs);
+        }
+        int a = (int)(this.fillOpacity * 255.0f);
+        if (this.rainbowFill) {
+            float hue = (float)((nowMs + (long)(2000.0f / this.fillRgbSpeed)) % (long)(4000.0f / this.fillRgbSpeed)) / (4000.0f / this.fillRgbSpeed);
+            return (a << 24) | hsvToRgbPacked(hue, 1.0f, 1.0f);
+        }
+        return (a << 24) | hsvToRgbPacked(this.fillHue2, this.fillSaturation2, this.fillValue2);
+    }
+
     public static int hsvToRgbPacked(float h, float s, float v) {
-        h = clamp(h, 0.0f, 1.0f);
-        s = clamp(s, 0.0f, 1.0f);
-        v = clamp(v, 0.0f, 1.0f);
+        h = Mth.clamp(h, 0.0f, 1.0f);
+        s = Mth.clamp(s, 0.0f, 1.0f);
+        v = Mth.clamp(v, 0.0f, 1.0f);
 
         if (s == 0.0f) {
             int val = (int)(v * 255.0f);
