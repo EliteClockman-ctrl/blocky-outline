@@ -49,21 +49,20 @@ public class BlockyOutlineMenuScreen extends Screen {
     private static final int COLOR_BORDER_PURPLE = 0xFF9333EA;
     private static final int COLOR_BORDER_GRAY = 0xFF334155;
 
-    // Smooth high-fidelity Hue spectrum gradient (12 steps) for modern look
     private static final int[] HUE_COLORS = {
-            0xFFFF0000, // 0.00: Red
-            0xFFFF4D00, // 0.08: Red-Orange
-            0xFFFF9900, // 0.17: Orange
-            0xFFFFEE00, // 0.25: Yellow
-            0xFF88FF00, // 0.33: Lime Green
-            0xFF00FF44, // 0.42: Pure Green
-            0xFF00FFAA, // 0.50: Mint Cyan
-            0xFF00CCFF, // 0.58: Sky Blue
-            0xFF0044FF, // 0.67: Pure Blue
-            0xFF7700FF, // 0.75: Indigo Purple
-            0xFFFF00CC, // 0.83: Magenta/Pink
-            0xFFFF0044, // 0.92: Rose Red
-            0xFFFF0000  // 1.00: Loop back to Red
+            0xFFFF0000,
+            0xFFFF4D00,
+            0xFFFF9900,
+            0xFFFFEE00,
+            0xFF88FF00,
+            0xFF00FF44,
+            0xFF00FFAA,
+            0xFF00CCFF,
+            0xFF0044FF,
+            0xFF7700FF,
+            0xFFFF00CC,
+            0xFFFF0044,
+            0xFFFF0000
     };
 
     private int panelW;
@@ -84,8 +83,6 @@ public class BlockyOutlineMenuScreen extends Screen {
     private int dragCol = -1;
     private int dragRow = -1;
 
-    // Color Palette Modal Popup state
-    // -1 = closed, 0 = Outline Color, 1 = Fill Color 1 (Top), 2 = Fill Color 2 (Bottom)
     private int activePickerTarget = -1;
     private boolean isDragging2DBox = false;
     private boolean isDraggingPopupHue = false;
@@ -109,13 +106,11 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void updateLayout() {
-        int maxRows = 7; // Tab Fill has 7 rows
+        int maxRows = 7;
 
-        // Available screen space with safety margin
         int availW = Math.max(200, this.width - 16);
         int availH = Math.max(160, this.height - 16);
 
-        // Responsive layout modes
         this.compactMode = availH < 280 || availW < 450;
         this.showPreview = availW >= 420 && availH >= 240;
 
@@ -178,7 +173,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         int logoY = this.py + (this.compactMode ? 4 : 10);
         int logoW;
         if (this.panelW < 360) {
-            // Ultra-compact logo
             guiGraphics.drawString(this.font, "BO", logoX, logoY + (this.compactMode ? 2 : 4), COLOR_PURPLE_LIGHT, true);
             logoW = this.font.width("BO");
         } else {
@@ -187,7 +181,6 @@ public class BlockyOutlineMenuScreen extends Screen {
             logoW = this.font.width("Blocky Outline");
         }
 
-        // Version badge (hide on very narrow screens)
         String vTag = "v1.1.1";
         int vW = this.font.width(vTag);
         boolean showVTag = this.panelW >= 340;
@@ -416,15 +409,12 @@ public class BlockyOutlineMenuScreen extends Screen {
         int sliderY = ry + (this.rowH - trackH) / 2;
         int thumbX = sliderX + (int)((float)this.sliderW * hue);
 
-        // 1. Sleek Hue Bar Container with subtle background and border
         int trackBorder = disabled ? 0xFF334155 : 0xFF2D2D44;
         guiGraphics.fill(sliderX - 2, sliderY - 2, sliderX + this.sliderW + 2, sliderY + trackH + 2, 0xFF0D0C16);
         guiGraphics.fill(sliderX - 1, sliderY - 1, sliderX + this.sliderW + 1, sliderY + trackH + 1, trackBorder);
 
-        // Hue Gradient Bar
         this.renderHueBar(guiGraphics, sliderX, sliderY, this.sliderW, trackH, disabled);
 
-        // Top glossy overlay highlight on track
         if (!disabled) {
             guiGraphics.fill(sliderX, sliderY, sliderX + this.sliderW, sliderY + 1, 0x30FFFFFF);
         }
@@ -433,7 +423,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         int activeColor = 0xFF000000 | ((int) (activeRgb[0] * 255.0f) << 16) | ((int) (activeRgb[1] * 255.0f) << 8) | (int) (activeRgb[2] * 255.0f);
         int thumbFillColor = disabled ? 0xFF64748B : activeColor;
 
-        // 2. Modern pill-shaped slider handle
         int thumbW = 6;
         int thumbH = trackH + 6;
         int thumbY = sliderY - 3;
@@ -444,7 +433,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(tLeft, thumbY, tRight, thumbY + thumbH, COLOR_TEXT_WHITE);           // White casing
         guiGraphics.fill(tLeft + 1, thumbY + 1, tRight - 1, thumbY + thumbH - 1, thumbFillColor); // Active color inside handle
 
-        // 3. Compact Premium Color Preview Swatch (Clickable to open 2D Color Picker Modal)
         int pSize = 15;
         int pX = sliderX - pSize - 8;
         int pY = ry + (this.rowH - pSize) / 2;
@@ -462,7 +450,6 @@ public class BlockyOutlineMenuScreen extends Screen {
             this.hoveredTooltipText = "Click to open Color Palette";
         }
 
-        // 4. Stylish HEX Badge Box (#FFFFFF) with input focus glow
         if (!disabled) {
             String hexStr;
             int textColor;
@@ -522,25 +509,21 @@ public class BlockyOutlineMenuScreen extends Screen {
         int boxX = centerX - boxW / 2;
         int boxY = centerY - boxH / 2;
 
-        // Clean, smooth block preview box with 2-color vertical blend
         if (this.settings.fillEnabled) {
             guiGraphics.fillGradient(boxX, boxY, boxX + boxW, boxY + boxH, fillColor, fillColor2);
         } else {
             guiGraphics.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0x20000000);
         }
 
-        // Render outline borders
         int lw = Math.max(1, Math.min(6, (int) this.settings.outlineWidth));
         guiGraphics.fill(boxX, boxY, boxX + boxW, boxY + lw, outlineColor);
         guiGraphics.fill(boxX, boxY + boxH - lw, boxX + boxW, boxY + boxH, outlineColor);
         guiGraphics.fill(boxX, boxY, boxX + lw, boxY + boxH, outlineColor);
         guiGraphics.fill(boxX + boxW - lw, boxY, boxX + boxW, boxY + boxH, outlineColor);
 
-        // Inner shadow grid for blocky aesthetic
         guiGraphics.fill(boxX + boxW / 2, boxY, boxX + boxW / 2 + 1, boxY + boxH, 0x15FFFFFF);
         guiGraphics.fill(boxX, boxY + boxH / 2, boxX + boxW, boxY + boxH / 2 + 1, 0x15FFFFFF);
 
-        // Stats card at bottom
         int statsY = cy + ch - 48;
         guiGraphics.fill(cx + 8, statsY, cx + cw - 8, cy + ch - 8, 0xFF1B1B2C);
         guiGraphics.fill(cx + 8, statsY, cx + cw - 8, statsY + 1, COLOR_PURPLE_PRIMARY);
@@ -647,7 +630,6 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void renderColorPickerModal(GuiGraphics guiGraphics, int mx, int my) {
-        // 1. Semi-transparent backdrop overlay
         guiGraphics.fill(0, 0, this.width, this.height, 0x88000000);
 
         int mW = 240;
@@ -655,14 +637,12 @@ public class BlockyOutlineMenuScreen extends Screen {
         int mX = (this.width - mW) / 2;
         int mY = (this.height - mH) / 2;
 
-        // 2. Modal card background & borders
         guiGraphics.fill(mX, mY, mX + mW, mY + mH, 0xFD12121E);
         guiGraphics.fill(mX - 1, mY - 1, mX + mW + 1, mY, COLOR_PURPLE_PRIMARY);
         guiGraphics.fill(mX - 1, mY + mH, mX + mW + 1, mY + mH + 1, COLOR_PURPLE_PRIMARY);
         guiGraphics.fill(mX - 1, mY, mX, mY + mH, COLOR_PURPLE_PRIMARY);
         guiGraphics.fill(mX + mW, mY, mX + mW + 1, mY + mH, COLOR_PURPLE_PRIMARY);
 
-        // Header bar
         guiGraphics.fillGradient(mX + 1, mY + 1, mX + mW - 1, mY + 24, 0xFF1E1B2E, 0xFF171424);
         guiGraphics.fill(mX + 1, mY + 24, mX + mW - 1, mY + 25, 0xFF2D2640);
 
@@ -672,7 +652,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         else title = "Palette: Fill Color 2 (Bottom)";
         guiGraphics.drawString(this.font, title, mX + 10, mY + 8, COLOR_TEXT_WHITE, false);
 
-        // Close button (X) in header
         int closeBtnW = 16;
         int closeBtnH = 14;
         int closeBtnX = mX + mW - closeBtnW - 6;
@@ -681,7 +660,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(closeBtnX, closeBtnY, closeBtnX + closeBtnW, closeBtnY + closeBtnH, closeHover ? 0xFFEF4444 : 0xFF282538);
         guiGraphics.drawCenteredString(this.font, "×", closeBtnX + closeBtnW / 2, closeBtnY + 2, COLOR_TEXT_WHITE);
 
-        // Fetch current HSV
         float hue, sat, val;
         if (this.activePickerTarget == 0) {
             hue = this.settings.outlineHue;
@@ -697,20 +675,16 @@ public class BlockyOutlineMenuScreen extends Screen {
             val = this.settings.fillValue2;
         }
 
-        // 3. 2D Saturation / Value Gradient Box
         int boxX = mX + 12;
         int boxY = mY + 34;
         int boxW = 180;
         int boxH = 100;
 
-        // Base pure hue color
         float[] baseRgb = BlockyOutlineSettings.hsvToRgb(hue, 1.0f, 1.0f);
         int baseColor = 0xFF000000 | ((int) (baseRgb[0] * 255.0f) << 16) | ((int) (baseRgb[1] * 255.0f) << 8) | (int) (baseRgb[2] * 255.0f);
 
-        // Frame around 2D picker
         guiGraphics.fill(boxX - 1, boxY - 1, boxX + boxW + 1, boxY + boxH + 1, 0xFF2D2640);
 
-        // Horizontal white-to-base gradient
         int steps = 24;
         float stepW = (float) boxW / (float) steps;
         for (int i = 0; i < steps; ++i) {
@@ -722,10 +696,8 @@ public class BlockyOutlineMenuScreen extends Screen {
             int c1 = lerpColor(0xFFFFFFFF, baseColor, s1);
             guiGraphics.fillGradient(x0, boxY, x1, boxY + boxH, c0, c1);
         }
-        // Vertical shade overlay to black (Value: 1.0 at top -> 0.0 at bottom)
         guiGraphics.fillGradient(boxX, boxY, boxX + boxW, boxY + boxH, 0x00000000, 0xFF000000);
 
-        // 2D Cursor marker
         int curX = boxX + (int) (sat * (float) boxW);
         int curY = boxY + (int) ((1.0f - val) * (float) boxH);
         curX = Mth.clamp(curX, boxX, boxX + boxW);
@@ -741,7 +713,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(curX - 3, curY - 2, curX - 2, curY + 3, 0xFFFFFFFF);
         guiGraphics.fill(curX + 3, curY - 2, curX + 4, curY + 3, 0xFFFFFFFF);
 
-        // 4. Vertical Hue Strip
         int vHueX = boxX + boxW + 10;
         int vHueY = boxY;
         int vHueW = 16;
@@ -756,13 +727,11 @@ public class BlockyOutlineMenuScreen extends Screen {
             guiGraphics.fillGradient(vHueX, y0, vHueX + vHueW, y1, HUE_COLORS[i], HUE_COLORS[i + 1]);
         }
 
-        // Vertical hue cursor
         int hThumbY = vHueY + (int) (hue * (float) vHueH);
         hThumbY = Mth.clamp(hThumbY, vHueY, vHueY + vHueH);
         guiGraphics.fill(vHueX - 2, hThumbY - 2, vHueX + vHueW + 2, hThumbY + 2, 0xFF000000);
         guiGraphics.fill(vHueX - 1, hThumbY - 1, vHueX + vHueW + 1, hThumbY + 1, 0xFFFFFFFF);
 
-        // 5. Bottom Preview Swatch, HEX Badge, and Select button
         int activeRgbInt = BlockyOutlineSettings.hsvToRgbPacked(hue, sat, val);
         int activeArgb = 0xFF000000 | activeRgbInt;
 
@@ -771,7 +740,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(boxX - 1, bottomY - 1, boxX + pSize + 1, bottomY + pSize + 1, 0xFF2D2640);
         guiGraphics.fill(boxX, bottomY, boxX + pSize, bottomY + pSize, activeArgb);
 
-        // HEX badge in modal
         int modalHexX = boxX + pSize + 8;
         int modalHexW = 54;
         int modalHexH = 18;
@@ -783,7 +751,6 @@ public class BlockyOutlineMenuScreen extends Screen {
         String hexCode = String.format("#%06X", activeRgbInt & 0xFFFFFF);
         guiGraphics.drawString(this.font, hexCode, modalHexX + (modalHexW - this.font.width(hexCode)) / 2, bottomY + 5, COLOR_TEXT_WHITE, false);
 
-        // Quick Preset Palette dots
         int[] palette = {
                 0xFFFF0044, 0xFFFF7700, 0xFFFFDD00, 0xFF00DD44, 0xFF00CCFF, 0xFF3366FF, 0xFFA855F7, 0xFFFFFFFF
         };
@@ -798,7 +765,6 @@ public class BlockyOutlineMenuScreen extends Screen {
             guiGraphics.fill(dx, dy, dx + dotSize, dy + dotSize, palette[i]);
         }
 
-        // Done / Close button
         int doneBtnW = 60;
         int doneBtnH = 16;
         int doneBtnX = mX + mW - doneBtnW - 12;
@@ -876,14 +842,12 @@ public class BlockyOutlineMenuScreen extends Screen {
         double my = event.y();
         int button = event.button();
 
-        // 1. If Color Palette Modal is open, handle all interactions inside the modal first
         if (this.activePickerTarget != -1) {
             int mW = 240;
             int mH = 205;
             int mX = (this.width - mW) / 2;
             int mY = (this.height - mH) / 2;
 
-            // Close button (X) in header
             int closeBtnW = 16;
             int closeBtnH = 14;
             int closeBtnX = mX + mW - closeBtnW - 6;
@@ -894,7 +858,6 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // OK / Done button
             int doneBtnW = 60;
             int doneBtnH = 16;
             int doneBtnX = mX + mW - doneBtnW - 12;
@@ -905,7 +868,6 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // 2D Saturation / Value Box
             int boxX = mX + 12;
             int boxY = mY + 34;
             int boxW = 180;
@@ -916,7 +878,6 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // Vertical Hue Strip
             int vHueX = boxX + boxW + 10;
             int vHueY = boxY;
             int vHueW = 16;
@@ -927,7 +888,6 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // Quick Preset Palette dots
             int bottomY = boxY + boxH + 12;
             int modalHexW = 54;
             int modalHexX = boxX + 18 + 8;
@@ -949,7 +909,6 @@ public class BlockyOutlineMenuScreen extends Screen {
                 }
             }
 
-            // Clicking outside modal dialog card closes it
             if (mx < mX || mx > mX + mW || my < mY || my > mY + mH) {
                 this.activePickerTarget = -1;
                 this.playClickSound();
@@ -959,7 +918,6 @@ public class BlockyOutlineMenuScreen extends Screen {
             return true; // Eat click events inside modal backdrop
         }
 
-        // Header tab switching
         int logoX = this.px + (this.compactMode ? 8 : 14);
         int logoW;
         if (this.panelW < 360) {
@@ -1023,7 +981,6 @@ public class BlockyOutlineMenuScreen extends Screen {
                         int hexBoxX = pX - hexBoxW - 6;
                         int hexBoxY = currentY + (this.rowH - hexBoxH) / 2;
 
-                        // Click Color Preview Swatch -> Opens 2D Color Palette Modal!
                         if (mx >= pX && mx <= pX + pSize && my >= pY && my <= pY + pSize) {
                             this.activePickerTarget = (col == 1 && row == 5) ? 2 : col;
                             this.focusedHexCol = -1;
@@ -1031,14 +988,12 @@ public class BlockyOutlineMenuScreen extends Screen {
                             return true;
                         }
 
-                        // Click HEX Badge -> Focus for keyboard typing
                         if (mx >= hexBoxX && mx <= hexBoxX + hexBoxW && my >= hexBoxY && my <= hexBoxY + hexBoxH) {
                             this.focusedHexCol = (col == 1 && row == 5) ? 2 : col;
                             this.typingHex = "";
                             return true;
                         }
 
-                        // Drag Slider
                         if (mx >= sliderX - 4 && mx <= sliderX + this.sliderW + 4) {
                             this.isDraggingSlider = true;
                             this.dragCol = col;
@@ -1160,7 +1115,6 @@ public class BlockyOutlineMenuScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int keyCode = event.key();
 
-        // If Modal is open, ESC closes the modal first
         if (keyCode == 256 && this.activePickerTarget != -1) { // GLFW_KEY_ESCAPE
             this.activePickerTarget = -1;
             return true;
@@ -1226,8 +1180,6 @@ public class BlockyOutlineMenuScreen extends Screen {
             BlockyOutlineSettings.save();
         } catch (NumberFormatException ignored) {}
     }
-
-
 
     private void applyPreset(int index) {
         switch (index) {

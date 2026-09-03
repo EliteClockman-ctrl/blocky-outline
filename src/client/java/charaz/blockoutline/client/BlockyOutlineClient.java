@@ -16,13 +16,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.glfw.GLFW;
 
@@ -30,24 +27,24 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("blocky-outline", "general"));
     private static KeyMapping menuKeyBinding;
 
-    private static double smoothedX = 0.0;
-    private static double smoothedY = 0.0;
-    private static double smoothedZ = 0.0;
-    private static boolean initializedPos = false;
+    private static double smoothedX;
+    private static double smoothedY;
+    private static double smoothedZ;
+    private static boolean initializedPos;
 
     @Override
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
 
         WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outlineRenderState) -> {
-            Minecraft client = Minecraft.getInstance();
-            HitResult hitResult = client.hitResult;
-            if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK || !(hitResult instanceof BlockHitResult blockHit)) {
+            Minecraft mc = Minecraft.getInstance();
+            HitResult hit = mc.hitResult;
+            if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
                 return true;
             }
             BlockPos pos = blockHit.getBlockPos();
-            ClientLevel level = client.level;
-            if (pos == null || level == null) {
+            ClientLevel level = mc.level;
+            if (level == null) {
                 initializedPos = false;
                 return true;
             }
@@ -56,7 +53,6 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 initializedPos = false;
                 return true;
             }
-
             VoxelShape shape = state.getShape(level, pos);
             if (shape.isEmpty()) {
                 initializedPos = false;
@@ -68,30 +64,21 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 shape = shape.move(offset.x, offset.y, offset.z);
             }
 
-            Vec3 cam = client.gameRenderer.getMainCamera().position();
             PoseStack matrices = context.matrices();
             if (matrices == null) return true;
 
             BlockyOutlineSettings s = BlockyOutlineSettings.get();
-            double targetX = pos.getX();
-            double targetY = pos.getY();
-            double targetZ = pos.getZ();
+            double tx = pos.getX(), ty = pos.getY(), tz = pos.getZ();
 
             if (s.smoothTransition) {
                 if (!initializedPos) {
-                    smoothedX = targetX;
-                    smoothedY = targetY;
-                    smoothedZ = targetZ;
+                    smoothedX = tx; smoothedY = ty; smoothedZ = tz;
                     initializedPos = true;
                 } else {
-                    double dx = targetX - smoothedX;
-                    double dy = targetY - smoothedY;
-                    double dz = targetZ - smoothedZ;
+                    double dx = tx - smoothedX, dy = ty - smoothedY, dz = tz - smoothedZ;
                     double distSq = dx * dx + dy * dy + dz * dz;
                     if (distSq > 36.0 || distSq < 0.000001) {
-                        smoothedX = targetX;
-                        smoothedY = targetY;
-                        smoothedZ = targetZ;
+                        smoothedX = tx; smoothedY = ty; smoothedZ = tz;
                     } else {
                         smoothedX += dx * 0.75;
                         smoothedY += dy * 0.75;
@@ -99,34 +86,29 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     }
                 }
             } else {
-                smoothedX = targetX;
-                smoothedY = targetY;
-                smoothedZ = targetZ;
+                smoothedX = tx; smoothedY = ty; smoothedZ = tz;
                 initializedPos = true;
             }
 
-            double dx = smoothedX - cam.x;
-            double dy = smoothedY - cam.y;
-            double dz = smoothedZ - cam.z;
+            if (context.consumers() == null) return false;
 
-            if (context.consumers() != null) {
-                long now = System.currentTimeMillis();
-                int outlineColor = s.getOutlineArgb(now);
-                float a = (float)(outlineColor >>> 24) * 0.003921569f;
-                if (a > 0.001f) {
-                    float r = (float)((outlineColor >>> 16) & 0xFF) * 0.003921569f;
-                    float g = (float)((outlineColor >>> 8) & 0xFF) * 0.003921569f;
-                    float b = (float)(outlineColor & 0xFF) * 0.003921569f;
-                    VertexConsumer lineConsumer = context.consumers().getBuffer(RenderTypes.lines());
-                    OutlineRenderer.renderOutline(matrices, lineConsumer, shape, dx, dy, dz, r, g, b, a, s.outlineWidth);
-                }
+            Vec3 cam = mc.gameRenderer.getMainCamera().position();
+            double ox = smoothedX - cam.x, oy = smoothedY - cam.y, oz = smoothedZ - cam.z;
+            long now = System.currentTimeMillis();
 
-                if (s.fillEnabled && s.fillOpacity > 0.01f) {
-                    int fillColor = s.getFillArgb(now);
-                    int fillColor2 = s.getFillArgb2(now);
-                    VertexConsumer fillConsumer = context.consumers().getBuffer(RenderTypes.debugQuads());
-                    OutlineRenderer.renderFilledBox(matrices, fillConsumer, shape, dx, dy, dz, fillColor, fillColor2);
-                }
+            int outlineArgb = s.getOutlineArgb(now);
+            float a = (float)(outlineArgb >>> 24) * 0.003921569f;
+            if (a > 0.001f) {
+                float r = (float)((outlineArgb >>> 16) & 0xFF) * 0.003921569f;
+                float g = (float)((outlineArgb >>> 8) & 0xFF) * 0.003921569f;
+                float b = (float)(outlineArgb & 0xFF) * 0.003921569f;
+                VertexConsumer lines = context.consumers().getBuffer(RenderTypes.lines());
+                OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, r, g, b, a, s.outlineWidth);
+            }
+
+            if (s.fillEnabled && s.fillOpacity > 0.01f) {
+                VertexConsumer quads = context.consumers().getBuffer(RenderTypes.debugQuads());
+                OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz, s.getFillArgb(now), s.getFillArgb2(now));
             }
 
             return false;
@@ -139,10 +121,10 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 CATEGORY
         ));
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             while (menuKeyBinding != null && menuKeyBinding.consumeClick()) {
-                if (client.screen == null) {
-                    client.setScreen(new BlockyOutlineMenuScreen());
+                if (mc.screen == null) {
+                    mc.setScreen(new BlockyOutlineMenuScreen());
                 }
             }
         });
