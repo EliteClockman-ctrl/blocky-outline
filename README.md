@@ -1,29 +1,66 @@
-# Blocky Outline v1.1.1 — Official Source Code
+# Blocky Outline
 
-A lightweight, modern client-side mod that customizes the block selection outline and fill in Minecraft Fabric 1.21.11. Built for Fabric Loader & Fabric API.
+A lightweight, modern client-side Fabric mod that replaces Minecraft's default block selection outline with a fully customizable outline and optional gradient fill.
+
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-62ba3d?style=flat-square)](https://minecraft.net)
+[![Fabric](https://img.shields.io/badge/Fabric-0.19.3-b87333?style=flat-square)](https://fabricmc.net)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE_blocky-outline)
+[![Version](https://img.shields.io/badge/Version-1.1.1-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.1)
+
+---
 
 ## Features
 
-- **Custom Outline & Fill**: Customize block outline color, opacity, and width, with optional transparent block face fill.
-- **Dynamic HSV & Rainbow RGB**: Static HSV color tuning (via Hue bar, Saturation/Value box, or Hex input) or independent animated Rainbow RGB modes.
-- **Ultra-Responsive Smooth Movement**: High-performance smooth LERP interpolation algorithm with instant auto-snapping when switching between blocks.
-- **Zero-GC Executive Engine**: Optimized color conversion engine eliminating per-frame memory allocation for smooth, stutter-free FPS.
-- **In-Game Executive UI**: Press **M** anywhere in-game to toggle the configuration screen. Includes 5 built-in presets (Minimalist Silver, Executive Purple, Vibrant Gold, Rainbow Corporate, Dark Slate).
-- **Auto Configuration Persistence**: Automatically saves settings to `.minecraft/config/blocky-outline.json`.
+- **Custom Outline**: Adjust color (HSV or HEX), opacity, and width of the block selection outline.
+- **Block Fill with Dual-Color Gradient**: Enable an optional transparent fill on block faces. Set two colors (top/bottom) for a smooth vertical gradient blend.
+- **In-game Color Picker**: Click the color swatch to open a full 2D Saturation/Value picker with a Hue strip and HEX input — no external tools needed.
+- **Rainbow RGB Mode**: Animated rainbow cycling for both outline and fill, each with independent speed control.
+- **Smooth Movement**: High-performance adaptive spring LERP tracks the cursor block with zero delay and instant snap when switching blocks far apart.
+- **Grass & Plant Alignment**: Outlines correctly follow the rendered position of grass, flowers, ferns, and all other offset blocks.
+- **Responsive UI**: The configuration menu adapts to any window size or GUI scale — no overlap, no cutoff.
+- **5 Built-in Presets**: Minimalist Silver, Executive Purple, Vibrant Gold, Rainbow Corporate, Dark Slate.
+- **Zero-GC Render Engine**: No per-frame allocations in the render hot path — smooth FPS regardless of framerate.
+- **Auto-Save Config**: Settings persist to `.minecraft/config/blocky-outline.json` automatically.
+
+---
+
+## Controls
+
+| Action | Keybind |
+|---|---|
+| Open configuration menu | **M** |
+
+---
+
+## Installation
+
+1. Install [Fabric Loader](https://fabricmc.net/use/installer/) `≥0.16.0`
+2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
+3. Drop `blocky-outline-1.1.1.jar` into your `.minecraft/mods/` folder
+4. Launch Minecraft `1.21.11`
+
+---
 
 ## Requirements
 
-- Minecraft `1.21.11 Fabric`
-- Fabric Loader `>=0.16.0`
-- Fabric API
+| Dependency | Version |
+|---|---|
+| Minecraft | `1.21.11` |
+| Fabric Loader | `≥0.16.0` |
+| Fabric API | any |
+| Java | `≥21` |
 
-## Building
+---
 
-To build the mod JAR file, run:
+## Building from Source
+
 ```bash
 ./gradlew build
 ```
-The output JAR file will be generated in `dist/blocky-outline-1.1.1.jar`.
+
+Output JAR: `dist/blocky-outline-1.1.1.jar`
+
+---
 
 ## License
 

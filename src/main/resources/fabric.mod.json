@@ -3,16 +3,16 @@
 	"id": "blocky-outline",
 	"version": "${version}",
 	"name": "Blocky Outline",
-	"description": "A mod that adds a blocky outline to blocks when you look at them.",
+	"description": "Customize the block selection outline and fill with colors, gradients, rainbow RGB, and smooth movement. Lightweight client-side mod for Fabric 1.21.11.",
 	"authors": [
 		"CharaZ"
 	],
 	"contact": {
 		"sources": "https://github.com/EliteClockman-ctrl/blocky-outline"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/blocky-outline/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
 		"main": [
 			"charaz.blockoutline.BlockyOutlineMod"
