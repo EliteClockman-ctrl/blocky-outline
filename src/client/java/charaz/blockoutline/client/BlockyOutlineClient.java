@@ -15,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,6 +27,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.glfw.GLFW;
 
 public final class BlockyOutlineClient implements ClientModInitializer {
+    private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("blocky-outline", "general"));
     private static KeyMapping menuKeyBinding;
 
     private static double smoothedX = 0.0;
@@ -134,7 +136,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 "key.blocky-outline.open_menu",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_M,
-                KeyMapping.Category.MISC
+                CATEGORY
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
