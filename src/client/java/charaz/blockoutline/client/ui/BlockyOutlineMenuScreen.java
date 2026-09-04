@@ -163,10 +163,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(this.px - 1, this.py - 1, this.px + this.pW + 1, this.py, BORDER_DIM);
         guiGraphics.fill(this.px - 1, this.py + this.pH, this.px + this.pW + 1, this.py + this.pH + 1, BORDER_DIM);
 
-        guiGraphics.fill(this.px, this.py, this.px + this.pW, this.py + 1, BORDER_PRP);
-        guiGraphics.fill(this.px, this.py + this.pH - 1, this.px + this.pW, this.py + this.pH, BORDER_PRP);
-        guiGraphics.fill(this.px, this.py, this.px + 1, this.py + this.pH, BORDER_PRP);
-        guiGraphics.fill(this.px + this.pW - 1, this.py, this.px + this.pW, this.py + this.pH, BORDER_PRP);
+        brd(guiGraphics, this.px, this.py, this.px + this.pW, this.py + this.pH, BORDER_PRP);
 
         int headerH = this.compact ? 28 : 36;
         guiGraphics.fillGradient(this.px + 1, this.py + 1, this.px + this.pW - 1, this.py + headerH, HEADER_BG, 0xFF161625);
@@ -275,10 +272,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fillGradient(btnX, btnY, btnX + btnW, btnY + btnH, bgTop, bgBot);
 
         int border = hovered ? 0xFFC084FC : 0xFFA855F7;
-        guiGraphics.fill(btnX, btnY, btnX + btnW, btnY + 1, border);
-        guiGraphics.fill(btnX, btnY + btnH - 1, btnX + btnW, btnY + btnH, border);
-        guiGraphics.fill(btnX, btnY, btnX + 1, btnY + btnH, border);
-        guiGraphics.fill(btnX + btnW - 1, btnY, btnX + btnW, btnY + btnH, border);
+        brd(guiGraphics, btnX, btnY, btnX + btnW, btnY + btnH, border);
 
         int textCol = hovered ? 0xFFFFFFFF : CLR_WHITE;
         guiGraphics.drawCenteredString(this.font, "Done", btnX + btnW / 2, btnY + (btnH - 8) / 2, textCol);
@@ -292,10 +286,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(tx, ty, tx + tw, ty + th, bg);
 
         int border = selected ? PURPLE_LT : (hovered ? LILAC : BORDER_GRAY);
-        guiGraphics.fill(tx, ty, tx + tw, ty + 1, border);
-        guiGraphics.fill(tx, ty + th - 1, tx + tw, ty + th, border);
-        guiGraphics.fill(tx, ty, tx + 1, ty + th, border);
-        guiGraphics.fill(tx + tw - 1, ty, tx + tw, ty + th, border);
+        brd(guiGraphics, tx, ty, tx + tw, ty + th, border);
 
         int textCol = selected ? CLR_WHITE : (hovered ? CLR_GRAY : CLR_MUTED);
         guiGraphics.drawCenteredString(this.font, TAB_LABELS[index], tx + tw / 2, ty + (th - 8) / 2, textCol);
@@ -314,10 +305,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(rx, ry, rx + settingsW, ry + height, bg);
 
         int borderCol = disabled ? 0x15FFFFFF : (hovered ? BORDER_PRP : BORDER_GRAY);
-        guiGraphics.fill(rx, ry, rx + settingsW, ry + 1, borderCol);
-        guiGraphics.fill(rx, ry + height - 1, rx + settingsW, ry + height, borderCol);
-        guiGraphics.fill(rx, ry, rx + 1, ry + height, borderCol);
-        guiGraphics.fill(rx + settingsW - 1, ry, rx + settingsW, ry + height, borderCol);
+        brd(guiGraphics, rx, ry, rx + settingsW, ry + height, borderCol);
 
         String label = (col == 0) ? OUTLINE_ROW_LABELS[row] : FILL_ROW_LABELS[row];
         int labelColor = disabled ? 0xFF64748B : CLR_WHITE;
@@ -343,10 +331,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(switchX, switchY, switchX + switchW, switchY + switchH, trackBg);
 
         int borderCol = disabled ? 0xFF475569 : (checked ? PURPLE_LT : 0xFF475569);
-        guiGraphics.fill(switchX, switchY, switchX + switchW, switchY + 1, borderCol);
-        guiGraphics.fill(switchX, switchY + switchH - 1, switchX + switchW, switchY + switchH, borderCol);
-        guiGraphics.fill(switchX, switchY, switchX + 1, switchY + switchH, borderCol);
-        guiGraphics.fill(switchX + switchW - 1, switchY, switchX + switchW, switchY + switchH, borderCol);
+        brd(guiGraphics, switchX, switchY, switchX + switchW, switchY + switchH, borderCol);
 
         int thumbW = 12;
         int thumbH = 12;
@@ -475,10 +460,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             guiGraphics.fill(hexBoxX, hexBoxY, hexBoxX + hexBoxW, hexBoxY + hexBoxH, hexBg);
 
             int boxBorderColor = (this.hexFocus == hexIndex) ? PURPLE_LT : (hexHovered ? LILAC : 0xFF3B3B54);
-            guiGraphics.fill(hexBoxX, hexBoxY, hexBoxX + hexBoxW, hexBoxY + 1, boxBorderColor);
-            guiGraphics.fill(hexBoxX, hexBoxY + hexBoxH - 1, hexBoxX + hexBoxW, hexBoxY + hexBoxH, boxBorderColor);
-            guiGraphics.fill(hexBoxX, hexBoxY, hexBoxX + 1, hexBoxY + hexBoxH, boxBorderColor);
-            guiGraphics.fill(hexBoxX + hexBoxW - 1, hexBoxY, hexBoxX + hexBoxW, hexBoxY + hexBoxH, boxBorderColor);
+            brd(guiGraphics, hexBoxX, hexBoxY, hexBoxX + hexBoxW, hexBoxY + hexBoxH, boxBorderColor);
 
             int textY = hexBoxY + (hexBoxH - 8) / 2;
             guiGraphics.drawString(this.font, hexStr, hexBoxX + (hexBoxW - this.font.width(hexStr)) / 2, textY, textColor, false);
@@ -491,10 +473,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
     private void drawLivePreview(GuiGraphics guiGraphics, int cx, int cy, int cw, int ch) {
         guiGraphics.fill(cx, cy, cx + cw, cy + ch, CARD_BG);
-        guiGraphics.fill(cx, cy, cx + cw, cy + 1, BORDER_PRP);
-        guiGraphics.fill(cx, cy + ch - 1, cx + cw, cy + ch, BORDER_PRP);
-        guiGraphics.fill(cx, cy, cx + 1, cy + ch, BORDER_PRP);
-        guiGraphics.fill(cx + cw - 1, cy, cx + cw, cy + ch, BORDER_PRP);
+        brd(guiGraphics, cx, cy, cx + cw, cy + ch, BORDER_PRP);
 
         guiGraphics.fillGradient(cx + 1, cy + 1, cx + cw - 1, cy + 20, 0xFF1B1B2C, 0xFF161625);
         guiGraphics.fill(cx + 1, cy + 20, cx + cw - 1, cy + 21, PURPLE);
@@ -519,10 +498,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
 
         int lw = Math.max(1, Math.min(6, (int) this.settings.outlineWidth));
-        guiGraphics.fill(boxX, boxY, boxX + boxW, boxY + lw, outlineColor);
-        guiGraphics.fill(boxX, boxY + boxH - lw, boxX + boxW, boxY + boxH, outlineColor);
-        guiGraphics.fill(boxX, boxY, boxX + lw, boxY + boxH, outlineColor);
-        guiGraphics.fill(boxX + boxW - lw, boxY, boxX + boxW, boxY + boxH, outlineColor);
+        brd(guiGraphics, boxX, boxY, boxX + boxW, boxY + boxH, outlineColor);
 
         guiGraphics.fill(boxX + boxW / 2, boxY, boxX + boxW / 2 + 1, boxY + boxH, 0x15FFFFFF);
         guiGraphics.fill(boxX, boxY + boxH / 2, boxX + boxW, boxY + boxH / 2 + 1, 0x15FFFFFF);
@@ -542,10 +518,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int borderCol = hovered ? BORDER_PRP : BORDER_GRAY;
 
         guiGraphics.fill(pxX, pxY, pxX + this.cW, pxY + 28, bg);
-        guiGraphics.fill(pxX, pxY, pxX + this.cW, pxY + 1, borderCol);
-        guiGraphics.fill(pxX, pxY + 27, pxX + this.cW, pxY + 28, borderCol);
-        guiGraphics.fill(pxX, pxY, pxX + 1, pxY + 28, borderCol);
-        guiGraphics.fill(pxX + this.cW - 1, pxY, pxX + this.cW, pxY + 28, borderCol);
+        brd(guiGraphics, pxX, pxY, pxX + this.cW, pxY + 28, borderCol);
 
         int themeCol = switch (index) {
             case 0 -> 0xFFCBD5E1;
@@ -567,10 +540,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         boolean btnHovered = mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
 
         guiGraphics.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHovered ? PURPLE_LT : PURPLE);
-        guiGraphics.fill(btnX, btnY, btnX + btnW, btnY + 1, BORDER_PRP);
-        guiGraphics.fill(btnX, btnY + btnH - 1, btnX + btnW, btnY + btnH, BORDER_PRP);
-        guiGraphics.fill(btnX, btnY, btnX + 1, btnY + btnH, BORDER_PRP);
-        guiGraphics.fill(btnX + btnW - 1, btnY, btnX + btnW, btnY + btnH, BORDER_PRP);
+        brd(guiGraphics, btnX, btnY, btnX + btnW, btnY + btnH, BORDER_PRP);
 
         guiGraphics.drawCenteredString(this.font, "Apply", btnX + btnW / 2, btnY + 4, CLR_WHITE);
     }
@@ -580,10 +550,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int cardH = 185;
 
         guiGraphics.fill(ax, ay, ax + cardW, ay + cardH, CARD_BG);
-        guiGraphics.fill(ax, ay, ax + cardW, ay + 1, BORDER_PRP);
-        guiGraphics.fill(ax, ay + cardH - 1, ax + cardW, ay + cardH, BORDER_PRP);
-        guiGraphics.fill(ax, ay, ax + 1, ay + cardH, BORDER_PRP);
-        guiGraphics.fill(ax + cardW - 1, ay, ax + cardW, ay + cardH, BORDER_PRP);
+        brd(guiGraphics, ax, ay, ax + cardW, ay + cardH, BORDER_PRP);
 
         guiGraphics.fillGradient(ax + 1, ay + 1, ax + cardW - 1, ay + 42, 0xFF1B1B2C, 0xFF161625);
         guiGraphics.fillGradient(ax + 1, ay + 42, ax + cardW - 1, ay + 43, PURPLE, PURPLE_LT);
@@ -747,10 +714,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int modalHexW = 54;
         int modalHexH = 18;
         guiGraphics.fill(modalHexX, bottomY, modalHexX + modalHexW, bottomY + modalHexH, 0xFF181524);
-        guiGraphics.fill(modalHexX, bottomY, modalHexX + modalHexW, bottomY + 1, PURPLE);
-        guiGraphics.fill(modalHexX, bottomY + modalHexH - 1, modalHexX + modalHexW, bottomY + modalHexH, PURPLE);
-        guiGraphics.fill(modalHexX, bottomY, modalHexX + 1, bottomY + modalHexH, PURPLE);
-        guiGraphics.fill(modalHexX + modalHexW - 1, bottomY, modalHexX + modalHexW, bottomY + modalHexH, PURPLE);
+        brd(guiGraphics, modalHexX, bottomY, modalHexX + modalHexW, bottomY + modalHexH, PURPLE);
         String hexCode = String.format("#%06X", activeRgbInt & 0xFFFFFF);
         guiGraphics.drawString(this.font, hexCode, modalHexX + (modalHexW - this.font.width(hexCode)) / 2, bottomY + 5, CLR_WHITE, false);
 
@@ -774,10 +738,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int doneBtnY = mY + mH - doneBtnH - 10;
         boolean doneHov = mx >= doneBtnX && mx <= doneBtnX + doneBtnW && my >= doneBtnY && my <= doneBtnY + doneBtnH;
         guiGraphics.fillGradient(doneBtnX, doneBtnY, doneBtnX + doneBtnW, doneBtnY + doneBtnH, doneHov ? 0xFFA855F7 : 0xFF9333EA, doneHov ? 0xFF9333EA : 0xFF7E22CE);
-        guiGraphics.fill(doneBtnX, doneBtnY, doneBtnX + doneBtnW, doneBtnY + 1, LILAC);
-        guiGraphics.fill(doneBtnX, doneBtnY + doneBtnH - 1, doneBtnX + doneBtnW, doneBtnY + doneBtnH, LILAC);
-        guiGraphics.fill(doneBtnX, doneBtnY, doneBtnX + 1, doneBtnY + doneBtnH, LILAC);
-        guiGraphics.fill(doneBtnX + doneBtnW - 1, doneBtnY, doneBtnX + doneBtnW, doneBtnY + doneBtnH, LILAC);
+        brd(guiGraphics, doneBtnX, doneBtnY, doneBtnX + doneBtnW, doneBtnY + doneBtnH, LILAC);
         guiGraphics.drawCenteredString(this.font, "OK", doneBtnX + doneBtnW / 2, doneBtnY + 4, CLR_WHITE);
     }
 
@@ -1340,20 +1301,23 @@ public class BlockyOutlineMenuScreen extends Screen {
         pct = Mth.clamp(pct, 0.0f, 1.0f);
 
         if (col == 0) {
-            switch (row) {
-                case 1 -> this.settings.outlineRgbSpeed = 0.1f + pct * 4.9f;
-                case 2 -> this.settings.outlineHue = pct;
-                case 3 -> this.settings.outlineOpacity = pct;
-                case 4 -> this.settings.outlineWidth = 0.5f + pct * 9.5f;
-            }
+            if (row == 1) this.settings.outlineRgbSpeed = 0.1f + pct * 4.9f;
+            else if (row == 2) this.settings.outlineHue = pct;
+            else if (row == 3) this.settings.outlineOpacity = pct;
+            else if (row == 4) this.settings.outlineWidth = 0.5f + pct * 9.5f;
         } else {
-            switch (row) {
-                case 2 -> this.settings.fillRgbSpeed = 0.1f + pct * 4.9f;
-                case 3 -> this.settings.fillHue = pct;
-                case 5 -> this.settings.fillHue2 = pct;
-                case 6 -> this.settings.fillOpacity = pct;
-            }
+            if (row == 2) this.settings.fillRgbSpeed = 0.1f + pct * 4.9f;
+            else if (row == 3) this.settings.fillHue = pct;
+            else if (row == 5) this.settings.fillHue2 = pct;
+            else if (row == 6) this.settings.fillOpacity = pct;
         }
         BlockyOutlineSettings.save();
+    }
+
+    private void brd(GuiGraphics g, int x, int y, int x2, int y2, int c) {
+        g.fill(x, y, x2, y + 1, c);
+        g.fill(x, y2 - 1, x2, y2, c);
+        g.fill(x, y, x + 1, y2, c);
+        g.fill(x2 - 1, y, x2, y2, c);
     }
 }
