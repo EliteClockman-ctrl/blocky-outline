@@ -65,31 +65,31 @@ public class BlockyOutlineMenuScreen extends Screen {
             0xFFFF0000
     };
 
-    private int panelW;
-    private int panelH;
+    private int pW;
+    private int pH;
     private int px;
     private int py;
-    private int topPad;
-    private int rowH;
-    private int rowGap;
-    private int contentX;
-    private int contentW;
-    private int sliderW;
-    private boolean compactMode = false;
-    private boolean showPreview = true;
+    private int tPad;
+    private int rH;
+    private int rGap;
+    private int cX;
+    private int cW;
+    private int sW;
+    private boolean compact = false;
+    private boolean preview = true;
 
-    private int activeTab = 0;
-    private boolean isDraggingSlider = false;
-    private int dragCol = -1;
-    private int dragRow = -1;
+    private int tab = 0;
+    private boolean draggingSlider = false;
+    private int dCol = -1;
+    private int dRow = -1;
 
-    private int activePickerTarget = -1;
-    private boolean isDragging2DBox = false;
-    private boolean isDraggingPopupHue = false;
+    private int pickerTarget = -1;
+    private boolean dragging2D = false;
+    private boolean draggingHue = false;
 
-    private int focusedHexCol = -1;
-    private String typingHex = "";
-    private String hoveredTooltipText;
+    private int hexFocus = -1;
+    private String hexInput = "";
+    private String tooltip;
 
     private final BlockyOutlineSettings settings = BlockyOutlineSettings.get();
 
@@ -97,7 +97,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         super(Component.literal("Block outline customizer"));
     }
 
-    private void playClickSound() {
+    private void click() {
         try {
             Minecraft.getInstance().getSoundManager().play(
                     SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
@@ -105,141 +105,141 @@ public class BlockyOutlineMenuScreen extends Screen {
         } catch (Throwable ignored) {}
     }
 
-    private void updateLayout() {
+    private void recalcLayout() {
         int rows = 7;
         int w = Math.max(200, this.width - 16);
         int h = Math.max(160, this.height - 16);
 
         boolean compact = h < 280 || w < 450;
-        this.compactMode = compact;
-        this.showPreview = w >= 420 && h >= 240;
+        this.compact = compact;
+        this.preview = w >= 420 && h >= 240;
 
         if (compact) {
             int tp = h / 7;
-            this.topPad = tp < 30 ? 30 : Math.min(tp, 36);
-            int rh = (h - this.topPad - 20) / rows - 3;
-            this.rowH = rh < 18 ? 18 : Math.min(rh, 22);
-            int rg = (h - this.topPad - this.rowH * rows) / rows;
-            this.rowGap = rg < 2 ? 2 : Math.min(rg, 4);
+            this.tPad = tp < 30 ? 30 : Math.min(tp, 36);
+            int rh = (h - this.tPad - 20) / rows - 3;
+            this.rH = rh < 18 ? 18 : Math.min(rh, 22);
+            int rg = (h - this.tPad - this.rH * rows) / rows;
+            this.rGap = rg < 2 ? 2 : Math.min(rg, 4);
             int sw = w / 5;
-            this.sliderW = sw < 50 ? 50 : Math.min(sw, 90);
+            this.sW = sw < 50 ? 50 : Math.min(sw, 90);
         } else {
-            this.topPad = 42;
+            this.tPad = 42;
             int needed = 42 + 24 * rows + 5 * (rows - 1) + 16;
             if (needed > h) {
-                this.rowH = Math.max(20, (h - this.topPad - 20) / rows - 3);
-                this.rowGap = Math.max(2, (h - this.topPad - this.rowH * rows) / (rows + 1));
+                this.rH = Math.max(20, (h - this.tPad - 20) / rows - 3);
+                this.rGap = Math.max(2, (h - this.tPad - this.rH * rows) / (rows + 1));
             } else {
-                this.rowH = 24;
-                this.rowGap = 4;
+                this.rH = 24;
+                this.rGap = 4;
             }
             int sw = w / 4;
-            this.sliderW = sw < 70 ? 70 : Math.min(sw, 105);
+            this.sW = sw < 70 ? 70 : Math.min(sw, 105);
         }
 
-        int contentH = this.topPad + this.rowH * rows + this.rowGap * (rows - 1) + 14;
-        this.panelH = Math.min(h, Math.max(180, contentH));
-        this.panelW = Math.min(w, this.showPreview ? 580 : 380);
-        this.px = (this.width - this.panelW) / 2;
-        this.py = (this.height - this.panelH) / 2;
-        this.contentX = this.px + 12;
-        this.contentW = this.panelW - 24;
+        int contentH = this.tPad + this.rH * rows + this.rGap * (rows - 1) + 14;
+        this.pH = Math.min(h, Math.max(180, contentH));
+        this.pW = Math.min(w, this.preview ? 580 : 380);
+        this.px = (this.width - this.pW) / 2;
+        this.py = (this.height - this.pH) / 2;
+        this.cX = this.px + 12;
+        this.cW = this.pW - 24;
     }
 
     @Override
     protected void init() {
         super.init();
-        this.updateLayout();
+        this.recalcLayout();
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         guiGraphics.fill(0, 0, this.width, this.height, OVERLAY);
-        this.updateLayout();
-        this.hoveredTooltipText = null;
+        this.recalcLayout();
+        this.tooltip = null;
 
-        guiGraphics.fillGradient(this.px, this.py, this.px + this.panelW, this.py + this.panelH, 0xFD12121E, PANEL_BG);
+        guiGraphics.fillGradient(this.px, this.py, this.px + this.pW, this.py + this.pH, 0xFD12121E, PANEL_BG);
 
-        guiGraphics.fill(this.px - 1, this.py - 1, this.px + this.panelW + 1, this.py, BORDER_DIM);
-        guiGraphics.fill(this.px - 1, this.py + this.panelH, this.px + this.panelW + 1, this.py + this.panelH + 1, BORDER_DIM);
+        guiGraphics.fill(this.px - 1, this.py - 1, this.px + this.pW + 1, this.py, BORDER_DIM);
+        guiGraphics.fill(this.px - 1, this.py + this.pH, this.px + this.pW + 1, this.py + this.pH + 1, BORDER_DIM);
 
-        guiGraphics.fill(this.px, this.py, this.px + this.panelW, this.py + 1, BORDER_PRP);
-        guiGraphics.fill(this.px, this.py + this.panelH - 1, this.px + this.panelW, this.py + this.panelH, BORDER_PRP);
-        guiGraphics.fill(this.px, this.py, this.px + 1, this.py + this.panelH, BORDER_PRP);
-        guiGraphics.fill(this.px + this.panelW - 1, this.py, this.px + this.panelW, this.py + this.panelH, BORDER_PRP);
+        guiGraphics.fill(this.px, this.py, this.px + this.pW, this.py + 1, BORDER_PRP);
+        guiGraphics.fill(this.px, this.py + this.pH - 1, this.px + this.pW, this.py + this.pH, BORDER_PRP);
+        guiGraphics.fill(this.px, this.py, this.px + 1, this.py + this.pH, BORDER_PRP);
+        guiGraphics.fill(this.px + this.pW - 1, this.py, this.px + this.pW, this.py + this.pH, BORDER_PRP);
 
-        int headerH = this.compactMode ? 28 : 36;
-        guiGraphics.fillGradient(this.px + 1, this.py + 1, this.px + this.panelW - 1, this.py + headerH, HEADER_BG, 0xFF161625);
-        guiGraphics.fillGradient(this.px + 1, this.py + headerH, this.px + this.panelW - 1, this.py + headerH + 1, PURPLE, PURPLE_LT);
+        int headerH = this.compact ? 28 : 36;
+        guiGraphics.fillGradient(this.px + 1, this.py + 1, this.px + this.pW - 1, this.py + headerH, HEADER_BG, 0xFF161625);
+        guiGraphics.fillGradient(this.px + 1, this.py + headerH, this.px + this.pW - 1, this.py + headerH + 1, PURPLE, PURPLE_LT);
 
-        int logoX = this.px + (this.compactMode ? 8 : 14);
-        int logoY = this.py + (this.compactMode ? 4 : 10);
+        int logoX = this.px + (this.compact ? 8 : 14);
+        int logoY = this.py + (this.compact ? 4 : 10);
         int logoW;
-        if (this.panelW < 360) {
-            guiGraphics.drawString(this.font, "BO", logoX, logoY + (this.compactMode ? 2 : 4), PURPLE_LT, true);
+        if (this.pW < 360) {
+            guiGraphics.drawString(this.font, "BO", logoX, logoY + (this.compact ? 2 : 4), PURPLE_LT, true);
             logoW = this.font.width("BO");
         } else {
-            guiGraphics.drawString(this.font, "Blocky", logoX, logoY + (this.compactMode ? 2 : 4), CLR_WHITE, true);
-            guiGraphics.drawString(this.font, "Outline", logoX + this.font.width("Blocky") + 3, logoY + (this.compactMode ? 2 : 4), PURPLE_LT, false);
+            guiGraphics.drawString(this.font, "Blocky", logoX, logoY + (this.compact ? 2 : 4), CLR_WHITE, true);
+            guiGraphics.drawString(this.font, "Outline", logoX + this.font.width("Blocky") + 3, logoY + (this.compact ? 2 : 4), PURPLE_LT, false);
             logoW = this.font.width("Blocky Outline");
         }
 
         String vTag = "v1.1.1";
         int vW = this.font.width(vTag);
-        boolean showVTag = this.panelW >= 340;
-        int vX = this.px + this.panelW - vW - (this.compactMode ? 8 : 12);
+        boolean showVTag = this.pW >= 340;
+        int vX = this.px + this.pW - vW - (this.compact ? 8 : 12);
         if (showVTag) {
-            int tagTop = this.py + (this.compactMode ? 5 : 9);
-            int tagBot = tagTop + (this.compactMode ? 13 : 15);
+            int tagTop = this.py + (this.compact ? 5 : 9);
+            int tagBot = tagTop + (this.compact ? 13 : 15);
             guiGraphics.fillGradient(vX - 3, tagTop, vX + vW + 3, tagBot, PURPLE, 0xFF7E22CE);
-            guiGraphics.drawString(this.font, vTag, vX, tagTop + (this.compactMode ? 2 : 3), CLR_WHITE, false);
+            guiGraphics.drawString(this.font, vTag, vX, tagTop + (this.compact ? 2 : 3), CLR_WHITE, false);
         }
 
-        int tabStartX = logoX + logoW + (this.compactMode ? 8 : 14);
-        int tabRightLimit = showVTag ? (vX - 6) : (this.px + this.panelW - 8);
+        int tabStartX = logoX + logoW + (this.compact ? 8 : 14);
+        int tabRightLimit = showVTag ? (vX - 6) : (this.px + this.pW - 8);
         int tabAvailableW = tabRightLimit - tabStartX;
         int gap = 2;
         int tabW = Math.max(34, (tabAvailableW - gap * 3) / 4);
-        int tabH = this.compactMode ? 17 : 21;
-        int tabY = this.py + (this.compactMode ? 5 : 8);
+        int tabH = this.compact ? 17 : 21;
+        int tabY = this.py + (this.compact ? 5 : 8);
 
         for (int i = 0; i < TAB_LABELS.length; ++i) {
-            this.renderHeaderTab(guiGraphics, tabStartX + i * (tabW + gap), tabY, tabW, tabH, i, mouseX, mouseY);
+            this.drawTab(guiGraphics, tabStartX + i * (tabW + gap), tabY, tabW, tabH, i, mouseX, mouseY);
         }
 
-        int contentY = this.py + this.topPad;
-        if (this.activeTab == 0 || this.activeTab == 1) {
-            int col = this.activeTab;
+        int contentY = this.py + this.tPad;
+        if (this.tab == 0 || this.tab == 1) {
+            int col = this.tab;
             int currentY = contentY;
             int numRows = (col == 0) ? 6 : 7;
             for (int row = 0; row < numRows; ++row) {
-                int height = this.getRowHeight(col, row);
-                this.renderRow(guiGraphics, this.contentX, currentY, col, row, height, mouseX, mouseY);
-                currentY += height + this.rowGap;
+                int height = this.rHFor(col, row);
+                this.drawRow(guiGraphics, this.cX, currentY, col, row, height, mouseX, mouseY);
+                currentY += height + this.rGap;
             }
 
-            if (this.showPreview) {
-                int pw = this.getPreviewWidth();
-                this.renderLive3DBlockCanvas(guiGraphics, this.contentX + this.contentW - pw, contentY, pw, this.panelH - this.topPad - (this.compactMode ? 28 : 40));
+            if (this.preview) {
+                int pw = this.previewW();
+                this.drawLivePreview(guiGraphics, this.cX + this.cW - pw, contentY, pw, this.pH - this.tPad - (this.compact ? 28 : 40));
             }
-        } else if (this.activeTab == 2) {
+        } else if (this.tab == 2) {
             for (int i = 0; i < PRESET_NAMES.length; ++i) {
-                this.renderPresetCard(guiGraphics, this.contentX, contentY + i * 34, i, mouseX, mouseY);
+                this.renderPresetCard(guiGraphics, this.cX, contentY + i * 34, i, mouseX, mouseY);
             }
-        } else if (this.activeTab == 3) {
-            this.renderAboutPanel(guiGraphics, this.contentX, contentY);
+        } else if (this.tab == 3) {
+            this.renderAboutPanel(guiGraphics, this.cX, contentY);
         }
 
-        this.renderDoneButton(guiGraphics, mouseX, mouseY);
+        this.drawDoneBtn(guiGraphics, mouseX, mouseY);
 
         super.render(guiGraphics, mouseX, mouseY, delta);
 
-        if (this.activePickerTarget != -1) {
-            this.renderColorPickerModal(guiGraphics, mouseX, mouseY);
+        if (this.pickerTarget != -1) {
+            this.drawPickerModal(guiGraphics, mouseX, mouseY);
         }
 
-        if (this.hoveredTooltipText != null) {
-            int textW = this.font.width(this.hoveredTooltipText);
+        if (this.tooltip != null) {
+            int textW = this.font.width(this.tooltip);
             int tx = mouseX + 10;
             int ty = mouseY - 14;
             guiGraphics.fill(tx - 6, ty - 5, tx + textW + 6, ty + 13, 0xF0141422);
@@ -247,27 +247,27 @@ public class BlockyOutlineMenuScreen extends Screen {
             guiGraphics.fill(tx - 6, ty + 12, tx + textW + 6, ty + 13, PURPLE);
             guiGraphics.fill(tx - 6, ty - 4, tx - 5, ty + 12, PURPLE);
             guiGraphics.fill(tx + textW + 5, ty - 4, tx + textW + 6, ty + 12, PURPLE);
-            guiGraphics.drawString(this.font, this.hoveredTooltipText, tx, ty, CLR_WHITE, false);
+            guiGraphics.drawString(this.font, this.tooltip, tx, ty, CLR_WHITE, false);
         }
     }
 
-    private int getSettingsWidth() {
-        if (!this.showPreview) {
-            return this.contentW;
+    private int settingsW() {
+        if (!this.preview) {
+            return this.cW;
         }
-        return this.contentW - this.getPreviewWidth() - 10;
+        return this.cW - this.previewW() - 10;
     }
 
-    private int getPreviewWidth() {
-        if (!this.showPreview) return 0;
-        return Math.max(130, Math.min(175, this.contentW / 3));
+    private int previewW() {
+        if (!this.preview) return 0;
+        return Math.max(130, Math.min(175, this.cW / 3));
     }
 
-    private void renderDoneButton(GuiGraphics guiGraphics, int mx, int my) {
-        int btnW = this.compactMode ? 65 : 85;
-        int btnH = this.compactMode ? 18 : 22;
-        int btnX = this.px + this.panelW - btnW - (this.compactMode ? 10 : 16);
-        int btnY = this.py + this.panelH - btnH - (this.compactMode ? 6 : 10);
+    private void drawDoneBtn(GuiGraphics guiGraphics, int mx, int my) {
+        int btnW = this.compact ? 65 : 85;
+        int btnH = this.compact ? 18 : 22;
+        int btnX = this.px + this.pW - btnW - (this.compact ? 10 : 16);
+        int btnY = this.py + this.pH - btnH - (this.compact ? 6 : 10);
         boolean hovered = mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
 
         int bgTop = hovered ? 0xFFA855F7 : 0xFF9333EA;
@@ -284,8 +284,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, "Done", btnX + btnW / 2, btnY + (btnH - 8) / 2, textCol);
     }
 
-    private void renderHeaderTab(GuiGraphics guiGraphics, int tx, int ty, int tw, int th, int index, int mx, int my) {
-        boolean selected = (this.activeTab == index);
+    private void drawTab(GuiGraphics guiGraphics, int tx, int ty, int tw, int th, int index, int mx, int my) {
+        boolean selected = (this.tab == index);
         boolean hovered = mx >= tx && mx <= tx + tw && my >= ty && my <= ty + th;
 
         int bg = selected ? CARD_BG : (hovered ? CARD_HOVER : 0xFF141422);
@@ -301,13 +301,13 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, TAB_LABELS[index], tx + tw / 2, ty + (th - 8) / 2, textCol);
     }
 
-    private int getRowHeight(int col, int row) {
-        return this.rowH;
+    private int rHFor(int col, int row) {
+        return this.rH;
     }
 
-    private void renderRow(GuiGraphics guiGraphics, int rx, int ry, int col, int row, int height, int mx, int my) {
-        boolean disabled = this.isRowDisabled(col, row);
-        int settingsW = this.getSettingsWidth();
+    private void drawRow(GuiGraphics guiGraphics, int rx, int ry, int col, int row, int height, int mx, int my) {
+        boolean disabled = this.rowDisabled(col, row);
+        int settingsW = this.settingsW();
         boolean hovered = !disabled && mx >= rx && mx <= rx + settingsW && my >= ry && my <= ry + height;
 
         int bg = disabled ? 0xFF0F0F1B : (hovered ? CARD_HOVER : CARD_BG);
@@ -321,23 +321,23 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         String label = (col == 0) ? OUTLINE_ROW_LABELS[row] : FILL_ROW_LABELS[row];
         int labelColor = disabled ? 0xFF64748B : CLR_WHITE;
-        guiGraphics.drawString(this.font, label, rx + (this.compactMode ? 8 : 12), ry + (this.rowH - 8) / 2, labelColor, false);
+        guiGraphics.drawString(this.font, label, rx + (this.compact ? 8 : 12), ry + (this.rH - 8) / 2, labelColor, false);
 
-        if (this.isCheckboxRow(col, row)) {
-            this.renderToggleSwitch(guiGraphics, rx, ry, col, row, disabled, settingsW);
+        if (this.isToggle(col, row)) {
+            this.drawToggle(guiGraphics, rx, ry, col, row, disabled, settingsW);
         } else if ((col == 0 && row == 2) || (col == 1 && (row == 3 || row == 5))) {
-            this.renderColorSliderAndHex(guiGraphics, rx, ry, col, row, disabled, mx, my, settingsW);
+            this.drawColorRow(guiGraphics, rx, ry, col, row, disabled, mx, my, settingsW);
         } else {
-            this.renderSlider(guiGraphics, rx, ry, col, row, disabled, settingsW);
+            this.drawSlider(guiGraphics, rx, ry, col, row, disabled, settingsW);
         }
     }
 
-    private void renderToggleSwitch(GuiGraphics guiGraphics, int rx, int ry, int col, int row, boolean disabled, int containerW) {
-        boolean checked = this.getCheckboxValue(col, row);
+    private void drawToggle(GuiGraphics guiGraphics, int rx, int ry, int col, int row, boolean disabled, int containerW) {
+        boolean checked = this.toggleVal(col, row);
         int switchW = 34;
         int switchH = 16;
         int switchX = rx + containerW - switchW - 12;
-        int switchY = ry + (this.rowH - switchH) / 2;
+        int switchY = ry + (this.rH - switchH) / 2;
 
         int trackBg = disabled ? 0xFF1E293B : (checked ? PURPLE : 0xFF2D2D44);
         guiGraphics.fill(switchX, switchY, switchX + switchW, switchY + switchH, trackBg);
@@ -357,19 +357,19 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         String stateText = checked ? "● ON" : "○ OFF";
         int stateColor = disabled ? 0xFF64748B : (checked ? NEON_GREEN : RED);
-        guiGraphics.drawString(this.font, stateText, switchX - this.font.width(stateText) - 8, ry + (this.rowH - 8) / 2, stateColor, false);
+        guiGraphics.drawString(this.font, stateText, switchX - this.font.width(stateText) - 8, ry + (this.rH - 8) / 2, stateColor, false);
     }
 
-    private void renderSlider(GuiGraphics guiGraphics, int rx, int ry, int col, int row, boolean disabled, int containerW) {
-        float pct = this.getSliderPct(col, row);
-        String val = this.getSliderValueStr(col, row);
+    private void drawSlider(GuiGraphics guiGraphics, int rx, int ry, int col, int row, boolean disabled, int containerW) {
+        float pct = this.sliderPct(col, row);
+        String val = this.sliderStr(col, row);
 
-        int sliderX = rx + containerW - this.sliderW - 12;
-        int sliderY = ry + (this.rowH - 6) / 2;
-        int filled = (int)((float)this.sliderW * pct);
+        int sliderX = rx + containerW - this.sW - 12;
+        int sliderY = ry + (this.rH - 6) / 2;
+        int filled = (int)((float)this.sW * pct);
 
         int trackBg = 0xFF141422;
-        guiGraphics.fill(sliderX, sliderY, sliderX + this.sliderW, sliderY + 6, trackBg);
+        guiGraphics.fill(sliderX, sliderY, sliderX + this.sW, sliderY + 6, trackBg);
         if (!disabled) {
             guiGraphics.fillGradient(sliderX, sliderY, sliderX + filled, sliderY + 6, PURPLE, PURPLE_LT);
         } else {
@@ -382,11 +382,11 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         if (!val.isEmpty()) {
             int valColor = disabled ? 0xFF64748B : CLR_WHITE;
-            guiGraphics.drawString(this.font, val, sliderX - this.font.width(val) - 8, ry + (this.rowH - 8) / 2, valColor, false);
+            guiGraphics.drawString(this.font, val, sliderX - this.font.width(val) - 8, ry + (this.rH - 8) / 2, valColor, false);
         }
     }
 
-    private void renderHueBar(GuiGraphics guiGraphics, int x, int y, int w, int h, boolean disabled) {
+    private void drawHueTrack(GuiGraphics guiGraphics, int x, int y, int w, int h, boolean disabled) {
         if (disabled) {
             guiGraphics.fill(x, y, x + w, y + h, 0xFF141422);
             return;
@@ -400,7 +400,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
     }
 
-    private void renderColorSliderAndHex(GuiGraphics guiGraphics, int rx, int ry, int col, int row, boolean disabled, int mx, int my, int containerW) {
+    private void drawColorRow(GuiGraphics guiGraphics, int rx, int ry, int col, int row, boolean disabled, int mx, int my, int containerW) {
         boolean isColor2 = (col == 1 && row == 5);
         float hue = (col == 0) ? this.settings.outlineHue : (isColor2 ? this.settings.fillHue2 : this.settings.fillHue);
         float saturation = (col == 0) ? this.settings.outlineSaturation : (isColor2 ? this.settings.fillSaturation2 : this.settings.fillSaturation);
@@ -408,18 +408,18 @@ public class BlockyOutlineMenuScreen extends Screen {
         int hexIndex = isColor2 ? 2 : col;
 
         int trackH = 8;
-        int sliderX = rx + containerW - this.sliderW - 12;
-        int sliderY = ry + (this.rowH - trackH) / 2;
-        int thumbX = sliderX + (int)((float)this.sliderW * hue);
+        int sliderX = rx + containerW - this.sW - 12;
+        int sliderY = ry + (this.rH - trackH) / 2;
+        int thumbX = sliderX + (int)((float)this.sW * hue);
 
         int trackBorder = disabled ? 0xFF334155 : 0xFF2D2D44;
-        guiGraphics.fill(sliderX - 2, sliderY - 2, sliderX + this.sliderW + 2, sliderY + trackH + 2, 0xFF0D0C16);
-        guiGraphics.fill(sliderX - 1, sliderY - 1, sliderX + this.sliderW + 1, sliderY + trackH + 1, trackBorder);
+        guiGraphics.fill(sliderX - 2, sliderY - 2, sliderX + this.sW + 2, sliderY + trackH + 2, 0xFF0D0C16);
+        guiGraphics.fill(sliderX - 1, sliderY - 1, sliderX + this.sW + 1, sliderY + trackH + 1, trackBorder);
 
-        this.renderHueBar(guiGraphics, sliderX, sliderY, this.sliderW, trackH, disabled);
+        this.drawHueTrack(guiGraphics, sliderX, sliderY, this.sW, trackH, disabled);
 
         if (!disabled) {
-            guiGraphics.fill(sliderX, sliderY, sliderX + this.sliderW, sliderY + 1, 0x30FFFFFF);
+            guiGraphics.fill(sliderX, sliderY, sliderX + this.sW, sliderY + 1, 0x30FFFFFF);
         }
 
         float[] activeRgb = BlockyOutlineSettings.hsvToRgb(hue, saturation, value);
@@ -438,7 +438,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         int pSize = 15;
         int pX = sliderX - pSize - 8;
-        int pY = ry + (this.rowH - pSize) / 2;
+        int pY = ry + (this.rH - pSize) / 2;
         boolean swatchHovered = !disabled && mx >= pX && mx <= pX + pSize && my >= pY && my <= pY + pSize;
 
         guiGraphics.fill(pX - 2, pY - 2, pX + pSize + 2, pY + pSize + 2, 0xFF0D0C16);
@@ -449,16 +449,16 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(pX - 1, pY, pX, pY + pSize, swatchBorder);
         guiGraphics.fill(pX + pSize, pY, pX + pSize + 1, pY + pSize, swatchBorder);
 
-        if (swatchHovered && this.activePickerTarget == -1 && this.focusedHexCol == -1) {
-            this.hoveredTooltipText = "Click to open Color Palette";
+        if (swatchHovered && this.pickerTarget == -1 && this.hexFocus == -1) {
+            this.tooltip = "Click to open Color Palette";
         }
 
         if (!disabled) {
             String hexStr;
             int textColor;
 
-            if (this.focusedHexCol == hexIndex) {
-                hexStr = "#" + (this.typingHex + "______").substring(0, 6);
+            if (this.hexFocus == hexIndex) {
+                hexStr = "#" + (this.hexInput + "______").substring(0, 6);
                 textColor = NEON_GREEN;
             } else {
                 hexStr = String.format("#%06X", activeColor & 0xFFFFFF);
@@ -468,13 +468,13 @@ public class BlockyOutlineMenuScreen extends Screen {
             int hexBoxW = 46;
             int hexBoxH = 15;
             int hexBoxX = pX - hexBoxW - 6;
-            int hexBoxY = ry + (this.rowH - hexBoxH) / 2;
+            int hexBoxY = ry + (this.rH - hexBoxH) / 2;
             boolean hexHovered = mx >= hexBoxX && mx <= hexBoxX + hexBoxW && my >= hexBoxY && my <= hexBoxY + hexBoxH;
 
-            int hexBg = (this.focusedHexCol == hexIndex) ? 0xFF1B1B2C : (hexHovered ? 0xFF24243B : 0xFF141422);
+            int hexBg = (this.hexFocus == hexIndex) ? 0xFF1B1B2C : (hexHovered ? 0xFF24243B : 0xFF141422);
             guiGraphics.fill(hexBoxX, hexBoxY, hexBoxX + hexBoxW, hexBoxY + hexBoxH, hexBg);
 
-            int boxBorderColor = (this.focusedHexCol == hexIndex) ? PURPLE_LT : (hexHovered ? LILAC : 0xFF3B3B54);
+            int boxBorderColor = (this.hexFocus == hexIndex) ? PURPLE_LT : (hexHovered ? LILAC : 0xFF3B3B54);
             guiGraphics.fill(hexBoxX, hexBoxY, hexBoxX + hexBoxW, hexBoxY + 1, boxBorderColor);
             guiGraphics.fill(hexBoxX, hexBoxY + hexBoxH - 1, hexBoxX + hexBoxW, hexBoxY + hexBoxH, boxBorderColor);
             guiGraphics.fill(hexBoxX, hexBoxY, hexBoxX + 1, hexBoxY + hexBoxH, boxBorderColor);
@@ -483,13 +483,13 @@ public class BlockyOutlineMenuScreen extends Screen {
             int textY = hexBoxY + (hexBoxH - 8) / 2;
             guiGraphics.drawString(this.font, hexStr, hexBoxX + (hexBoxW - this.font.width(hexStr)) / 2, textY, textColor, false);
 
-            if (hexHovered && this.focusedHexCol == -1 && this.activePickerTarget == -1) {
-                this.hoveredTooltipText = "Click to enter custom HEX color code";
+            if (hexHovered && this.hexFocus == -1 && this.pickerTarget == -1) {
+                this.tooltip = "Click to enter custom HEX color code";
             }
         }
     }
 
-    private void renderLive3DBlockCanvas(GuiGraphics guiGraphics, int cx, int cy, int cw, int ch) {
+    private void drawLivePreview(GuiGraphics guiGraphics, int cx, int cy, int cw, int ch) {
         guiGraphics.fill(cx, cy, cx + cw, cy + ch, CARD_BG);
         guiGraphics.fill(cx, cy, cx + cw, cy + 1, BORDER_PRP);
         guiGraphics.fill(cx, cy + ch - 1, cx + cw, cy + ch, BORDER_PRP);
@@ -537,15 +537,15 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void renderPresetCard(GuiGraphics guiGraphics, int pxX, int pxY, int index, int mx, int my) {
-        boolean hovered = mx >= pxX && mx <= pxX + this.contentW && my >= pxY && my <= pxY + 28;
+        boolean hovered = mx >= pxX && mx <= pxX + this.cW && my >= pxY && my <= pxY + 28;
         int bg = hovered ? CARD_HOVER : CARD_BG;
         int borderCol = hovered ? BORDER_PRP : BORDER_GRAY;
 
-        guiGraphics.fill(pxX, pxY, pxX + this.contentW, pxY + 28, bg);
-        guiGraphics.fill(pxX, pxY, pxX + this.contentW, pxY + 1, borderCol);
-        guiGraphics.fill(pxX, pxY + 27, pxX + this.contentW, pxY + 28, borderCol);
+        guiGraphics.fill(pxX, pxY, pxX + this.cW, pxY + 28, bg);
+        guiGraphics.fill(pxX, pxY, pxX + this.cW, pxY + 1, borderCol);
+        guiGraphics.fill(pxX, pxY + 27, pxX + this.cW, pxY + 28, borderCol);
         guiGraphics.fill(pxX, pxY, pxX + 1, pxY + 28, borderCol);
-        guiGraphics.fill(pxX + this.contentW - 1, pxY, pxX + this.contentW, pxY + 28, borderCol);
+        guiGraphics.fill(pxX + this.cW - 1, pxY, pxX + this.cW, pxY + 28, borderCol);
 
         int themeCol = switch (index) {
             case 0 -> 0xFFCBD5E1;
@@ -562,7 +562,7 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         int btnW = 68;
         int btnH = 16;
-        int btnX = pxX + this.contentW - btnW - 6;
+        int btnX = pxX + this.cW - btnW - 6;
         int btnY = pxY + 6;
         boolean btnHovered = mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
 
@@ -576,7 +576,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void renderAboutPanel(GuiGraphics guiGraphics, int ax, int ay) {
-        int cardW = this.contentW;
+        int cardW = this.cW;
         int cardH = 185;
 
         guiGraphics.fill(ax, ay, ax + cardW, ay + cardH, CARD_BG);
@@ -632,7 +632,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.drawString(this.font, "github.com/EliteClockman-ctrl/blocky-outline", ax + 24, repoY + 20, CLR_GRAY, false);
     }
 
-    private void renderColorPickerModal(GuiGraphics guiGraphics, int mx, int my) {
+    private void drawPickerModal(GuiGraphics guiGraphics, int mx, int my) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x88000000);
 
         int mW = 240;
@@ -650,8 +650,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(mX + 1, mY + 24, mX + mW - 1, mY + 25, 0xFF2D2640);
 
         String title;
-        if (this.activePickerTarget == 0) title = "Palette: Outline Color";
-        else if (this.activePickerTarget == 1) title = "Palette: Fill Color 1 (Top)";
+        if (this.pickerTarget == 0) title = "Palette: Outline Color";
+        else if (this.pickerTarget == 1) title = "Palette: Fill Color 1 (Top)";
         else title = "Palette: Fill Color 2 (Bottom)";
         guiGraphics.drawString(this.font, title, mX + 10, mY + 8, CLR_WHITE, false);
 
@@ -664,11 +664,11 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, "×", closeBtnX + closeBtnW / 2, closeBtnY + 2, CLR_WHITE);
 
         float hue, sat, val;
-        if (this.activePickerTarget == 0) {
+        if (this.pickerTarget == 0) {
             hue = this.settings.outlineHue;
             sat = this.settings.outlineSaturation;
             val = this.settings.outlineValue;
-        } else if (this.activePickerTarget == 1) {
+        } else if (this.pickerTarget == 1) {
             hue = this.settings.fillHue;
             sat = this.settings.fillSaturation;
             val = this.settings.fillValue;
@@ -808,13 +808,13 @@ public class BlockyOutlineMenuScreen extends Screen {
         sat = Mth.clamp(sat, 0.0f, 1.0f);
         val = Mth.clamp(val, 0.0f, 1.0f);
 
-        if (this.activePickerTarget == 0) {
+        if (this.pickerTarget == 0) {
             this.settings.outlineSaturation = sat;
             this.settings.outlineValue = val;
-        } else if (this.activePickerTarget == 1) {
+        } else if (this.pickerTarget == 1) {
             this.settings.fillSaturation = sat;
             this.settings.fillValue = val;
-        } else if (this.activePickerTarget == 2) {
+        } else if (this.pickerTarget == 2) {
             this.settings.fillSaturation2 = sat;
             this.settings.fillValue2 = val;
         }
@@ -829,11 +829,11 @@ public class BlockyOutlineMenuScreen extends Screen {
         float hue = (float) (my - vHueY) / (float) vHueH;
         hue = Mth.clamp(hue, 0.0f, 1.0f);
 
-        if (this.activePickerTarget == 0) {
+        if (this.pickerTarget == 0) {
             this.settings.outlineHue = hue;
-        } else if (this.activePickerTarget == 1) {
+        } else if (this.pickerTarget == 1) {
             this.settings.fillHue = hue;
-        } else if (this.activePickerTarget == 2) {
+        } else if (this.pickerTarget == 2) {
             this.settings.fillHue2 = hue;
         }
         BlockyOutlineSettings.save();
@@ -845,7 +845,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         double my = event.y();
         int button = event.button();
 
-        if (this.activePickerTarget != -1) {
+        if (this.pickerTarget != -1) {
             int mW = 240;
             int mH = 205;
             int mX = (this.width - mW) / 2;
@@ -856,8 +856,8 @@ public class BlockyOutlineMenuScreen extends Screen {
             int closeBtnX = mX + mW - closeBtnW - 6;
             int closeBtnY = mY + 5;
             if (mx >= closeBtnX && mx <= closeBtnX + closeBtnW && my >= closeBtnY && my <= closeBtnY + closeBtnH) {
-                this.activePickerTarget = -1;
-                this.playClickSound();
+                this.pickerTarget = -1;
+                this.click();
                 return true;
             }
 
@@ -866,8 +866,8 @@ public class BlockyOutlineMenuScreen extends Screen {
             int doneBtnX = mX + mW - doneBtnW - 12;
             int doneBtnY = mY + mH - doneBtnH - 10;
             if (mx >= doneBtnX && mx <= doneBtnX + doneBtnW && my >= doneBtnY && my <= doneBtnY + doneBtnH) {
-                this.activePickerTarget = -1;
-                this.playClickSound();
+                this.pickerTarget = -1;
+                this.click();
                 return true;
             }
 
@@ -876,7 +876,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             int boxW = 180;
             int boxH = 100;
             if (mx >= boxX && mx <= boxX + boxW && my >= boxY && my <= boxY + boxH) {
-                this.isDragging2DBox = true;
+                this.dragging2D = true;
                 this.updateModal2DPicker(mx, my);
                 return true;
             }
@@ -886,7 +886,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             int vHueW = 16;
             int vHueH = boxH;
             if (mx >= vHueX && mx <= vHueX + vHueW && my >= vHueY && my <= vHueY + vHueH) {
-                this.isDraggingPopupHue = true;
+                this.draggingHue = true;
                 this.updateModalHue(my);
                 return true;
             }
@@ -906,24 +906,24 @@ public class BlockyOutlineMenuScreen extends Screen {
                 if (mx >= dx && mx <= dx + dotSize && my >= dy && my <= dy + dotSize) {
                     int c = palette[i];
                     String hexStr = String.format("%06X", c & 0xFFFFFF);
-                    this.applyHexColor(this.activePickerTarget, hexStr);
-                    this.playClickSound();
+                    this.applyHexColor(this.pickerTarget, hexStr);
+                    this.click();
                     return true;
                 }
             }
 
             if (mx < mX || mx > mX + mW || my < mY || my > mY + mH) {
-                this.activePickerTarget = -1;
-                this.playClickSound();
+                this.pickerTarget = -1;
+                this.click();
                 return true;
             }
 
             return true; // Eat click events inside modal backdrop
         }
 
-        int logoX = this.px + (this.compactMode ? 8 : 14);
+        int logoX = this.px + (this.compact ? 8 : 14);
         int logoW;
-        if (this.panelW < 360) {
+        if (this.pW < 360) {
             logoW = this.font.width("BO");
         } else {
             logoW = this.font.width("Blocky Outline");
@@ -931,119 +931,119 @@ public class BlockyOutlineMenuScreen extends Screen {
 
         String vTag = "v1.1.1";
         int vW = this.font.width(vTag);
-        boolean showVTag = this.panelW >= 340;
-        int vX = this.px + this.panelW - vW - (this.compactMode ? 8 : 12);
+        boolean showVTag = this.pW >= 340;
+        int vX = this.px + this.pW - vW - (this.compact ? 8 : 12);
 
-        int tabStartX = logoX + logoW + (this.compactMode ? 8 : 14);
-        int tabRightLimit = showVTag ? (vX - 6) : (this.px + this.panelW - 8);
+        int tabStartX = logoX + logoW + (this.compact ? 8 : 14);
+        int tabRightLimit = showVTag ? (vX - 6) : (this.px + this.pW - 8);
         int tabAvailableW = tabRightLimit - tabStartX;
         int gap = 2;
         int tabW = Math.max(34, (tabAvailableW - gap * 3) / 4);
-        int tabH = this.compactMode ? 17 : 21;
-        int tabY = this.py + (this.compactMode ? 5 : 8);
+        int tabH = this.compact ? 17 : 21;
+        int tabY = this.py + (this.compact ? 5 : 8);
 
         for (int i = 0; i < TAB_LABELS.length; ++i) {
             int tx = tabStartX + i * (tabW + gap);
             if (mx >= tx && mx <= tx + tabW && my >= tabY && my <= tabY + tabH) {
-                this.activeTab = i;
-                this.playClickSound();
+                this.tab = i;
+                this.click();
                 return true;
             }
         }
 
-        int contentY = this.py + this.topPad;
-        if (this.activeTab == 0 || this.activeTab == 1) {
-            int col = this.activeTab;
-            int settingsW = this.getSettingsWidth();
+        int contentY = this.py + this.tPad;
+        if (this.tab == 0 || this.tab == 1) {
+            int col = this.tab;
+            int settingsW = this.settingsW();
             int currentY = contentY;
             int numRows = (col == 0) ? 6 : 7;
 
             for (int row = 0; row < numRows; ++row) {
-                int height = this.getRowHeight(col, row);
-                boolean disabled = this.isRowDisabled(col, row);
+                int height = this.rHFor(col, row);
+                boolean disabled = this.rowDisabled(col, row);
 
-                if (!disabled && mx >= this.contentX && mx <= this.contentX + settingsW && my >= currentY && my <= currentY + height) {
-                    if (this.isCheckboxRow(col, row)) {
+                if (!disabled && mx >= this.cX && mx <= this.cX + settingsW && my >= currentY && my <= currentY + height) {
+                    if (this.isToggle(col, row)) {
                         int switchW = 34;
                         int switchH = 16;
-                        int switchX = this.contentX + settingsW - switchW - 12;
-                        int switchY = currentY + (this.rowH - switchH) / 2;
+                        int switchX = this.cX + settingsW - switchW - 12;
+                        int switchY = currentY + (this.rH - switchH) / 2;
 
                         if (mx >= switchX - 6 && mx <= switchX + switchW + 6 && my >= switchY - 4 && my <= switchY + switchH + 4) {
                             this.toggleCheckbox(col, row);
-                            this.playClickSound();
+                            this.click();
                             return true;
                         }
                     } else if ((col == 0 && row == 2) || (col == 1 && (row == 3 || row == 5))) {
-                        int sliderX = this.contentX + settingsW - this.sliderW - 12;
+                        int sliderX = this.cX + settingsW - this.sW - 12;
                         int pSize = 15;
                         int pX = sliderX - pSize - 8;
-                        int pY = currentY + (this.rowH - pSize) / 2;
+                        int pY = currentY + (this.rH - pSize) / 2;
                         int hexBoxW = 46;
                         int hexBoxH = 15;
                         int hexBoxX = pX - hexBoxW - 6;
-                        int hexBoxY = currentY + (this.rowH - hexBoxH) / 2;
+                        int hexBoxY = currentY + (this.rH - hexBoxH) / 2;
 
                         if (mx >= pX && mx <= pX + pSize && my >= pY && my <= pY + pSize) {
-                            this.activePickerTarget = (col == 1 && row == 5) ? 2 : col;
-                            this.focusedHexCol = -1;
-                            this.playClickSound();
+                            this.pickerTarget = (col == 1 && row == 5) ? 2 : col;
+                            this.hexFocus = -1;
+                            this.click();
                             return true;
                         }
 
                         if (mx >= hexBoxX && mx <= hexBoxX + hexBoxW && my >= hexBoxY && my <= hexBoxY + hexBoxH) {
-                            this.focusedHexCol = (col == 1 && row == 5) ? 2 : col;
-                            this.typingHex = "";
+                            this.hexFocus = (col == 1 && row == 5) ? 2 : col;
+                            this.hexInput = "";
                             return true;
                         }
 
-                        if (mx >= sliderX - 4 && mx <= sliderX + this.sliderW + 4) {
-                            this.isDraggingSlider = true;
-                            this.dragCol = col;
-                            this.dragRow = row;
+                        if (mx >= sliderX - 4 && mx <= sliderX + this.sW + 4) {
+                            this.draggingSlider = true;
+                            this.dCol = col;
+                            this.dRow = row;
                             this.updateSliderValue(col, row, mx, sliderX);
                             return true;
                         }
                     } else {
-                        int sliderX = this.contentX + settingsW - this.sliderW - 12;
-                        if (mx >= sliderX - 4 && mx <= sliderX + this.sliderW + 4) {
-                            this.isDraggingSlider = true;
-                            this.dragCol = col;
-                            this.dragRow = row;
+                        int sliderX = this.cX + settingsW - this.sW - 12;
+                        if (mx >= sliderX - 4 && mx <= sliderX + this.sW + 4) {
+                            this.draggingSlider = true;
+                            this.dCol = col;
+                            this.dRow = row;
                             this.updateSliderValue(col, row, mx, sliderX);
                             return true;
                         }
                     }
                 }
-                currentY += height + this.rowGap;
+                currentY += height + this.rGap;
             }
-        } else if (this.activeTab == 2) {
+        } else if (this.tab == 2) {
             for (int i = 0; i < PRESET_NAMES.length; ++i) {
                 int pxY = contentY + i * 34;
                 int btnW = 68;
                 int btnH = 16;
-                int btnX = this.contentX + this.contentW - btnW - 6;
+                int btnX = this.cX + this.cW - btnW - 6;
                 int btnY = pxY + 6;
 
                 if (mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH) {
                     this.applyPreset(i);
-                    this.playClickSound();
+                    this.click();
                     return true;
                 }
             }
         }
 
-        int doneW = this.compactMode ? 65 : 85;
-        int doneH = this.compactMode ? 18 : 22;
-        int doneX = this.px + this.panelW - doneW - (this.compactMode ? 10 : 16);
-        int doneY = this.py + this.panelH - doneH - (this.compactMode ? 6 : 10);
+        int doneW = this.compact ? 65 : 85;
+        int doneH = this.compact ? 18 : 22;
+        int doneX = this.px + this.pW - doneW - (this.compact ? 10 : 16);
+        int doneY = this.py + this.pH - doneH - (this.compact ? 6 : 10);
         if (mx >= doneX && mx <= doneX + doneW && my >= doneY && my <= doneY + doneH) {
-            this.playClickSound();
+            this.click();
             this.onClose();
             return true;
         }
 
-        this.focusedHexCol = -1;
+        this.hexFocus = -1;
         return super.mouseClicked(event, doubleClick);
     }
 
@@ -1052,17 +1052,17 @@ public class BlockyOutlineMenuScreen extends Screen {
         double mx = event.x();
         double my = event.y();
 
-        if (this.isDragging2DBox || this.isDraggingPopupHue) {
-            this.isDragging2DBox = false;
-            this.isDraggingPopupHue = false;
+        if (this.dragging2D || this.draggingHue) {
+            this.dragging2D = false;
+            this.draggingHue = false;
             BlockyOutlineSettings.save();
             return true;
         }
 
-        if (this.isDraggingSlider) {
-            this.isDraggingSlider = false;
-            this.dragCol = -1;
-            this.dragRow = -1;
+        if (this.draggingSlider) {
+            this.draggingSlider = false;
+            this.dCol = -1;
+            this.dRow = -1;
             BlockyOutlineSettings.save();
             return true;
         }
@@ -1074,22 +1074,22 @@ public class BlockyOutlineMenuScreen extends Screen {
         double mx = event.x();
         double my = event.y();
 
-        if (this.activePickerTarget != -1) {
-            if (this.isDragging2DBox) {
+        if (this.pickerTarget != -1) {
+            if (this.dragging2D) {
                 this.updateModal2DPicker(mx, my);
                 return true;
             }
-            if (this.isDraggingPopupHue) {
+            if (this.draggingHue) {
                 this.updateModalHue(my);
                 return true;
             }
             return true;
         }
 
-        if (this.isDraggingSlider && this.dragCol != -1 && this.dragRow != -1) {
-            int settingsW = this.getSettingsWidth();
-            int sliderX = this.contentX + settingsW - this.sliderW - 12;
-            this.updateSliderValue(this.dragCol, this.dragRow, mx, sliderX);
+        if (this.draggingSlider && this.dCol != -1 && this.dRow != -1) {
+            int settingsW = this.settingsW();
+            int sliderX = this.cX + settingsW - this.sW - 12;
+            this.updateSliderValue(this.dCol, this.dRow, mx, sliderX);
             return true;
         }
 
@@ -1100,12 +1100,12 @@ public class BlockyOutlineMenuScreen extends Screen {
     public boolean charTyped(CharacterEvent event) {
         char c = (char) event.codepoint();
 
-        if (this.focusedHexCol != -1) {
+        if (this.hexFocus != -1) {
             if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                if (this.typingHex.length() < 6) {
-                    this.typingHex += c;
-                    if (this.typingHex.length() == 6) {
-                        this.applyHexColor(this.focusedHexCol, this.typingHex);
+                if (this.hexInput.length() < 6) {
+                    this.hexInput += c;
+                    if (this.hexInput.length() == 6) {
+                        this.applyHexColor(this.hexFocus, this.hexInput);
                     }
                     return true;
                 }
@@ -1118,22 +1118,22 @@ public class BlockyOutlineMenuScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int keyCode = event.key();
 
-        if (keyCode == 256 && this.activePickerTarget != -1) { // GLFW_KEY_ESCAPE
-            this.activePickerTarget = -1;
+        if (keyCode == 256 && this.pickerTarget != -1) { // GLFW_KEY_ESCAPE
+            this.pickerTarget = -1;
             return true;
         }
 
-        if (this.focusedHexCol != -1) {
+        if (this.hexFocus != -1) {
             if (keyCode == 259) { // Backspace
-                if (!this.typingHex.isEmpty()) {
-                    this.typingHex = this.typingHex.substring(0, this.typingHex.length() - 1);
+                if (!this.hexInput.isEmpty()) {
+                    this.hexInput = this.hexInput.substring(0, this.hexInput.length() - 1);
                 }
                 return true;
             } else if (keyCode == 257 || keyCode == 335) { // Enter
-                if (this.typingHex.length() == 6) {
-                    this.applyHexColor(this.focusedHexCol, this.typingHex);
+                if (this.hexInput.length() == 6) {
+                    this.applyHexColor(this.hexFocus, this.hexInput);
                 }
-                this.focusedHexCol = -1;
+                this.hexFocus = -1;
                 return true;
             }
         }
@@ -1256,12 +1256,12 @@ public class BlockyOutlineMenuScreen extends Screen {
         BlockyOutlineSettings.save();
     }
 
-    private boolean isCheckboxRow(int col, int row) {
+    private boolean isToggle(int col, int row) {
         if (col == 0) return row == 0 || row == 5;
         return row == 0 || row == 1 || row == 4;
     }
 
-    private boolean getCheckboxValue(int col, int row) {
+    private boolean toggleVal(int col, int row) {
         if (col == 0) {
             if (row == 0) return this.settings.rainbowOutline;
             if (row == 5) return this.settings.smoothTransition;
@@ -1285,7 +1285,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         BlockyOutlineSettings.save();
     }
 
-    private boolean isRowDisabled(int col, int row) {
+    private boolean rowDisabled(int col, int row) {
         if (col == 0) {
             if (this.settings.rainbowOutline && (row == 2)) return true;
             if (!this.settings.rainbowOutline && (row == 1)) return true;
@@ -1298,7 +1298,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         return false;
     }
 
-    private float getSliderPct(int col, int row) {
+    private float sliderPct(int col, int row) {
         if (col == 0) {
             return switch (row) {
                 case 1 -> (this.settings.outlineRgbSpeed - 0.1f) / 4.9f;
@@ -1318,7 +1318,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
     }
 
-    private String getSliderValueStr(int col, int row) {
+    private String sliderStr(int col, int row) {
         if (col == 0) {
             return switch (row) {
                 case 1 -> String.format("%.1fx", this.settings.outlineRgbSpeed);
@@ -1336,7 +1336,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void updateSliderValue(int col, int row, double mx, int sliderX) {
-        float pct = (float)(mx - sliderX) / (float)this.sliderW;
+        float pct = (float)(mx - sliderX) / (float)this.sW;
         pct = Mth.clamp(pct, 0.0f, 1.0f);
 
         if (col == 0) {
