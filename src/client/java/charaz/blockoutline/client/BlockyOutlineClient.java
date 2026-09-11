@@ -37,22 +37,37 @@ public final class BlockyOutlineClient implements ClientModInitializer {
         BlockyOutlineSettings.load();
 
         WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outlineRenderState) -> {
+            BlockyOutlineSettings s = BlockyOutlineSettings.get();
+            boolean renderOutline = s.outlineOpacity > 0.001f;
+            boolean renderFill = s.fillEnabled && s.fillOpacity > 0.001f;
+
+            if (!renderOutline && !renderFill) {
+                return false;
+            }
+
             Minecraft mc = Minecraft.getInstance();
             HitResult hit = mc.hitResult;
             if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
                 return true;
             }
-            BlockPos pos = blockHit.getBlockPos();
+
+            if (context.consumers() == null || context.matrices() == null) {
+                return false;
+            }
+
             ClientLevel level = mc.level;
             if (level == null) {
                 initializedPos = false;
                 return true;
             }
+
+            BlockPos pos = blockHit.getBlockPos();
             BlockState state = level.getBlockState(pos);
             if (state.isAir()) {
                 initializedPos = false;
                 return true;
             }
+
             VoxelShape shape = state.getShape(level, pos);
             if (shape.isEmpty()) {
                 initializedPos = false;
@@ -64,10 +79,6 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 shape = shape.move(offset.x, offset.y, offset.z);
             }
 
-            PoseStack matrices = context.matrices();
-            if (matrices == null) return true;
-
-            BlockyOutlineSettings s = BlockyOutlineSettings.get();
             double tx = pos.getX(), ty = pos.getY(), tz = pos.getZ();
 
             if (s.smoothTransition) {
@@ -90,23 +101,24 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 initializedPos = true;
             }
 
-            if (context.consumers() == null) return false;
-
             Vec3 cam = mc.gameRenderer.getMainCamera().position();
             double ox = smoothedX - cam.x, oy = smoothedY - cam.y, oz = smoothedZ - cam.z;
             long now = System.currentTimeMillis();
+            PoseStack matrices = context.matrices();
 
-            int outlineArgb = s.getOutlineArgb(now);
-            float a = (float)(outlineArgb >>> 24) * 0.003921569f;
-            if (a > 0.001f) {
-                float r = (float)((outlineArgb >>> 16) & 0xFF) * 0.003921569f;
-                float g = (float)((outlineArgb >>> 8) & 0xFF) * 0.003921569f;
-                float b = (float)(outlineArgb & 0xFF) * 0.003921569f;
-                VertexConsumer lines = context.consumers().getBuffer(RenderTypes.lines());
-                OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, r, g, b, a, s.outlineWidth);
+            if (renderOutline) {
+                int outlineArgb = s.getOutlineArgb(now);
+                float a = (float)(outlineArgb >>> 24) * 0.003921569f;
+                if (a > 0.001f) {
+                    float r = (float)((outlineArgb >>> 16) & 0xFF) * 0.003921569f;
+                    float g = (float)((outlineArgb >>> 8) & 0xFF) * 0.003921569f;
+                    float b = (float)(outlineArgb & 0xFF) * 0.003921569f;
+                    VertexConsumer lines = context.consumers().getBuffer(RenderTypes.lines());
+                    OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, r, g, b, a, s.outlineWidth);
+                }
             }
 
-            if (s.fillEnabled && s.fillOpacity > 0.01f) {
+            if (renderFill) {
                 VertexConsumer quads = context.consumers().getBuffer(RenderTypes.debugQuads());
                 OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz, s.getFillArgb(now), s.getFillArgb2(now));
             }

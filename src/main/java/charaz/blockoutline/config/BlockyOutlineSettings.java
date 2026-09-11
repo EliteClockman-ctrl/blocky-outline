@@ -110,14 +110,6 @@ public final class BlockyOutlineSettings {
         this.fillOpacity = Mth.clamp(other.fillOpacity, 0.0f, 1.0f);
     }
 
-    public float[] getOutlineRgb(long nowMs) {
-        if (this.rainbowOutline) {
-            float hue = (float)(nowMs % (long)(4000.0f / this.outlineRgbSpeed)) / (4000.0f / this.outlineRgbSpeed);
-            return hsvToRgb(hue, 1.0f, 1.0f);
-        }
-        return hsvToRgb(this.outlineHue, this.outlineSaturation, this.outlineValue);
-    }
-
     public int getOutlineArgb(long nowMs) {
         int a = (int)(this.outlineOpacity * 255.0f);
         if (this.rainbowOutline) {
@@ -153,26 +145,32 @@ public final class BlockyOutlineSettings {
         s = Mth.clamp(s, 0.0f, 1.0f);
         v = Mth.clamp(v, 0.0f, 1.0f);
 
-        if (s == 0.0f) {
+        if (s <= 0.00001f) {
             int val = (int)(v * 255.0f);
             return (val << 16) | (val << 8) | val;
         }
 
         float h6 = h * 6.0f;
-        int i = (int)Math.floor(h6);
+        int i = (int)h6;
         float f = h6 - (float)i;
         float p = v * (1.0f - s);
         float q = v * (1.0f - s * f);
         float t = v * (1.0f - s * (1.0f - f));
 
         int r, g, b;
-        switch (i % 6) {
-            case 0 -> { r = (int)(v * 255.0f); g = (int)(t * 255.0f); b = (int)(p * 255.0f); }
-            case 1 -> { r = (int)(q * 255.0f); g = (int)(v * 255.0f); b = (int)(p * 255.0f); }
-            case 2 -> { r = (int)(p * 255.0f); g = (int)(v * 255.0f); b = (int)(t * 255.0f); }
-            case 3 -> { r = (int)(p * 255.0f); g = (int)(q * 255.0f); b = (int)(v * 255.0f); }
-            case 4 -> { r = (int)(t * 255.0f); g = (int)(p * 255.0f); b = (int)(v * 255.0f); }
-            default -> { r = (int)(v * 255.0f); g = (int)(p * 255.0f); b = (int)(q * 255.0f); }
+        int sector = i % 6;
+        if (sector == 0) {
+            r = (int)(v * 255.0f); g = (int)(t * 255.0f); b = (int)(p * 255.0f);
+        } else if (sector == 1) {
+            r = (int)(q * 255.0f); g = (int)(v * 255.0f); b = (int)(p * 255.0f);
+        } else if (sector == 2) {
+            r = (int)(p * 255.0f); g = (int)(v * 255.0f); b = (int)(t * 255.0f);
+        } else if (sector == 3) {
+            r = (int)(p * 255.0f); g = (int)(q * 255.0f); b = (int)(v * 255.0f);
+        } else if (sector == 4) {
+            r = (int)(t * 255.0f); g = (int)(p * 255.0f); b = (int)(v * 255.0f);
+        } else {
+            r = (int)(v * 255.0f); g = (int)(p * 255.0f); b = (int)(q * 255.0f);
         }
         return (r << 16) | (g << 8) | b;
     }
@@ -180,13 +178,9 @@ public final class BlockyOutlineSettings {
     public static float[] hsvToRgb(float h, float s, float v) {
         int packed = hsvToRgbPacked(h, s, v);
         return new float[]{
-            (float)((packed >> 16) & 0xFF) / 255.0f,
-            (float)((packed >> 8) & 0xFF) / 255.0f,
-            (float)(packed & 0xFF) / 255.0f
+            (float)((packed >> 16) & 0xFF) * 0.003921569f,
+            (float)((packed >> 8) & 0xFF) * 0.003921569f,
+            (float)(packed & 0xFF) * 0.003921569f
         };
-    }
-
-    public static float[] hsvToRgb(float h) {
-        return hsvToRgb(h, 1.0f, 1.0f);
     }
 }

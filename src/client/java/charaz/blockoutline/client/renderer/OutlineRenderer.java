@@ -6,6 +6,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class OutlineRenderer {
+    private static final float INV_255 = 0.003921569f;
+
     private OutlineRenderer() {
     }
 
@@ -16,9 +18,9 @@ public final class OutlineRenderer {
             float nx = (float)(x2 - x1);
             float ny = (float)(y2 - y1);
             float nz = (float)(z2 - z1);
-            float len = Mth.sqrt(nx * nx + ny * ny + nz * nz);
-            if (len > 0.0001f) {
-                float invLen = 1.0f / len;
+            float lenSq = nx * nx + ny * ny + nz * nz;
+            if (lenSq > 0.000001f) {
+                float invLen = (float) Mth.fastInvSqrt(lenSq);
                 nx *= invLen;
                 ny *= invLen;
                 nz *= invLen;
@@ -36,16 +38,15 @@ public final class OutlineRenderer {
 
     public static void renderFilledBox(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape, double dx, double dy, double dz, int colorARGB, int colorARGB2) {
         PoseStack.Pose pose = poseStack.last();
-        final float inv255 = 0.003921569f;
-        float r1 = (float)(colorARGB >> 16 & 0xFF) * inv255;
-        float g1 = (float)(colorARGB >> 8 & 0xFF) * inv255;
-        float b1 = (float)(colorARGB & 0xFF) * inv255;
-        float a1 = (float)(colorARGB >>> 24) * inv255;
+        float r1 = (float)(colorARGB >> 16 & 0xFF) * INV_255;
+        float g1 = (float)(colorARGB >> 8 & 0xFF) * INV_255;
+        float b1 = (float)(colorARGB & 0xFF) * INV_255;
+        float a1 = (float)(colorARGB >>> 24) * INV_255;
 
-        float r2 = (float)(colorARGB2 >> 16 & 0xFF) * inv255;
-        float g2 = (float)(colorARGB2 >> 8 & 0xFF) * inv255;
-        float b2 = (float)(colorARGB2 & 0xFF) * inv255;
-        float a2 = (float)(colorARGB2 >>> 24) * inv255;
+        float r2 = (float)(colorARGB2 >> 16 & 0xFF) * INV_255;
+        float g2 = (float)(colorARGB2 >> 8 & 0xFF) * INV_255;
+        float b2 = (float)(colorARGB2 & 0xFF) * INV_255;
+        float a2 = (float)(colorARGB2 >>> 24) * INV_255;
 
         shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
             float x0 = (float)(minX - 0.001 + dx);
