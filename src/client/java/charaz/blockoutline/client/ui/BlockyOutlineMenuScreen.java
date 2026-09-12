@@ -14,6 +14,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 
 public class BlockyOutlineMenuScreen extends Screen {
+    private static final String MOD_VERSION = "v1.1.2";
+    private static final String ENV_STR = "Fabric 26.1.x";
     private static final String[] TAB_LABELS = {"Outline", "Fill", "Presets", "About"};
     private static final String[] OUTLINE_ROW_LABELS = {"Rainbow outline", "RGB speed", "Colors", "Opacity", "Width", "Smooth movement"};
     private static final String[] FILL_ROW_LABELS = {"Enable fill", "Rainbow fill", "RGB speed", "Color 1 (Top)", "Enable Color 2", "Color 2 (Bottom)", "Opacity"};
@@ -181,7 +183,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             logoW = this.font.width("Blocky Outline");
         }
 
-        String vTag = "v1.1.1";
+        String vTag = MOD_VERSION;
         int vW = this.font.width(vTag);
         boolean showVTag = this.pW >= 340;
         int vX = this.px + this.pW - vW - (this.compact ? 8 : 12);
@@ -559,8 +561,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.drawString(this.font, "Outline", ax + 16 + this.font.width("Blocky") + 4, ay + 12, PURPLE_LT, false);
         guiGraphics.drawString(this.font, "Next-generation block outline & fill customizer", ax + 16, ay + 26, CLR_MUTED, false);
 
-        String vStr = "v1.1.1";
-        String envStr = "Fabric 1.21.11";
+        String vStr = MOD_VERSION;
+        String envStr = ENV_STR;
         int vW = this.font.width(vStr);
         int envW = this.font.width(envStr);
         int badge2X = ax + cardW - envW - 16;
@@ -890,7 +892,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             logoW = this.font.width("Blocky Outline");
         }
 
-        String vTag = "v1.1.1";
+        String vTag = MOD_VERSION;
         int vW = this.font.width(vTag);
         boolean showVTag = this.pW >= 340;
         int vX = this.px + this.pW - vW - (this.compact ? 8 : 12);
@@ -1085,7 +1087,10 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
 
         if (this.hexFocus != -1) {
-            if (keyCode == 259) { // Backspace
+            if (keyCode == 256) { // Escape
+                this.hexFocus = -1;
+                return true;
+            } else if (keyCode == 259) { // Backspace
                 if (!this.hexInput.isEmpty()) {
                     this.hexInput = this.hexInput.substring(0, this.hexInput.length() - 1);
                 }
@@ -1155,10 +1160,14 @@ public class BlockyOutlineMenuScreen extends Screen {
                 this.settings.outlineOpacity = 0.85f;
                 this.settings.outlineWidth = 2.0f;
                 this.settings.fillEnabled = true;
+                this.settings.fillGradientEnabled = false;
                 this.settings.rainbowFill = false;
                 this.settings.fillHue = 0.6f;
                 this.settings.fillSaturation = 0.05f;
                 this.settings.fillValue = 0.8f;
+                this.settings.fillHue2 = 0.6f;
+                this.settings.fillSaturation2 = 0.05f;
+                this.settings.fillValue2 = 0.8f;
                 this.settings.fillOpacity = 0.15f;
             }
             case 1 -> {
@@ -1169,10 +1178,14 @@ public class BlockyOutlineMenuScreen extends Screen {
                 this.settings.outlineOpacity = 1.0f;
                 this.settings.outlineWidth = 2.5f;
                 this.settings.fillEnabled = true;
+                this.settings.fillGradientEnabled = false;
                 this.settings.rainbowFill = false;
                 this.settings.fillHue = 0.75f;
                 this.settings.fillSaturation = 0.9f;
                 this.settings.fillValue = 0.4f;
+                this.settings.fillHue2 = 0.75f;
+                this.settings.fillSaturation2 = 0.9f;
+                this.settings.fillValue2 = 0.4f;
                 this.settings.fillOpacity = 0.35f;
             }
             case 2 -> {
@@ -1183,10 +1196,14 @@ public class BlockyOutlineMenuScreen extends Screen {
                 this.settings.outlineOpacity = 1.0f;
                 this.settings.outlineWidth = 3.0f;
                 this.settings.fillEnabled = true;
+                this.settings.fillGradientEnabled = false;
                 this.settings.rainbowFill = false;
                 this.settings.fillHue = 0.12f;
                 this.settings.fillSaturation = 0.8f;
                 this.settings.fillValue = 0.9f;
+                this.settings.fillHue2 = 0.12f;
+                this.settings.fillSaturation2 = 0.8f;
+                this.settings.fillValue2 = 0.9f;
                 this.settings.fillOpacity = 0.25f;
             }
             case 3 -> {
@@ -1195,6 +1212,7 @@ public class BlockyOutlineMenuScreen extends Screen {
                 this.settings.outlineOpacity = 1.0f;
                 this.settings.outlineWidth = 2.5f;
                 this.settings.fillEnabled = true;
+                this.settings.fillGradientEnabled = false;
                 this.settings.rainbowFill = true;
                 this.settings.fillRgbSpeed = 1.5f;
                 this.settings.fillOpacity = 0.3f;
@@ -1207,10 +1225,14 @@ public class BlockyOutlineMenuScreen extends Screen {
                 this.settings.outlineOpacity = 0.9f;
                 this.settings.outlineWidth = 2.0f;
                 this.settings.fillEnabled = true;
+                this.settings.fillGradientEnabled = false;
                 this.settings.rainbowFill = false;
                 this.settings.fillHue = 0.6f;
                 this.settings.fillSaturation = 0.2f;
                 this.settings.fillValue = 0.15f;
+                this.settings.fillHue2 = 0.6f;
+                this.settings.fillSaturation2 = 0.2f;
+                this.settings.fillValue2 = 0.15f;
                 this.settings.fillOpacity = 0.4f;
             }
         }
@@ -1283,14 +1305,14 @@ public class BlockyOutlineMenuScreen extends Screen {
         if (col == 0) {
             return switch (row) {
                 case 1 -> String.format("%.1fx", this.settings.outlineRgbSpeed);
-                case 3 -> String.format("%d%%", (int)(this.settings.outlineOpacity * 100));
+                case 3 -> String.format("%d%%", Math.round(this.settings.outlineOpacity * 100.0f));
                 case 4 -> String.format("%.1fpx", this.settings.outlineWidth);
                 default -> "";
             };
         } else {
             return switch (row) {
                 case 2 -> String.format("%.1fx", this.settings.fillRgbSpeed);
-                case 6 -> String.format("%d%%", (int)(this.settings.fillOpacity * 100));
+                case 6 -> String.format("%d%%", Math.round(this.settings.fillOpacity * 100.0f));
                 default -> "";
             };
         }

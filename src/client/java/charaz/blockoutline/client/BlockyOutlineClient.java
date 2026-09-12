@@ -48,6 +48,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             Minecraft mc = Minecraft.getInstance();
             HitResult hit = mc.hitResult;
             if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
+                initializedPos = false;
                 return true;
             }
 
@@ -91,9 +92,10 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     if (distSq > 36.0 || distSq < 0.000001) {
                         smoothedX = tx; smoothedY = ty; smoothedZ = tz;
                     } else {
-                        smoothedX += dx * 0.75;
-                        smoothedY += dy * 0.75;
-                        smoothedZ += dz * 0.75;
+                        double factor = Math.min(1.0, Math.max(0.05, (double) s.smoothSpeed));
+                        smoothedX += dx * factor;
+                        smoothedY += dy * factor;
+                        smoothedZ += dz * factor;
                     }
                 }
             } else {
