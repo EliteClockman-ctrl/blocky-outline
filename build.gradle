@@ -61,3 +61,10 @@ tasks.register('distModJar', Copy) {
 }
 
 tasks.named('build') { finalizedBy tasks.named('distModJar') }
+
+tasks.register('runClient26', Exec) {
+    group = 'fabric'
+    description = 'Runs Minecraft Fabric 26.1.2 with Blocky Outline'
+    dependsOn tasks.named('distModJar')
+    commandLine 'python', 'run_test_26.py'
+}
