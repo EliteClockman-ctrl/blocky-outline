@@ -45,10 +45,10 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 
 | Dependency | Version |
 |---|---|
-| Minecraft | `1.21.11` |
+| Minecraft | `26.1.x` |
 | Fabric Loader | `≥0.16.0` |
 | Fabric API | any |
-| Java | `≥21` |
+| Java | `≥21` (JDK 25 recommended) |
 
 ---
 
@@ -58,7 +58,7 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 ./gradlew build
 ```
 
-Output JAR: `dist/blocky-outline-v1.1.1.jar`
+Output JAR: `dist/blocky-outline-v1.1.2.jar`
 
 ---
 
