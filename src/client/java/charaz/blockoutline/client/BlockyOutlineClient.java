@@ -12,7 +12,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
@@ -27,11 +27,20 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     private static double smoothedX;
     private static double smoothedY;
     private static double smoothedZ;
-    private static boolean initializedPos;
+    private static boolean hasTarget;
+    private static long lastTargetTimeMs = 0;
+    private static long lastFrameNano = 0;
 
     @Override
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
+
+        // Pre-warm custom render pipelines early to avoid first-frame shader compilation lag
+        try {
+            net.minecraft.client.renderer.rendertype.BlockyOutlineRenderTypes.xrayLines();
+            net.minecraft.client.renderer.rendertype.BlockyOutlineRenderTypes.xrayQuads();
+        } catch (Throwable ignored) {
+        }
 
         LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outlineRenderState) -> {
             BlockyOutlineSettings s = BlockyOutlineSettings.get();
@@ -43,66 +52,92 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             }
 
             if (outlineRenderState == null) {
-                initializedPos = false;
+                hasTarget = false;
                 return true;
             }
 
             BlockPos pos = outlineRenderState.pos();
             VoxelShape shape = outlineRenderState.shape();
             if (pos == null || shape == null || shape.isEmpty()) {
-                initializedPos = false;
+                hasTarget = false;
                 return true;
             }
 
             PoseStack matrices = context.poseStack();
-            MultiBufferSource bufferSource = context.bufferSource();
-            if (matrices == null || bufferSource == null) {
+            SubmitNodeCollector collector = context.submitNodeCollector();
+            if (matrices == null || collector == null) {
                 return false;
             }
 
             double tx = pos.getX(), ty = pos.getY(), tz = pos.getZ();
 
-            if (s.smoothTransition) {
-                if (!initializedPos) {
-                    smoothedX = tx; smoothedY = ty; smoothedZ = tz;
-                    initializedPos = true;
+            long nowMs = System.currentTimeMillis();
+            long nowNano = System.nanoTime();
+
+            // Detect whether the player was continuously targeting blocks
+            boolean continuous = hasTarget && (nowMs - lastTargetTimeMs < 120);
+            lastTargetTimeMs = nowMs;
+            hasTarget = true;
+
+            double dt = (lastFrameNano == 0 || (nowNano - lastFrameNano > 100_000_000L))
+                    ? 0.016
+                    : (nowNano - lastFrameNano) * 1e-9;
+            lastFrameNano = nowNano;
+            if (dt < 0.001) dt = 0.001;
+            else if (dt > 0.05) dt = 0.05;
+
+            if (s.smoothTransition && continuous) {
+                double dx = tx - smoothedX;
+                double dy = ty - smoothedY;
+                double dz = tz - smoothedZ;
+                double distSq = dx * dx + dy * dy + dz * dz;
+
+                // Smoothly glide between nearby blocks (<= 3 blocks away)
+                if (distSq > 9.0 || distSq < 0.00002) {
+                    smoothedX = tx;
+                    smoothedY = ty;
+                    smoothedZ = tz;
                 } else {
-                    double dx = tx - smoothedX, dy = ty - smoothedY, dz = tz - smoothedZ;
-                    double distSq = dx * dx + dy * dy + dz * dz;
-                    if (distSq > 36.0 || distSq < 0.000001) {
-                        smoothedX = tx; smoothedY = ty; smoothedZ = tz;
-                    } else {
-                        double factor = Math.min(1.0, Math.max(0.05, (double) s.smoothSpeed));
-                        smoothedX += dx * factor;
-                        smoothedY += dy * factor;
-                        smoothedZ += dz * factor;
-                    }
+                    // Snappy, responsive exponential ease-out (like Custom Block Highlight)
+                    double speedFactor = Math.max(0.1, (double) s.smoothSpeed);
+                    double lambda = 24.0 + speedFactor * 24.0;
+                    double blend = 1.0 - Math.exp(-lambda * dt);
+                    smoothedX += dx * blend;
+                    smoothedY += dy * blend;
+                    smoothedZ += dz * blend;
                 }
             } else {
-                smoothedX = tx; smoothedY = ty; smoothedZ = tz;
-                initializedPos = true;
+                // Instant appearance with zero delay when freshly aiming from air or far away
+                smoothedX = tx;
+                smoothedY = ty;
+                smoothedZ = tz;
             }
 
-            Minecraft mc = Minecraft.getInstance();
-            Vec3 cam = mc.gameRenderer.getMainCamera().position();
+            Vec3 cam = (context.levelState() != null && context.levelState().cameraRenderState != null)
+                    ? context.levelState().cameraRenderState.pos
+                    : Minecraft.getInstance().gameRenderer.mainCamera().position();
             double ox = smoothedX - cam.x, oy = smoothedY - cam.y, oz = smoothedZ - cam.z;
             long now = System.currentTimeMillis();
 
             if (renderOutline) {
                 int outlineArgb = s.getOutlineArgb(now);
-                float a = (float)(outlineArgb >>> 24) * 0.003921569f;
-                if (a > 0.001f) {
-                    float r = (float)((outlineArgb >>> 16) & 0xFF) * 0.003921569f;
-                    float g = (float)((outlineArgb >>> 8) & 0xFF) * 0.003921569f;
-                    float b = (float)(outlineArgb & 0xFF) * 0.003921569f;
-                    VertexConsumer lines = bufferSource.getBuffer(RenderTypes.lines());
-                    OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, r, g, b, a, s.outlineWidth);
+                if ((outlineArgb >>> 24) > 0) {
+                    net.minecraft.client.renderer.rendertype.RenderType lineType = s.xrayMode
+                            ? net.minecraft.client.renderer.rendertype.BlockyOutlineRenderTypes.xrayLines()
+                            : RenderTypes.lines();
+                    collector.submitCustomGeometry(matrices, lineType, (pose, lines) -> {
+                        OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb, s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand);
+                    });
                 }
             }
 
             if (renderFill) {
-                VertexConsumer quads = bufferSource.getBuffer(RenderTypes.debugQuads());
-                OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz, s.getFillArgb(now), s.getFillArgb2(now));
+                net.minecraft.client.renderer.rendertype.RenderType quadType = s.xrayMode
+                            ? net.minecraft.client.renderer.rendertype.BlockyOutlineRenderTypes.xrayQuads()
+                            : RenderTypes.debugQuads();
+                collector.submitCustomGeometry(matrices, quadType, (pose, quads) -> {
+                    OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz, s.getFillArgb(now), s.getFillArgb2(now), s.hitboxExpand);
+                });
             }
 
             return false;
@@ -116,9 +151,12 @@ public final class BlockyOutlineClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.hitResult == null || mc.hitResult.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                hasTarget = false;
+            }
             while (menuKeyBinding != null && menuKeyBinding.consumeClick()) {
-                if (mc.screen == null) {
-                    mc.setScreen(new BlockyOutlineMenuScreen());
+                if (mc.gui.screen() == null) {
+                    mc.gui.setScreen(new BlockyOutlineMenuScreen());
                 }
             }
         });

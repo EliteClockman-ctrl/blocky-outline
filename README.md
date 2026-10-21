@@ -2,10 +2,10 @@
 
 A lightweight, modern client-side Fabric mod that replaces Minecraft's default block selection outline with a fully customizable outline and optional gradient fill.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.x-62ba3d?style=flat-square)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.x-62ba3d?style=flat-square)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.3-b87333?style=flat-square)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE_blocky-outline)
-[![Version](https://img.shields.io/badge/Version-1.1.2-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.2)
+[![Version](https://img.shields.io/badge/Version-1.1.3-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.3)
 
 ---
 
@@ -36,8 +36,8 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 
 1. Install [Fabric Loader](https://fabricmc.net/use/installer/) `≥0.16.0`
 2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
-3. Drop `blocky-outline-v1.1.2.jar` into your `.minecraft/mods/` folder
-4. Launch Minecraft `26.1.x`
+3. Drop `blocky-outline-1.1.3.jar` into your `.minecraft/mods/` folder
+4. Launch Minecraft `26.x` (Fabric 26.2)
 
 ---
 
@@ -45,7 +45,7 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 
 | Dependency | Version |
 |---|---|
-| Minecraft | `26.1.x` |
+| Minecraft | `26.x` (26.1 - 26.3) |
 | Fabric Loader | `≥0.16.0` |
 | Fabric API | any |
 | Java | `≥21` (JDK 25 recommended) |
@@ -55,10 +55,10 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 ## Building from Source
 
 ```bash
-./gradlew build
+python build_26.py
 ```
 
-Output JAR: `dist/blocky-outline-v1.1.2.jar`
+Output JAR: `dist/blocky-outline-1.1.3.jar`
 
 ---
 

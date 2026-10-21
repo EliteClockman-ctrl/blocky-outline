@@ -7,3 +7,4 @@ out/
 tools/
 .DS_Store
 .gradle-user/
+scratch/

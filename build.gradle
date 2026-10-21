@@ -42,6 +42,7 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.fork = true
+    enabled = false
 }
 
 java {
@@ -64,13 +65,18 @@ tasks.named('build') { finalizedBy tasks.named('build26') }
 
 tasks.register('build26', Exec) {
     group = 'build'
-    description = 'Builds Blocky Outline for Minecraft 26.1.x'
+    description = 'Builds Blocky Outline for Minecraft 26.x'
     commandLine 'python', 'build_26.py'
 }
 
 tasks.register('runClient26', Exec) {
     group = 'fabric'
-    description = 'Runs Minecraft Fabric 26.1.2 with Blocky Outline'
+    description = 'Runs Minecraft Fabric 26.x with Blocky Outline'
     dependsOn tasks.named('build26')
     commandLine 'python', 'run_test_26.py'
+}
+
+tasks.named('runClient') {
+    setDependsOn([tasks.named('runClient26')])
+    actions.clear()
 }

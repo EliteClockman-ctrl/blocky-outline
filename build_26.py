@@ -5,11 +5,15 @@ import json
 import zipfile
 
 def build_mod():
-    print("=== Building Blocky Outline for Minecraft 26.1.x ===")
+    print("=== Building Blocky Outline v1.1.3 for Minecraft 26.x ===")
     base_dir = os.path.dirname(os.path.abspath(__file__))
     game_dir = r"D:\Minecraft\game"
-    version_dir = os.path.join(game_dir, "versions", "Fabric 26.1.2")
-    json_path = os.path.join(version_dir, "Fabric 26.1.2.json")
+    
+    # Select Fabric 26.x version directory (prefer 26.2)
+    version_name = "Fabric 26.2" if os.path.exists(os.path.join(game_dir, "versions", "Fabric 26.2")) else "Fabric 26.1.2"
+    version_dir = os.path.join(game_dir, "versions", version_name)
+    json_path = os.path.join(version_dir, f"{version_name}.json")
+    print(f"Targeting Minecraft version: {version_name}")
     
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -26,21 +30,14 @@ def build_mod():
         if os.path.exists(p):
             cp_jars.append(p)
             
-    cp_jars.append(os.path.join(version_dir, "Fabric 26.1.2.jar"))
+    cp_jars.append(os.path.join(version_dir, f"{version_name}.jar"))
     
-    # Extract Fabric API 26.1.2 sub-jars if needed
-    fapi_dir = os.path.join(base_dir, "build", "fapi_jars")
-    os.makedirs(fapi_dir, exist_ok=True)
-    fapi_fat = os.path.join(game_dir, "mods", "fabric-api-0.155.3+26.1.2.jar")
-    with zipfile.ZipFile(fapi_fat) as z:
-        for n in z.namelist():
-            if n.startswith("META-INF/jars/") and n.endswith(".jar"):
-                fname = os.path.basename(n)
-                out_p = os.path.join(fapi_dir, fname)
-                if not os.path.exists(out_p):
-                    with open(out_p, "wb") as out_f:
-                        out_f.write(z.read(n))
-                cp_jars.append(out_p)
+    # Add Fabric API jars for 26.x
+    proc_dir = os.path.join(game_dir, ".fabric", "processedMods")
+    if os.path.exists(proc_dir):
+        for f in os.listdir(proc_dir):
+            if f.endswith(".jar") and ("9e" in f or "fabric-api-base-2" in f):
+                cp_jars.append(os.path.join(proc_dir, f))
 
     # 2. Compile java files
     classes_out = os.path.join(base_dir, "build", "classes_26")
@@ -56,8 +53,15 @@ def build_mod():
                     java_files.append(os.path.join(root, file))
 
     javac = r"C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\javac.exe"
-    cmd = [javac, "-encoding", "UTF-8", "-cp", ";".join(cp_jars), "-d", classes_out] + java_files
+    arg_file = os.path.join(base_dir, "build", "javac_args.txt")
+    with open(arg_file, "w", encoding="utf-8") as f:
+        cp_str = ";".join(cp_jars).replace("\\", "/")
+        f.write("-encoding\nUTF-8\n-cp\n\"" + cp_str + "\"\n-d\n\"" + classes_out.replace("\\", "/") + "\"\n")
+        for jf in java_files:
+            f.write("\"" + jf.replace("\\", "/") + "\"\n")
+
     print(f"Compiling {len(java_files)} Java source files with JDK 25...")
+    cmd = [javac, f"@{arg_file}"]
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
         print("Compilation FAILED:")
@@ -68,9 +72,15 @@ def build_mod():
     # 3. Create Jar
     dist_dir = os.path.join(base_dir, "dist")
     os.makedirs(dist_dir, exist_ok=True)
-    jar_path = os.path.join(dist_dir, "blocky-outline-v1.1.2.jar")
+    jar_name = "blocky-outline-1.1.3.jar"
+    jar_path = os.path.join(dist_dir, jar_name)
     if os.path.exists(jar_path):
         os.remove(jar_path)
+
+    # Clean up old demo jar in dist
+    old_demo = os.path.join(dist_dir, "blocky-outline-demo-1.1.3.jar")
+    if os.path.exists(old_demo):
+        os.remove(old_demo)
 
     with zipfile.ZipFile(jar_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
         # Add class files
@@ -88,7 +98,7 @@ def build_mod():
                 rel = os.path.relpath(full, res_dir).replace(os.sep, "/")
                 if file == "fabric.mod.json":
                     with open(full, "r", encoding="utf-8") as rf:
-                        content = rf.read().replace("${version}", "1.1.2")
+                        content = rf.read().replace("${version}", "1.1.3")
                     z.writestr(rel, content.encode("utf-8"))
                 else:
                     z.write(full, rel)
@@ -100,10 +110,66 @@ def build_mod():
 
     print(f"Jar successfully created at: {jar_path}")
     
-    # 4. Copy to game mods directory
-    dest_mod = os.path.join(game_dir, "mods", "blocky-outline-v1.1.2.jar")
+    # 4. Copy to game mods directory and mods_26
+    dest_mod = os.path.join(game_dir, "mods", jar_name)
     shutil.copyfile(jar_path, dest_mod)
     print(f"Copied to: {dest_mod}")
+
+    # Remove old demo jar from mods
+    old_mod = os.path.join(game_dir, "mods", "blocky-outline-demo-1.1.3.jar")
+    if os.path.exists(old_mod):
+        os.remove(old_mod)
+
+    mods_26 = os.path.join(game_dir, "mods_26")
+    os.makedirs(mods_26, exist_ok=True)
+    dest_mod_26 = os.path.join(mods_26, jar_name)
+    shutil.copyfile(jar_path, dest_mod_26)
+    print(f"Copied to: {dest_mod_26}")
+
+    old_mod_26 = os.path.join(mods_26, "blocky-outline-demo-1.1.3.jar")
+    if os.path.exists(old_mod_26):
+        os.remove(old_mod_26)
+
+    # Ensure required 26.x fabric-api submodules are present in mods_26
+    proc_dir = os.path.join(game_dir, ".fabric", "processedMods")
+    needed_fapi = [
+        "fabric-rendering-v1-25.3.2+515ac5339e-ef38fe27d6988403.jar",
+        "fabric-key-mapping-api-v1-2.0.5+e2bdee789e-40579a8e16a5fe53.jar",
+        "fabric-lifecycle-events-v1-4.1.3+4575b05f9e-366e4ba6f40f2e4.jar",
+        "fabric-api-base-2.0.4+ece063239e-25b880d50d5aa2e2.jar"
+    ]
+    for jar in needed_fapi:
+        src_jar = os.path.join(proc_dir, jar)
+        dst_jar = os.path.join(mods_26, jar)
+        if os.path.exists(src_jar) and not os.path.exists(dst_jar):
+            shutil.copyfile(src_jar, dst_jar)
+        # Patch fabric-rendering-v1 to remove incompatible BuiltInBlockModelsMixin on 26.2 if present
+        if "fabric-rendering-v1" in jar and os.path.exists(dst_jar):
+            try:
+                with zipfile.ZipFile(dst_jar, 'r') as z:
+                    mixin_str = z.read('fabric-rendering-v1.mixins.json').decode('utf-8')
+                    mdata = json.loads(mixin_str)
+                    if 'BuiltInBlockModelsMixin' in mdata.get('client', []):
+                        all_entries = {n: z.read(n) for n in z.namelist()}
+                        mdata['client'].remove('BuiltInBlockModelsMixin')
+                        all_entries['fabric-rendering-v1.mixins.json'] = json.dumps(mdata, indent=2).encode('utf-8')
+                        with zipfile.ZipFile(dst_jar, 'w', zipfile.ZIP_DEFLATED) as zw:
+                            for n, c in all_entries.items():
+                                zw.writestr(n, c)
+                        print("Auto-patched fabric-rendering-v1 BuiltInBlockModelsMixin.")
+            except Exception as e:
+                print(f"Warning: could not check fabric-rendering-v1: {e}")
+
+    # Remove obsolete versions from game mods and mods_26
+    for folder in [os.path.join(game_dir, "mods"), mods_26]:
+        for old_name in ["blocky-outline-v1.1.2.jar", "blocky-outline-v1.1.3.jar"]:
+            old_p = os.path.join(folder, old_name)
+            if os.path.exists(old_p):
+                try:
+                    os.remove(old_p)
+                    print(f"Removed older mod jar: {old_p}")
+                except Exception:
+                    pass
 
 if __name__ == "__main__":
     build_mod()

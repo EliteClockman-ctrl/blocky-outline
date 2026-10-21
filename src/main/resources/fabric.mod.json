@@ -3,7 +3,7 @@
 	"id": "blocky-outline",
 	"version": "${version}",
 	"name": "Blocky Outline",
-	"description": "Customize the block selection outline and fill with colors, gradients, rainbow RGB, and smooth movement. Lightweight client-side mod for Minecraft 26.1.x (Fabric).",
+	"description": "Customize the block selection outline and fill with colors, gradients, rainbow RGB, and smooth movement. Lightweight client-side mod for Minecraft 26.x (Fabric).",
 	"authors": [
 		"CharaZ"
 	],
@@ -26,6 +26,8 @@
 		"fabricloader": ">=0.16.0",
 		"minecraft": ">=26.1",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-rendering-v1": "*",
+		"fabric-key-mapping-api-v1": "*",
+		"fabric-lifecycle-events-v1": "*"
 	}
 }
