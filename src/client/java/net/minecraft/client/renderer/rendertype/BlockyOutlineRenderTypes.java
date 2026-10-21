@@ -20,7 +20,7 @@ public final class BlockyOutlineRenderTypes {
                         .createRenderSetup();
                 XRAY_LINES = RenderType.create("blocky_outline_xray_lines", setup);
             } catch (Throwable t) {
-                return RenderTypes.lines();
+                XRAY_LINES = RenderTypes.lines();
             }
         }
         return XRAY_LINES;
@@ -35,7 +35,7 @@ public final class BlockyOutlineRenderTypes {
                         .createRenderSetup();
                 XRAY_QUADS = RenderType.create("blocky_outline_xray_quads", setup);
             } catch (Throwable t) {
-                return RenderTypes.debugQuads();
+                XRAY_QUADS = RenderTypes.debugQuads();
             }
         }
         return XRAY_QUADS;

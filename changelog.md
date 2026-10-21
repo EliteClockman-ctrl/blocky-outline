@@ -17,4 +17,6 @@
 - **Zero-GC Render Loop**: Completely eliminated runtime allocations in the block outline and fill rendering pipelines.
 - **Fast Axis-Aligned Edges**: Removed runtime square-root (`fastInvSqrt`) and vector normalization operations from edge rendering.
 - **Frame-Cached Math**: Breathing pulse wave (`Math.sin`) and rainbow calculations are now cached per frame instead of recomputed per face.
-
+### Compatibility
+- **Full Minecraft 26.x Support (26.1 through 26.3)**: Dynamically bridges camera state retrieval between Minecraft 26.1 (`GameRenderer.getMainCamera()`) and 26.2+ (`LevelRenderContext.levelState()` / `GameRenderer.mainCamera()`).
+- **Flexible Dependencies**: Loosened Fabric API sub-dependency declarations so the mod loads seamlessly on both official bundled Fabric API releases and modular setups.

@@ -31,6 +31,61 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     private static long lastTargetTimeMs = 0;
     private static long lastFrameNano = 0;
 
+    private static java.lang.reflect.Method levelStateMethod;
+    private static java.lang.reflect.Field cameraRenderStateField;
+    private static java.lang.reflect.Field cameraPosField;
+    private static java.lang.reflect.Method mainCameraMethod;
+
+    static {
+        try {
+            levelStateMethod = Class.forName("net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext")
+                    .getMethod("levelState");
+            cameraRenderStateField = Class.forName("net.minecraft.client.renderer.state.LevelRenderState")
+                    .getField("cameraRenderState");
+            cameraPosField = Class.forName("net.minecraft.client.renderer.state.CameraRenderState")
+                    .getField("pos");
+        } catch (Throwable ignored) {
+            levelStateMethod = null;
+        }
+
+        try {
+            var grClass = net.minecraft.client.renderer.GameRenderer.class;
+            try {
+                mainCameraMethod = grClass.getMethod("mainCamera");
+            } catch (Throwable t) {
+                mainCameraMethod = grClass.getMethod("getMainCamera");
+            }
+        } catch (Throwable ignored) {
+            mainCameraMethod = null;
+        }
+    }
+
+    private static Vec3 getCameraPos(net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext context) {
+        if (levelStateMethod != null) {
+            try {
+                Object ls = levelStateMethod.invoke(context);
+                if (ls != null) {
+                    Object crs = cameraRenderStateField.get(ls);
+                    if (crs != null) {
+                        return (Vec3) cameraPosField.get(crs);
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mainCameraMethod != null) {
+            try {
+                net.minecraft.client.Camera cam = (net.minecraft.client.Camera) mainCameraMethod.invoke(Minecraft.getInstance().gameRenderer);
+                if (cam != null) {
+                    return cam.position();
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        var player = Minecraft.getInstance().player;
+        return player != null ? player.getEyePosition() : Vec3.ZERO;
+    }
+
     @Override
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
@@ -113,9 +168,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 smoothedZ = tz;
             }
 
-            Vec3 cam = (context.levelState() != null && context.levelState().cameraRenderState != null)
-                    ? context.levelState().cameraRenderState.pos
-                    : Minecraft.getInstance().gameRenderer.mainCamera().position();
+            Vec3 cam = getCameraPos(context);
             double ox = smoothedX - cam.x, oy = smoothedY - cam.y, oz = smoothedZ - cam.z;
             long now = System.currentTimeMillis();
 

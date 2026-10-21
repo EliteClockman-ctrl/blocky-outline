@@ -25,9 +25,9 @@
 	"depends": {
 		"fabricloader": ">=0.16.0",
 		"minecraft": ">=26.1",
-		"java": ">=21",
-		"fabric-rendering-v1": "*",
-		"fabric-key-mapping-api-v1": "*",
-		"fabric-lifecycle-events-v1": "*"
+		"java": ">=21"
+	},
+	"suggests": {
+		"fabric-api": "*"
 	}
 }
