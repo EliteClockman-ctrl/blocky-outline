@@ -41,7 +41,7 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 
 ## Installation
 
-1. Install [Fabric Loader](https://fabricmc.net/use/installer/) `≥0.16.0`
+1. Install [Fabric Loader](https://fabricmc.net/use/installer/) `≥0.17.3`
 2. Install [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft `1.21.11`
 3. Drop `blocky-outline-1.1.6.jar` into your `.minecraft/mods/` folder
 4. Launch Minecraft `1.21.11`
@@ -53,7 +53,7 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 | Dependency | Version |
 |---|---|
 | Minecraft | `1.21.11` |
-| Fabric Loader | `≥0.16.0` |
+| Fabric Loader | `≥0.17.3` |
 | Fabric API | Compatible with 1.21.x |
 | Java | `≥21` |
 
