@@ -31,8 +31,31 @@ public final class BlockyOutlineSettings {
     public float hitboxExpand = 0.002f;
     public boolean smoothTransition = true;
     public float smoothSpeed = 0.85f;
+    public int motionMode = 1; // 0: Spring Physics, 1: Back (Overshoot), 2: Circ, 3: Quint, 4: Fluid Bezier, 5: Classic
+    public float springStiffness = 200.0f;
+    public float springDamping = 22.0f;
+    public float backOvershoot = 1.70158f;
+    public float motionDurationMs = 90.0f;
     public boolean breathingEffect = true;
     public float breathingSpeed = 1.0f;
+
+    public static final String[] MOTION_MODE_NAMES = {
+        "Spring Physics",
+        "Back (Overshoot)",
+        "Circ (Instant)",
+        "Quint (Snappy)",
+        "Fluid Bezier",
+        "Classic Lerp"
+    };
+
+    public static final String[] MOTION_MODE_DESCS = {
+        "Damped harmonic spring with preserved momentum",
+        "Fast glide with subtle single-bounce overshoot",
+        "Maximum initial speed with soft landing",
+        "High-contrast fifth-degree deceleration curve",
+        "Smooth Apple & Material Design curve",
+        "Standard exponential decay interpolation"
+    };
 
     public boolean fillEnabled = false;
     public boolean fillGradientEnabled = false;
@@ -113,6 +136,11 @@ public final class BlockyOutlineSettings {
         public float hitboxExpand = 0.002f;
         public boolean smoothTransition = true;
         public float smoothSpeed = 0.85f;
+        public int motionMode = 1;
+        public float springStiffness = 200.0f;
+        public float springDamping = 22.0f;
+        public float backOvershoot = 1.70158f;
+        public float motionDurationMs = 90.0f;
         public boolean breathingEffect = true;
         public float breathingSpeed = 1.0f;
 
@@ -156,6 +184,11 @@ public final class BlockyOutlineSettings {
             this.hitboxExpand = s.hitboxExpand;
             this.smoothTransition = s.smoothTransition;
             this.smoothSpeed = s.smoothSpeed;
+            this.motionMode = s.motionMode;
+            this.springStiffness = s.springStiffness;
+            this.springDamping = s.springDamping;
+            this.backOvershoot = s.backOvershoot;
+            this.motionDurationMs = s.motionDurationMs;
             this.breathingEffect = s.breathingEffect;
             this.breathingSpeed = s.breathingSpeed;
 
@@ -188,6 +221,11 @@ public final class BlockyOutlineSettings {
             s.hitboxExpand = this.hitboxExpand;
             s.smoothTransition = this.smoothTransition;
             s.smoothSpeed = this.smoothSpeed;
+            s.motionMode = this.motionMode;
+            s.springStiffness = this.springStiffness;
+            s.springDamping = this.springDamping;
+            s.backOvershoot = this.backOvershoot;
+            s.motionDurationMs = this.motionDurationMs;
             s.breathingEffect = this.breathingEffect;
             s.breathingSpeed = this.breathingSpeed;
 
@@ -220,6 +258,11 @@ public final class BlockyOutlineSettings {
         this.hitboxExpand = Mth.clamp(other.hitboxExpand, 0.0f, 0.05f);
         this.smoothTransition = other.smoothTransition;
         this.smoothSpeed = Mth.clamp(other.smoothSpeed, 0.05f, 1.0f);
+        this.motionMode = (other.motionMode >= 0 && other.motionMode <= 5) ? other.motionMode : 1;
+        this.springStiffness = Mth.clamp(other.springStiffness, 60.0f, 400.0f);
+        this.springDamping = Mth.clamp(other.springDamping, 10.0f, 40.0f);
+        this.backOvershoot = Mth.clamp(other.backOvershoot, 1.0f, 3.0f);
+        this.motionDurationMs = Mth.clamp(other.motionDurationMs, 50.0f, 250.0f);
         this.breathingEffect = other.breathingEffect;
         this.breathingSpeed = Mth.clamp(other.breathingSpeed, 0.2f, 3.0f);
 

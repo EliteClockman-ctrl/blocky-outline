@@ -26,10 +26,12 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     private static final String CATEGORY = "key.categories.misc";
     private static KeyMapping menuKeyBinding;
 
-    private static double smoothedX;
-    private static double smoothedY;
-    private static double smoothedZ;
-    private static boolean hasTarget;
+    private static double currX, currY, currZ;
+    private static double velX, velY, velZ;
+    private static double startX, startY, startZ;
+    private static double lastTargetX, lastTargetY, lastTargetZ;
+    private static long animStartTimeMs = 0;
+    private static boolean hasTarget = false;
     private static long lastTargetTimeMs = 0;
     private static long lastFrameNano = 0;
 
@@ -80,6 +82,32 @@ public final class BlockyOutlineClient implements ClientModInitializer {
 
             boolean continuous = hasTarget && (nowMs - lastTargetTimeMs < 120);
             lastTargetTimeMs = nowMs;
+
+            double diffX = tx - lastTargetX;
+            double diffY = ty - lastTargetY;
+            double diffZ = tz - lastTargetZ;
+            double targetDiffSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
+
+            if (!continuous || targetDiffSq > 25.0) {
+                currX = tx;
+                currY = ty;
+                currZ = tz;
+                velX = 0.0;
+                velY = 0.0;
+                velZ = 0.0;
+                startX = tx;
+                startY = ty;
+                startZ = tz;
+                animStartTimeMs = nowMs;
+            } else if (targetDiffSq > 0.00005) {
+                startX = currX;
+                startY = currY;
+                startZ = currZ;
+                animStartTimeMs = nowMs;
+            }
+            lastTargetX = tx;
+            lastTargetY = ty;
+            lastTargetZ = tz;
             hasTarget = true;
 
             double dt = (lastFrameNano == 0 || (nowNano - lastFrameNano > 100_000_000L))
@@ -90,33 +118,20 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             else if (dt > 0.05) dt = 0.05;
 
             if (s.smoothTransition && continuous) {
-                double dx = tx - smoothedX;
-                double dy = ty - smoothedY;
-                double dz = tz - smoothedZ;
-                double distSq = dx * dx + dy * dy + dz * dz;
-
-                if (distSq > 9.0 || distSq < 0.00002) {
-                    smoothedX = tx;
-                    smoothedY = ty;
-                    smoothedZ = tz;
-                } else {
-                    double speedFactor = Math.max(0.1, (double) s.smoothSpeed);
-                    double lambda = 24.0 + speedFactor * 24.0;
-                    double blend = 1.0 - Math.exp(-lambda * dt);
-                    smoothedX += dx * blend;
-                    smoothedY += dy * blend;
-                    smoothedZ += dz * blend;
-                }
+                updateMotion(s, tx, ty, tz, dt, nowMs);
             } else {
-                smoothedX = tx;
-                smoothedY = ty;
-                smoothedZ = tz;
+                currX = tx;
+                currY = ty;
+                currZ = tz;
+                velX = 0.0;
+                velY = 0.0;
+                velZ = 0.0;
             }
 
             Vec3 cam = context.camera().getPosition();
-            double ox = smoothedX - cam.x;
-            double oy = smoothedY - cam.y;
-            double oz = smoothedZ - cam.z;
+            double ox = currX - cam.x;
+            double oy = currY - cam.y;
+            double oz = currZ - cam.z;
 
             if (renderOutline) {
                 int outlineArgb = s.getOutlineArgb(nowMs);
@@ -155,5 +170,122 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 }
             }
         });
+    }
+
+    private static void updateMotion(BlockyOutlineSettings s, double tx, double ty, double tz, double dt, long nowMs) {
+        switch (s.motionMode) {
+            case 0 -> { // Damped Spring Physics (preserves velocity across frames)
+                double speedMult = 0.5 + (double) s.smoothSpeed * 0.8;
+                double k = (double) s.springStiffness * speedMult;
+                double c = (double) s.springDamping;
+                double subDt = dt * 0.5;
+                for (int step = 0; step < 2; step++) {
+                    double fx = -k * (currX - tx) - c * velX;
+                    double fy = -k * (currY - ty) - c * velY;
+                    double fz = -k * (currZ - tz) - c * velZ;
+                    velX += fx * subDt;
+                    velY += fy * subDt;
+                    velZ += fz * subDt;
+                    currX += velX * subDt;
+                    currY += velY * subDt;
+                    currZ += velZ * subDt;
+                }
+                if (Math.abs(currX - tx) < 0.0005 && Math.abs(currY - ty) < 0.0005 && Math.abs(currZ - tz) < 0.0005
+                        && Math.abs(velX) < 0.01 && Math.abs(velY) < 0.01 && Math.abs(velZ) < 0.01) {
+                    currX = tx;
+                    currY = ty;
+                    currZ = tz;
+                    velX = 0.0;
+                    velY = 0.0;
+                    velZ = 0.0;
+                }
+            }
+            case 1 -> { // Ease-Out Back (Snappy Overshoot & Pullback)
+                double dur = Math.max(40.0, (double) s.motionDurationMs / Math.max(0.2, (double) s.smoothSpeed));
+                double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
+                if (progress >= 1.0) {
+                    currX = tx;
+                    currY = ty;
+                    currZ = tz;
+                } else {
+                    double p1 = progress - 1.0;
+                    double c1 = (double) s.backOvershoot;
+                    double c3 = c1 + 1.0;
+                    double ease = 1.0 + c3 * p1 * p1 * p1 + c1 * p1 * p1;
+                    currX = startX + (tx - startX) * ease;
+                    currY = startY + (ty - startY) * ease;
+                    currZ = startZ + (tz - startZ) * ease;
+                }
+            }
+            case 2 -> { // Ease-Out Circ (High initial speed, soft landing)
+                double dur = Math.max(40.0, (double) s.motionDurationMs / Math.max(0.2, (double) s.smoothSpeed));
+                double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
+                if (progress >= 1.0) {
+                    currX = tx;
+                    currY = ty;
+                    currZ = tz;
+                } else {
+                    double p1 = progress - 1.0;
+                    double ease = Math.sqrt(Math.max(0.0, 1.0 - p1 * p1));
+                    currX = startX + (tx - startX) * ease;
+                    currY = startY + (ty - startY) * ease;
+                    currZ = startZ + (tz - startZ) * ease;
+                }
+            }
+            case 3 -> { // Ease-Out Quint (Extreme contrast deceleration)
+                double dur = Math.max(40.0, (double) s.motionDurationMs / Math.max(0.2, (double) s.smoothSpeed));
+                double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
+                if (progress >= 1.0) {
+                    currX = tx;
+                    currY = ty;
+                    currZ = tz;
+                } else {
+                    double p1 = 1.0 - progress;
+                    double ease = 1.0 - p1 * p1 * p1 * p1 * p1;
+                    currX = startX + (tx - startX) * ease;
+                    currY = startY + (ty - startY) * ease;
+                    currZ = startZ + (tz - startZ) * ease;
+                }
+            }
+            case 4 -> { // Fluid Cubic Bezier (Apple / Material fluid curve: 0.25, 1.0, 0.5, 1.0)
+                double dur = Math.max(40.0, (double) s.motionDurationMs / Math.max(0.2, (double) s.smoothSpeed));
+                double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
+                if (progress >= 1.0) {
+                    currX = tx;
+                    currY = ty;
+                    currZ = tz;
+                } else {
+                    double ease = solveCubicBezier(0.25, 1.0, 0.5, 1.0, progress);
+                    currX = startX + (tx - startX) * ease;
+                    currY = startY + (ty - startY) * ease;
+                    currZ = startZ + (tz - startZ) * ease;
+                }
+            }
+            default -> { // Classic Exponential Lerp
+                double dx = tx - currX;
+                double dy = ty - currY;
+                double dz = tz - currZ;
+                double speedFactor = Math.max(0.1, (double) s.smoothSpeed);
+                double lambda = 24.0 + speedFactor * 24.0;
+                double blend = 1.0 - Math.exp(-lambda * dt);
+                currX += dx * blend;
+                currY += dy * blend;
+                currZ += dz * blend;
+            }
+        }
+    }
+
+    private static double solveCubicBezier(double x1, double y1, double x2, double y2, double x) {
+        if (x <= 0.0) return 0.0;
+        if (x >= 1.0) return 1.0;
+        double t = x;
+        for (int i = 0; i < 4; i++) {
+            double currentX = 3.0 * (1.0 - t) * (1.0 - t) * t * x1 + 3.0 * (1.0 - t) * t * t * x2 + t * t * t;
+            double dx = 3.0 * (1.0 - t) * (1.0 - t) * x1 + 6.0 * (1.0 - t) * t * (x2 - x1) + 3.0 * t * t * (1.0 - x2);
+            if (Math.abs(dx) < 1e-6) break;
+            t -= (currentX - x) / dx;
+            t = Math.max(0.0, Math.min(1.0, t));
+        }
+        return 3.0 * (1.0 - t) * (1.0 - t) * t * y1 + 3.0 * (1.0 - t) * t * t * y2 + t * t * t;
     }
 }

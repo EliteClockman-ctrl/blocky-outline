@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 public class BlockyOutlineMenuScreen extends Screen {
 
     private static final String MOD_TITLE = "Blocky Outline";
-    private static final String MOD_VERSION = "v1.1.5";
+    private static final String MOD_VERSION = "v1.1.6";
 
     // Navigation tabs
     private static final String[] TABS = {"Outline", "Face Fill", "Smooth", "Presets"};
@@ -385,31 +385,70 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     // =========================================================================
-    // TAB 2: SMOOTH MOVEMENT & EFFECTS (DEFAULT 85% GLIDE)
+    // TAB 2: SMOOTH MOVEMENT & ADVANCED PHYSICS ENGINES
     // =========================================================================
     private void renderSmoothCards(GuiGraphics gui, int cx, int cy, int cw, int ch, int mx, int my) {
         int[] b = new int[2];
-        int totalRows = 4;
+        int totalRows = 5;
 
         // Row 0: Smooth Movement Toggle
         this.getRowBounds(0, totalRows, cy, ch, b);
         this.renderCardToggle(gui, cx, b[0], cw, b[1], "Smooth Move", "Glide between blocks",
                 this.settings.smoothTransition, false, mx, my);
 
-        // Row 1: Glide Speed Slider (Defaults to 85%)
+        // Row 1: Motion Engine / Easing Curve Selector
         this.getRowBounds(1, totalRows, cy, ch, b);
-        float speedPct = this.settings.smoothSpeed;
-        String speedStr = String.format("%d%%", (int) (this.settings.smoothSpeed * 100 + 0.5f));
-        this.renderCardSlider(gui, cx, b[0], cw, b[1], "Glide Speed", "Movement speed",
-                speedPct, speedStr, !this.settings.smoothTransition, mx, my);
+        int mode = this.settings.motionMode;
+        String modeName = (mode >= 0 && mode < BlockyOutlineSettings.MOTION_MODE_NAMES.length)
+                ? BlockyOutlineSettings.MOTION_MODE_NAMES[mode] : "Spring Physics";
+        String modeDesc = (mode >= 0 && mode < BlockyOutlineSettings.MOTION_MODE_DESCS.length)
+                ? BlockyOutlineSettings.MOTION_MODE_DESCS[mode] : "Physical spring";
+        this.renderCardChoice(gui, cx, b[0], cw, b[1], "Motion Curve", modeDesc,
+                modeName + " ▾", !this.settings.smoothTransition, mx, my);
 
-        // Row 2: Breathing Pulse Glow Toggle
+        // Row 2: Dynamic Parameter Slider based on active Motion Engine
         this.getRowBounds(2, totalRows, cy, ch, b);
+        float paramPct;
+        String paramStr;
+        String paramTitle;
+        String paramDesc;
+
+        switch (mode) {
+            case 0 -> { // Spring Physics
+                paramPct = (this.settings.springStiffness - 60.0f) / 340.0f;
+                paramStr = String.format("%.0fk", this.settings.springStiffness);
+                paramTitle = "Spring Tension";
+                paramDesc = "Oscillation stiffness";
+            }
+            case 1 -> { // Ease-Out Back (Overshoot)
+                paramPct = (this.settings.backOvershoot - 1.0f) / 2.0f;
+                paramStr = String.format("%.2fx", this.settings.backOvershoot);
+                paramTitle = "Overshoot Push";
+                paramDesc = "1-bounce intensity";
+            }
+            case 2, 3, 4 -> { // Circ, Quint, Fluid Bezier
+                paramPct = (this.settings.motionDurationMs - 50.0f) / 200.0f;
+                paramStr = String.format("%dms", (int) (this.settings.motionDurationMs + 0.5f));
+                paramTitle = "Glide Duration";
+                paramDesc = "Transition length";
+            }
+            default -> { // Classic Lerp
+                paramPct = this.settings.smoothSpeed;
+                paramStr = String.format("%d%%", (int) (this.settings.smoothSpeed * 100 + 0.5f));
+                paramTitle = "Glide Speed";
+                paramDesc = "Movement speed";
+            }
+        }
+        this.renderCardSlider(gui, cx, b[0], cw, b[1], paramTitle, paramDesc,
+                paramPct, paramStr, !this.settings.smoothTransition, mx, my);
+
+        // Row 3: Breathing Pulse Glow Toggle
+        this.getRowBounds(3, totalRows, cy, ch, b);
         this.renderCardToggle(gui, cx, b[0], cw, b[1], "Pulse Glow", "Rhythmic pulse effect",
                 this.settings.breathingEffect, false, mx, my);
 
-        // Row 3: Breathing Wave Speed Slider
-        this.getRowBounds(3, totalRows, cy, ch, b);
+        // Row 4: Breathing Wave Speed Slider
+        this.getRowBounds(4, totalRows, cy, ch, b);
         float breathPct = (this.settings.breathingSpeed - 0.2f) / 2.8f;
         String breathStr = String.format("%.1fx", this.settings.breathingSpeed);
         this.renderCardSlider(gui, cx, b[0], cw, b[1], "Pulse Speed", "Speed of pulse",
@@ -676,8 +715,35 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     // =========================================================================
-    // REUSABLE CARD COMPONENTS (TOGGLE, SLIDER, COLOR)
+    // REUSABLE CARD COMPONENTS (TOGGLE, SLIDER, COLOR, CHOICE)
     // =========================================================================
+    private void renderCardChoice(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, String choiceStr, boolean disabled, int mx, int my) {
+        boolean hov = !disabled && mx >= x && mx <= x + w && my >= y && my <= y + h;
+        gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
+        drawBorder(gui, x, y, x + w, y + h, hov ? CARD_BORDER_ACTIVE : CARD_BORDER);
+
+        int btnW = Math.max(76, Math.min(110, w / 3));
+        int btnH = Math.max(12, Math.min(16, h - 6));
+        int btnX = x + w - btnW - 8;
+        int btnY = y + (h - btnH) / 2;
+
+        int maxTextW = btnX - (x + 10) - 6;
+        int titleCol = disabled ? TEXT_DISABLED : TEXT_WHITE;
+        int descCol = disabled ? 0xFF475569 : TEXT_MUTED;
+
+        if (h < 25) {
+            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
+        } else {
+            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
+            gui.drawString(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
+        }
+
+        boolean btnHov = !disabled && mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
+        gui.fill(btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF131D28 : (btnHov ? 0xFF1E3A5F : 0xFF111A24));
+        drawBorder(gui, btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF162230 : (btnHov ? PRIMARY_BLUE : CARD_BORDER));
+        gui.drawCenteredString(this.font, trimText(choiceStr, btnW - 4), btnX + btnW / 2, btnY + (btnH - 8) / 2, disabled ? TEXT_DISABLED : (btnHov ? TEXT_WHITE : 0xFF93C5FD));
+    }
+
     private void renderCardToggle(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, boolean checked, boolean disabled, int mx, int my) {
         boolean hov = !disabled && mx >= x && mx <= x + w && my >= y && my <= y + h;
         gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
@@ -1399,10 +1465,10 @@ public class BlockyOutlineMenuScreen extends Screen {
             }
         }
 
-        // 7. Tab 2: Smooth Movement & Pulse Clicks
+        // 7. Tab 2: Smooth Movement & Advanced Motion Engine Clicks
         if (this.activeTab == 2) {
             int[] b = new int[2];
-            int totalRows = 4;
+            int totalRows = 5;
 
             // Row 0: Smooth Movement Toggle
             this.getRowBounds(0, totalRows, contentY, contentH, b);
@@ -1413,18 +1479,27 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // Row 1: Glide Speed Slider (Default 85%)
+            // Row 1: Motion Engine / Easing Curve Selector (Click card to cycle modes)
             this.getRowBounds(1, totalRows, contentY, contentH, b);
-            if (this.settings.smoothTransition && mx >= sX - 45 && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
-                this.draggingSlider = true;
-                this.activeSliderTab = 2;
-                this.activeSliderRow = 1;
-                this.updateSliderValue(2, 1, mx, sX, sW);
+            if (this.settings.smoothTransition && mx >= col1X && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+                this.settings.motionMode = (this.settings.motionMode + 1) % 6;
+                BlockyOutlineSettings.save();
+                this.playClick();
                 return true;
             }
 
-            // Row 2: Breathing Pulse Toggle
+            // Row 2: Dynamic Parameter Slider
             this.getRowBounds(2, totalRows, contentY, contentH, b);
+            if (this.settings.smoothTransition && mx >= sX - 45 && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+                this.draggingSlider = true;
+                this.activeSliderTab = 2;
+                this.activeSliderRow = 2;
+                this.updateSliderValue(2, 2, mx, sX, sW);
+                return true;
+            }
+
+            // Row 3: Breathing Pulse Glow Toggle
+            this.getRowBounds(3, totalRows, contentY, contentH, b);
             if (mx >= col1X && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
                 this.settings.breathingEffect = !this.settings.breathingEffect;
                 BlockyOutlineSettings.save();
@@ -1432,13 +1507,13 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // Row 3: Pulse Speed Slider
-            this.getRowBounds(3, totalRows, contentY, contentH, b);
+            // Row 4: Pulse Speed Slider
+            this.getRowBounds(4, totalRows, contentY, contentH, b);
             if (this.settings.breathingEffect && mx >= sX - 45 && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
                 this.draggingSlider = true;
                 this.activeSliderTab = 2;
-                this.activeSliderRow = 3;
-                this.updateSliderValue(2, 3, mx, sX, sW);
+                this.activeSliderRow = 4;
+                this.updateSliderValue(2, 4, mx, sX, sW);
                 return true;
             }
         }
@@ -1637,8 +1712,15 @@ public class BlockyOutlineMenuScreen extends Screen {
             }
         } else if (tabIndex == 2) {
             switch (rowIndex) {
-                case 1 -> this.settings.smoothSpeed = Math.max(0.05f, pct);
-                case 3 -> this.settings.breathingSpeed = 0.2f + pct * 2.8f;
+                case 2 -> {
+                    switch (this.settings.motionMode) {
+                        case 0 -> this.settings.springStiffness = 60.0f + pct * 340.0f;
+                        case 1 -> this.settings.backOvershoot = 1.0f + pct * 2.0f;
+                        case 2, 3, 4 -> this.settings.motionDurationMs = 50.0f + pct * 200.0f;
+                        default -> this.settings.smoothSpeed = Math.max(0.05f, pct);
+                    }
+                }
+                case 4 -> this.settings.breathingSpeed = 0.2f + pct * 2.8f;
             }
         }
     }
