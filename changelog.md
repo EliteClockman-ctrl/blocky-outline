@@ -1,18 +1,13 @@
 ## What's new in version 1.1.4 (Compared to 1.1.3):
 
-### 🔄 Minecraft Version & Platform
-- **Target Updated to Minecraft 1.21.11**: Replaced 26.x (26.1–26.3) support with official Minecraft `1.21.11` (Fabric).
-- **Native 1.21.11 Render Pipeline**: Switched to Fabric's standard `WorldRenderEvents.BEFORE_BLOCK_OUTLINE` and native Minecraft `RenderTypes`.
-- **Removed Obsolete 26.x Injection**: Removed experimental package-injection files (`BlockyOutlinePipelines` & `BlockyOutlineRenderTypes`).
+### 🔄 Ported to Minecraft 1.21.11
+- **Minecraft 1.21.11 Support**: Fully ported from 26.x down to official Minecraft `1.21.11` (Fabric).
+- **Native Render Pipeline**: Integrated with Minecraft 1.21.11's native render pipeline and Fabric's `WorldRenderEvents.BEFORE_BLOCK_OUTLINE`.
 
-### ⚡ Performance & Zero-Lag
-- **Zero-GC Allocation in Render Loop**: Completely removed temporary object allocations (`Vector3f`, `Matrix4f`, wrappers) during per-frame rendering to eliminate micro-stutters.
-- **Cached Frame Calculations**: Pulsing breathing waves and rainbow RGB calculations are now calculated once per frame instead of recomputed per block face.
-- **Improved Glide Responsiveness**: Fine-tuned block glide interpolation for instant, jitter-free cursor tracking.
-
-### 🎨 UI & Code Quality
-- **1.21.11 Menu Rendering**: Updated all menu text elements to use `GuiGraphics.drawString` and `GuiGraphics.drawCenteredString`.
-- **Clean Human-Written Codebase**: Cleaned up code structure and removed all robotic/AI-style comments into idiomatic, experienced mod developer conventions.
+### ⚡ Performance Optimizations (Zero-Lag)
+- **Zero-Allocation Rendering**: Eliminated runtime memory allocations in the block outline and fill rendering loops, preventing micro-stutters and GC lag spikes.
+- **Frame-Cached Calculations**: Cached breathing waves and rainbow color calculations per frame rather than recalculating on every block face.
+- **Snappier Glide**: Refined interpolation math for smooth, instant outline tracking with zero delay.
 
 ---
 
