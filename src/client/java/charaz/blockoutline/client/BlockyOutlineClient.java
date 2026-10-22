@@ -70,9 +70,10 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 return false;
             }
 
-            double tx = pos.getX();
-            double ty = pos.getY();
-            double tz = pos.getZ();
+            Vec3 offset = state.getOffset(mc.level, pos);
+            double tx = (double) pos.getX() + offset.x;
+            double ty = (double) pos.getY() + offset.y;
+            double tz = (double) pos.getZ() + offset.z;
 
             long nowMs = System.currentTimeMillis();
             long nowNano = System.nanoTime();
@@ -116,10 +117,9 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             double ox = smoothedX - cam.x;
             double oy = smoothedY - cam.y;
             double oz = smoothedZ - cam.z;
-            long now = System.currentTimeMillis();
 
             if (renderOutline) {
-                int outlineArgb = s.getOutlineArgb(now);
+                int outlineArgb = s.getOutlineArgb(nowMs);
                 if ((outlineArgb >>> 24) > 0) {
                     RenderType lineType = RenderType.lines();
                     VertexConsumer lines = consumers.getBuffer(lineType);
@@ -132,7 +132,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 RenderType quadType = RenderType.debugQuads();
                 VertexConsumer quads = consumers.getBuffer(quadType);
                 OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
-                        s.getFillArgb(now), s.getFillArgb2(now), s.hitboxExpand);
+                        s.getFillArgb(nowMs), s.getFillArgb2(nowMs), s.hitboxExpand);
             }
 
             return false;

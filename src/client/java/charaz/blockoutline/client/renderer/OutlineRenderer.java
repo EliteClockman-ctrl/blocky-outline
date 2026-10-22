@@ -2,7 +2,9 @@ package charaz.blockoutline.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import java.util.List;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class OutlineRenderer {
@@ -29,16 +31,19 @@ public final class OutlineRenderer {
         float cLen = Mth.clamp(cornerLength, 0.10f, 0.48f);
         float exp = Math.max(0.0f, expand);
 
-        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-            float x0 = (float) (minX - exp + dx);
-            float y0 = (float) (minY - exp + dy);
-            float z0 = (float) (minZ - exp + dz);
-            float x1 = (float) (maxX + exp + dx);
-            float y1 = (float) (maxY + exp + dy);
-            float z1 = (float) (maxZ + exp + dz);
+        List<AABB> boxes = shape.toAabbs();
+        int boxCount = boxes.size();
+        for (int i = 0; i < boxCount; i++) {
+            AABB box = boxes.get(i);
+            float x0 = (float) (box.minX - exp + dx);
+            float y0 = (float) (box.minY - exp + dy);
+            float z0 = (float) (box.minZ - exp + dz);
+            float x1 = (float) (box.maxX + exp + dx);
+            float y1 = (float) (box.maxY + exp + dy);
+            float z1 = (float) (box.maxZ + exp + dz);
 
             renderBoxOutline(consumer, pose, x0, y0, z0, x1, y1, z1, r, g, b, a, width, cornerMode, cLen);
-        });
+        }
     }
 
     private static void renderBoxOutline(VertexConsumer consumer, PoseStack.Pose pose,
@@ -137,13 +142,16 @@ public final class OutlineRenderer {
 
         float exp = Math.max(0.0005f, expand);
 
-        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-            float x0 = (float) (minX - exp + dx);
-            float y0 = (float) (minY - exp + dy);
-            float z0 = (float) (minZ - exp + dz);
-            float x1 = (float) (maxX + exp + dx);
-            float y1 = (float) (maxY + exp + dy);
-            float z1 = (float) (maxZ + exp + dz);
+        List<AABB> boxes = shape.toAabbs();
+        int boxCount = boxes.size();
+        for (int i = 0; i < boxCount; i++) {
+            AABB box = boxes.get(i);
+            float x0 = (float) (box.minX - exp + dx);
+            float y0 = (float) (box.minY - exp + dy);
+            float z0 = (float) (box.minZ - exp + dz);
+            float x1 = (float) (box.maxX + exp + dx);
+            float y1 = (float) (box.maxY + exp + dy);
+            float z1 = (float) (box.maxZ + exp + dz);
 
             // Bottom
             consumer.addVertex(pose, x0, y0, z0).setColor(r2, g2, b2, a2);
@@ -180,6 +188,6 @@ public final class OutlineRenderer {
             consumer.addVertex(pose, x0, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x0, y1, z0).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x0, y0, z0).setColor(r2, g2, b2, a2);
-        });
+        }
     }
 }
