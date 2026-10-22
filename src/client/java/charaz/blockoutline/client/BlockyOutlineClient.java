@@ -9,21 +9,20 @@ import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.BlockOutlineRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.glfw.GLFW;
 
 public final class BlockyOutlineClient implements ClientModInitializer {
-    private static final String CATEGORY = "key.categories.misc";
     private static KeyMapping menuKeyBinding;
 
     private static double currX, currY, currZ;
@@ -39,8 +38,8 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
 
-        WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, hitResult) -> {
-            if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK || !(hitResult instanceof BlockHitResult blockHit)) {
+        WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outlineRenderState) -> {
+            if (outlineRenderState == null) {
                 hasTarget = false;
                 return true;
             }
@@ -58,21 +57,21 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 return false;
             }
 
-            BlockPos pos = blockHit.getBlockPos();
-            BlockState state = mc.level.getBlockState(pos);
-            VoxelShape shape = state.getShape(mc.level, pos);
-            if (shape.isEmpty()) {
+            BlockPos pos = outlineRenderState.pos();
+            VoxelShape shape = outlineRenderState.shape();
+            if (shape == null || shape.isEmpty()) {
                 hasTarget = false;
                 return true;
             }
 
-            PoseStack matrices = context.matrixStack();
+            PoseStack matrices = context.matrices();
             MultiBufferSource consumers = context.consumers();
             if (matrices == null || consumers == null) {
                 return false;
             }
 
-            Vec3 offset = state.getOffset(mc.level, pos);
+            BlockState state = mc.level.getBlockState(pos);
+            Vec3 offset = state.getOffset(pos);
             double tx = (double) pos.getX() + offset.x;
             double ty = (double) pos.getY() + offset.y;
             double tz = (double) pos.getZ() + offset.z;
@@ -128,7 +127,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 velZ = 0.0;
             }
 
-            Vec3 cam = context.camera().getPosition();
+            Vec3 cam = mc.gameRenderer.getMainCamera().position();
             double ox = currX - cam.x;
             double oy = currY - cam.y;
             double oz = currZ - cam.z;
@@ -136,7 +135,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             if (renderOutline) {
                 int outlineArgb = s.getOutlineArgb(nowMs);
                 if ((outlineArgb >>> 24) > 0) {
-                    RenderType lineType = RenderType.lines();
+                    RenderType lineType = RenderTypes.lines();
                     VertexConsumer lines = consumers.getBuffer(lineType);
                     OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
                             s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand);
@@ -144,7 +143,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             }
 
             if (renderFill) {
-                RenderType quadType = RenderType.debugQuads();
+                RenderType quadType = RenderTypes.debugQuads();
                 VertexConsumer quads = consumers.getBuffer(quadType);
                 OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
                         s.getFillArgb(nowMs), s.getFillArgb2(nowMs), s.hitboxExpand);
@@ -157,7 +156,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 "key.blocky-outline.open_menu",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_M,
-                CATEGORY
+                KeyMapping.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
