@@ -2,10 +2,10 @@
 
 A lightweight, modern client-side Fabric mod that replaces Minecraft's default block selection outline with a fully customizable outline and optional gradient fill.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-62ba3d?style=flat-square)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-62ba3d?style=flat-square)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Fabric-0.16+-b87333?style=flat-square)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE_blocky-outline)
-[![Version](https://img.shields.io/badge/Version-1.1.4-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.4)
+[![Version](https://img.shields.io/badge/Version-1.1.5-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.5)
 
 ---
 
@@ -37,9 +37,9 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 ## Installation
 
 1. Install [Fabric Loader](https://fabricmc.net/use/installer/) `≥0.16.0`
-2. Install [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft `1.21.11`
-3. Drop `blocky-outline-1.1.4.jar` into your `.minecraft/mods/` folder
-4. Launch Minecraft `1.21.11`
+2. Install [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft `1.21.x`
+3. Drop `blocky-outline-1.1.5.jar` into your `.minecraft/mods/` folder
+4. Launch Minecraft `1.21` (or any `1.21.x` release)
 
 ---
 
@@ -47,9 +47,9 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 
 | Dependency | Version |
 |---|---|
-| Minecraft | `~1.21.11` |
+| Minecraft | `1.21.x` (`1.21` - `1.21.4`) |
 | Fabric Loader | `≥0.16.0` |
-| Fabric API | Compatible with 1.21.11 |
+| Fabric API | Compatible with 1.21.x |
 | Java | `≥21` |
 
 ---
