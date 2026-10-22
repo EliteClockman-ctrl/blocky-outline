@@ -404,7 +404,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         String modeDesc = (mode >= 0 && mode < BlockyOutlineSettings.MOTION_MODE_DESCS.length)
                 ? BlockyOutlineSettings.MOTION_MODE_DESCS[mode] : "Physical spring";
         this.renderCardChoice(gui, cx, b[0], cw, b[1], "Motion Curve", modeDesc,
-                modeName + " ▾", !this.settings.smoothTransition, mx, my);
+                modeName, !this.settings.smoothTransition, mx, my);
 
         // Row 2: Dynamic Parameter Slider based on active Motion Engine
         this.getRowBounds(2, totalRows, cy, ch, b);
@@ -485,11 +485,53 @@ public class BlockyOutlineMenuScreen extends Screen {
         int cy = vpY + vpH / 2;
         float scale = Math.min(pw, vpH) * (0.35f + this.settings.hitboxExpand * 1.5f);
 
-        // Dynamic smooth gliding demo shift in Smooth tab
+        // Live preview of active motion engine in Tab 2
         float demoShiftX = 0.0f;
         if (this.activeTab == 2 && this.settings.smoothTransition) {
             long nowTime = System.currentTimeMillis();
-            demoShiftX = (float) Math.sin(nowTime * 0.0022f * (0.4f + this.settings.smoothSpeed * 0.8f)) * scale * 0.28f;
+            long cycleMs = 1200;
+            long phase = nowTime % cycleMs;
+            float dir = ((nowTime / cycleMs) % 2 == 0) ? -1.0f : 1.0f;
+            float from = -dir * 0.25f;
+            float to = dir * 0.25f;
+            float p = Math.min(1.0f, (float) phase / 360.0f);
+            float ease;
+            switch (this.settings.motionMode) {
+                case 0 -> {
+                    float t = phase * 0.007f;
+                    ease = 1.0f - (float) Math.exp(-t * 3.2f) * (float) Math.cos(t * 12.0f);
+                }
+                case 1 -> {
+                    if (p >= 1.0f) ease = 1.0f;
+                    else {
+                        float p1 = p - 1.0f;
+                        float s = this.settings.backOvershoot;
+                        ease = 1.0f + (s + 1.0f) * p1 * p1 * p1 + s * p1 * p1;
+                    }
+                }
+                case 2 -> {
+                    if (p >= 1.0f) ease = 1.0f;
+                    else {
+                        float p1 = p - 1.0f;
+                        ease = (float) Math.sqrt(Math.max(0.0f, 1.0f - p1 * p1));
+                    }
+                }
+                case 3 -> {
+                    if (p >= 1.0f) ease = 1.0f;
+                    else {
+                        float p1 = 1.0f - p;
+                        ease = 1.0f - p1 * p1 * p1 * p1 * p1;
+                    }
+                }
+                case 4 -> {
+                    float t = p;
+                    ease = 3.0f * (1.0f - t) * t * t * 0.8f + t * t * t;
+                }
+                default -> {
+                    ease = 1.0f - (float) Math.exp(-p * 4.5f);
+                }
+            }
+            demoShiftX = (from + (to - from) * ease) * scale;
         }
 
         // Shape vertices
@@ -722,8 +764,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
         drawBorder(gui, x, y, x + w, y + h, hov ? CARD_BORDER_ACTIVE : CARD_BORDER);
 
-        int btnW = Math.max(76, Math.min(110, w / 3));
-        int btnH = Math.max(12, Math.min(16, h - 6));
+        int btnW = Math.max(120, Math.min(150, w / 2));
+        int btnH = Math.max(14, Math.min(20, h - 8));
         int btnX = x + w - btnW - 8;
         int btnY = y + (h - btnH) / 2;
 
@@ -739,9 +781,9 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
 
         boolean btnHov = !disabled && mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
-        gui.fill(btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF131D28 : (btnHov ? 0xFF1E3A5F : 0xFF111A24));
-        drawBorder(gui, btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF162230 : (btnHov ? PRIMARY_BLUE : CARD_BORDER));
-        gui.drawCenteredString(this.font, trimText(choiceStr, btnW - 4), btnX + btnW / 2, btnY + (btnH - 8) / 2, disabled ? TEXT_DISABLED : (btnHov ? TEXT_WHITE : 0xFF93C5FD));
+        gui.fill(btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF131D28 : (btnHov ? 0xFF2563EB : 0xFF141E2C));
+        drawBorder(gui, btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF162230 : (btnHov ? 0xFF93C5FD : PRIMARY_BLUE));
+        gui.drawCenteredString(this.font, trimText(choiceStr, btnW - 8), btnX + btnW / 2, btnY + (btnH - 8) / 2, disabled ? TEXT_DISABLED : (btnHov ? TEXT_WHITE : 0xFF93C5FD));
     }
 
     private void renderCardToggle(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, boolean checked, boolean disabled, int mx, int my) {
@@ -898,10 +940,8 @@ public class BlockyOutlineMenuScreen extends Screen {
         // 2D Sat / Val Box
         for (int py = 0; py < boxSize; py += 2) {
             float v = 1.0f - (float) py / (float) boxSize;
-            float[] rgbLeft = BlockyOutlineSettings.hsvToRgb(hue, 0.0f, v);
-            float[] rgbRight = BlockyOutlineSettings.hsvToRgb(hue, 1.0f, v);
-            int colLeft = 0xFF000000 | ((int) (rgbLeft[0] * 255.0f) << 16) | ((int) (rgbLeft[1] * 255.0f) << 8) | (int) (rgbLeft[2] * 255.0f);
-            int colRight = 0xFF000000 | ((int) (rgbRight[0] * 255.0f) << 16) | ((int) (rgbRight[1] * 255.0f) << 8) | (int) (rgbRight[2] * 255.0f);
+            int colLeft = 0xFF000000 | BlockyOutlineSettings.hsvToRgbPacked(hue, 0.0f, v);
+            int colRight = 0xFF000000 | BlockyOutlineSettings.hsvToRgbPacked(hue, 1.0f, v);
             gui.fillGradient(boxX, boxY + py, boxX + boxSize, boxY + py + 2, colLeft, colRight);
         }
         drawBorder(gui, boxX - 1, boxY - 1, boxX + boxSize + 1, boxY + boxSize + 1, CARD_BORDER);
@@ -929,8 +969,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         // Current Color Swatch Preview
         int curSwX = hStripX + hStripW + 10;
         int curSwW = 50;
-        float[] curRgb = BlockyOutlineSettings.hsvToRgb(hue, sat, val);
-        int curCol = 0xFF000000 | ((int) (curRgb[0] * 255.0f) << 16) | ((int) (curRgb[1] * 255.0f) << 8) | (int) (curRgb[2] * 255.0f);
+        int curCol = 0xFF000000 | BlockyOutlineSettings.hsvToRgbPacked(hue, sat, val);
         gui.fill(curSwX, boxY, curSwX + curSwW, boxY + 28, curCol);
         drawBorder(gui, curSwX, boxY, curSwX + curSwW, boxY + 28, TEXT_WHITE);
         gui.drawString(this.font, String.format("#%06X", curCol & 0xFFFFFF), curSwX, boxY + 34, TEXT_MUTED, false);
@@ -1479,10 +1518,15 @@ public class BlockyOutlineMenuScreen extends Screen {
                 return true;
             }
 
-            // Row 1: Motion Engine / Easing Curve Selector (Click card to cycle modes)
+            // Row 1: Motion Engine / Easing Curve Selector (Left click = next, Right click = prev)
             this.getRowBounds(1, totalRows, contentY, contentH, b);
-            if (this.settings.smoothTransition && mx >= col1X && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
-                this.settings.motionMode = (this.settings.motionMode + 1) % 6;
+            if (mx >= col1X && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+                if (button == 1) {
+                    this.settings.motionMode = (this.settings.motionMode + 5) % 6;
+                } else {
+                    this.settings.motionMode = (this.settings.motionMode + 1) % 6;
+                }
+                this.settings.smoothTransition = true;
                 BlockyOutlineSettings.save();
                 this.playClick();
                 return true;
@@ -1490,7 +1534,8 @@ public class BlockyOutlineMenuScreen extends Screen {
 
             // Row 2: Dynamic Parameter Slider
             this.getRowBounds(2, totalRows, contentY, contentH, b);
-            if (this.settings.smoothTransition && mx >= sX - 45 && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+            if (mx >= col1X && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+                this.settings.smoothTransition = true;
                 this.draggingSlider = true;
                 this.activeSliderTab = 2;
                 this.activeSliderRow = 2;
@@ -1509,7 +1554,8 @@ public class BlockyOutlineMenuScreen extends Screen {
 
             // Row 4: Pulse Speed Slider
             this.getRowBounds(4, totalRows, contentY, contentH, b);
-            if (this.settings.breathingEffect && mx >= sX - 45 && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+            if (mx >= col1X && mx <= col1X + col1W && my >= b[0] && my <= b[0] + b[1]) {
+                this.settings.breathingEffect = true;
                 this.draggingSlider = true;
                 this.activeSliderTab = 2;
                 this.activeSliderRow = 4;

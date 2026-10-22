@@ -1,6 +1,6 @@
 ## What's new in version 1.1.6:
 
-- **Minecraft 1.21.11 Support**: Expanded native compatibility to Minecraft `1.21.11` while retaining seamless operation on `1.21 - 1.21.4`.
+- **Minecraft 1.21.11 Dedicated**: Native support tailored specifically for Minecraft 1.21.11 Fabric.
 - **Damped Spring Physics (Harmonic Oscillator)**: Replaced static time interpolation with a true physical mass-spring-damper simulation. Inherits cursor velocity continuously across frames so rapid mouse flicks never feel jerky or abrupt.
 - **Ease-Out Back (Overshoot Engine)**: Crisp, modern UI movement modeled after macOS/iOS fluid animations. The outline snaps quickly toward the target block, overshoots with a subtle 1-bounce spring, and pulls tightly into place.
 - **Circ (Circular) & Quint (Quintic) Curves**: Maximum initial burst speed for instant target acquisition without visual delay, terminating in an ultra-smooth, gentle deceleration landing.
