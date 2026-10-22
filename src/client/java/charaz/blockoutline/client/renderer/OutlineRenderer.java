@@ -89,35 +89,35 @@ public final class OutlineRenderer {
     private static void line(VertexConsumer consumer, PoseStack.Pose pose,
                              float x1, float y1, float z1, float x2, float y2, float z2,
                              float nx, float ny, float nz, int r, int g, int b, int a, float width) {
-        consumer.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
-        consumer.addVertex(pose, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
+        consumer.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz).setLineWidth(width);
+        consumer.addVertex(pose, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz).setLineWidth(width);
     }
 
     private static void cornerLineX(VertexConsumer consumer, PoseStack.Pose pose,
                                     float x0, float x1, float dx, float y, float z,
                                     int r, int g, int b, int a, float width) {
-        consumer.addVertex(pose, x0, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f);
-        consumer.addVertex(pose, x0 + dx, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f);
-        consumer.addVertex(pose, x1 - dx, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f);
-        consumer.addVertex(pose, x1, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f);
+        consumer.addVertex(pose, x0, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f).setLineWidth(width);
+        consumer.addVertex(pose, x0 + dx, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f).setLineWidth(width);
+        consumer.addVertex(pose, x1 - dx, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f).setLineWidth(width);
+        consumer.addVertex(pose, x1, y, z).setColor(r, g, b, a).setNormal(pose, 1.0f, 0.0f, 0.0f).setLineWidth(width);
     }
 
     private static void cornerLineY(VertexConsumer consumer, PoseStack.Pose pose,
                                     float y0, float y1, float dy, float x, float z,
                                     int r, int g, int b, int a, float width) {
-        consumer.addVertex(pose, x, y0, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f);
-        consumer.addVertex(pose, x, y0 + dy, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f);
-        consumer.addVertex(pose, x, y1 - dy, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f);
-        consumer.addVertex(pose, x, y1, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f);
+        consumer.addVertex(pose, x, y0, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f).setLineWidth(width);
+        consumer.addVertex(pose, x, y0 + dy, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f).setLineWidth(width);
+        consumer.addVertex(pose, x, y1 - dy, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f).setLineWidth(width);
+        consumer.addVertex(pose, x, y1, z).setColor(r, g, b, a).setNormal(pose, 0.0f, 1.0f, 0.0f).setLineWidth(width);
     }
 
     private static void cornerLineZ(VertexConsumer consumer, PoseStack.Pose pose,
                                     float z0, float z1, float dz, float x, float y,
                                     int r, int g, int b, int a, float width) {
-        consumer.addVertex(pose, x, y, z0).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f);
-        consumer.addVertex(pose, x, y, z0 + dz).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f);
-        consumer.addVertex(pose, x, y, z1 - dz).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f);
-        consumer.addVertex(pose, x, y, z1).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f);
+        consumer.addVertex(pose, x, y, z0).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f).setLineWidth(width);
+        consumer.addVertex(pose, x, y, z0 + dz).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f).setLineWidth(width);
+        consumer.addVertex(pose, x, y, z1 - dz).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f).setLineWidth(width);
+        consumer.addVertex(pose, x, y, z1).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f).setLineWidth(width);
     }
 
     public static void renderFilledBox(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape,
