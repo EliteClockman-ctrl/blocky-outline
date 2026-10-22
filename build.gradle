@@ -44,11 +44,15 @@ tasks.withType(JavaCompile).configureEach {
 
 java {
     withSourcesJar()
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.matching { it.name.startsWith('run') }.configureEach {
+    def mcJava = file('D:/Minecraft/jre/x64/bin/java.exe')
+    if (mcJava.exists()) {
+        executable = mcJava.absolutePath
+    }
 }
 
 tasks.register('distModJar', Copy) {
