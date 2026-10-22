@@ -1,18 +1,18 @@
-## What's new in version 1.1.4 :
+## What's new in version 1.1.4 (Compared to 1.1.3):
 
-### Version & Target Migration
-- **Targeted Minecraft 1.21.11**: Fully transitioned and ported from Minecraft 26.x experiments to official Minecraft `1.21.11` (Fabric).
-- **Native Render Events**: Replaced experimental level rendering pipeline hooks with stable `WorldRenderEvents.BEFORE_BLOCK_OUTLINE`.
-- **Clean Standard Architecture**: Removed dirty package injection workarounds; now using clean, standard Minecraft 1.21.11 `RenderTypes` and `GuiGraphics` APIs.
+### 🔄 Minecraft Version & Platform
+- **Target Updated to Minecraft 1.21.11**: Replaced 26.x (26.1–26.3) support with official Minecraft `1.21.11` (Fabric).
+- **Native 1.21.11 Render Pipeline**: Switched to Fabric's standard `WorldRenderEvents.BEFORE_BLOCK_OUTLINE` and native Minecraft `RenderTypes`.
+- **Removed Obsolete 26.x Injection**: Removed experimental package-injection files (`BlockyOutlinePipelines` & `BlockyOutlineRenderTypes`).
 
-### Performance & Zero-Lag Enhancements
-- **Zero-Allocation Rendering**: Eliminated temporary vector, object, and matrix allocations in the render hot loop.
-- **Micro-Optimized Math**: Pre-computed trigonometric pulses and cached frame calculations prevent FPS drops and micro-stutters.
-- **Smooth Glide & Transition**: Fine-tuned block glide interpolation for instantaneous, snappy cursor tracking.
+### ⚡ Performance & Zero-Lag
+- **Zero-GC Allocation in Render Loop**: Completely removed temporary object allocations (`Vector3f`, `Matrix4f`, wrappers) during per-frame rendering to eliminate micro-stutters.
+- **Cached Frame Calculations**: Pulsing breathing waves and rainbow RGB calculations are now calculated once per frame instead of recomputed per block face.
+- **Improved Glide Responsiveness**: Fine-tuned block glide interpolation for instant, jitter-free cursor tracking.
 
-### Code Quality & Readability
-- **Human-Authored Style**: Completely rewritten and refactored code structure and comments to match clean, idiomatic open-source Minecraft mod standards.
-- **Robust UI Rendering**: Updated all menu text rendering to modern `GuiGraphics.drawString` and `drawCenteredString` for sharp, reliable font display across all GUI scales.
+### 🎨 UI & Code Quality
+- **1.21.11 Menu Rendering**: Updated all menu text elements to use `GuiGraphics.drawString` and `GuiGraphics.drawCenteredString`.
+- **Clean Human-Written Codebase**: Cleaned up code structure and removed all robotic/AI-style comments into idiomatic, experienced mod developer conventions.
 
 ---
 
