@@ -1,3 +1,21 @@
+## What's new in version 1.1.4 :
+
+### Version & Target Migration
+- **Targeted Minecraft 1.21.11**: Fully transitioned and ported from Minecraft 26.x experiments to official Minecraft `1.21.11` (Fabric).
+- **Native Render Events**: Replaced experimental level rendering pipeline hooks with stable `WorldRenderEvents.BEFORE_BLOCK_OUTLINE`.
+- **Clean Standard Architecture**: Removed dirty package injection workarounds; now using clean, standard Minecraft 1.21.11 `RenderTypes` and `GuiGraphics` APIs.
+
+### Performance & Zero-Lag Enhancements
+- **Zero-Allocation Rendering**: Eliminated temporary vector, object, and matrix allocations in the render hot loop.
+- **Micro-Optimized Math**: Pre-computed trigonometric pulses and cached frame calculations prevent FPS drops and micro-stutters.
+- **Smooth Glide & Transition**: Fine-tuned block glide interpolation for instantaneous, snappy cursor tracking.
+
+### Code Quality & Readability
+- **Human-Authored Style**: Completely rewritten and refactored code structure and comments to match clean, idiomatic open-source Minecraft mod standards.
+- **Robust UI Rendering**: Updated all menu text rendering to modern `GuiGraphics.drawString` and `drawCenteredString` for sharp, reliable font display across all GUI scales.
+
+---
+
 ## What's new in version 1.1.3 :
 
 ### New Features
@@ -14,9 +32,6 @@
 - **Short & Natural Descriptions**: Cleaned up all feature descriptions to be concise, clear, and player-friendly.
 
 ### Performance Optimizations
-- **Zero-GC Render Loop**: Completely eliminated runtime allocations in the block outline and fill rendering pipelines.
-- **Fast Axis-Aligned Edges**: Removed runtime square-root (`fastInvSqrt`) and vector normalization operations from edge rendering.
-- **Frame-Cached Math**: Breathing pulse wave (`Math.sin`) and rainbow calculations are now cached per frame instead of recomputed per face.
-### Compatibility
-- **Full Minecraft 26.x Support (26.1 through 26.3)**: Dynamically bridges camera state retrieval between Minecraft 26.1 (`GameRenderer.getMainCamera()`) and 26.2+ (`LevelRenderContext.levelState()` / `GameRenderer.mainCamera()`).
-- **Flexible Dependencies**: Loosened Fabric API sub-dependency declarations so the mod loads seamlessly on both official bundled Fabric API releases and modular setups.
+- **Zero-GC Render Engine**: Completely eliminated runtime allocations in the block outline and fill rendering pipelines.
+- **Fast Axis-Aligned Edges**: Removed runtime square-root operations from edge rendering.
+- **Frame-Cached Math**: Breathing pulse wave and rainbow calculations are now cached per frame instead of recomputed per face.

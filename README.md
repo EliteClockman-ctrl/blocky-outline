@@ -2,10 +2,10 @@
 
 A lightweight, modern client-side Fabric mod that replaces Minecraft's default block selection outline with a fully customizable outline and optional gradient fill.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.x-62ba3d?style=flat-square)](https://minecraft.net)
-[![Fabric](https://img.shields.io/badge/Fabric-0.19.3-b87333?style=flat-square)](https://fabricmc.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-62ba3d?style=flat-square)](https://minecraft.net)
+[![Fabric](https://img.shields.io/badge/Fabric-0.16+-b87333?style=flat-square)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE_blocky-outline)
-[![Version](https://img.shields.io/badge/Version-1.1.3-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.3)
+[![Version](https://img.shields.io/badge/Version-1.1.4-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.4)
 
 ---
 
@@ -16,10 +16,12 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 - **In-game Color Picker**: Click the color swatch to open a full 2D Saturation/Value picker with a Hue strip and HEX input — no external tools needed.
 - **Rainbow RGB Mode**: Animated rainbow cycling for both outline and fill, each with independent speed control.
 - **Smooth Movement**: High-performance adaptive spring LERP tracks the cursor block with zero delay and instant snap when switching blocks far apart.
+- **X-Ray / Through Walls Mode**: See the outline and fill through opaque obstacles.
+- **Corner Accents Mode**: Futuristic corner brackets with adjustable edge size.
 - **Grass & Plant Alignment**: Outlines correctly follow the rendered position of grass, flowers, ferns, and all other offset blocks.
 - **Responsive UI**: The configuration menu adapts to any window size or GUI scale — no overlap, no cutoff.
-- **5 Built-in Presets**: Minimalist Silver, Executive Purple, Vibrant Gold, Rainbow Corporate, Dark Slate.
-- **Zero-GC Render Engine**: No per-frame allocations in the render hot path — smooth FPS regardless of framerate.
+- **Profile Manager**: 3 customizable user preset slots with Load, Save, and Delete support.
+- **Zero-GC Render Engine**: No per-frame allocations in the render hot path — zero FPS drops or micro-stutters.
 - **Auto-Save Config**: Settings persist to `.minecraft/config/blocky-outline.json` automatically.
 
 ---
@@ -35,9 +37,9 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 ## Installation
 
 1. Install [Fabric Loader](https://fabricmc.net/use/installer/) `≥0.16.0`
-2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
-3. Drop `blocky-outline-1.1.3.jar` into your `.minecraft/mods/` folder
-4. Launch Minecraft `26.x` (Fabric 26.2)
+2. Install [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft `1.21.11`
+3. Drop `blocky-outline-1.1.4.jar` into your `.minecraft/mods/` folder
+4. Launch Minecraft `1.21.11`
 
 ---
 
@@ -45,23 +47,23 @@ A lightweight, modern client-side Fabric mod that replaces Minecraft's default b
 
 | Dependency | Version |
 |---|---|
-| Minecraft | `26.x` (26.1 - 26.3) |
+| Minecraft | `~1.21.11` |
 | Fabric Loader | `≥0.16.0` |
-| Fabric API | any |
-| Java | `≥21` (JDK 25 recommended) |
+| Fabric API | Compatible with 1.21.11 |
+| Java | `≥21` |
 
 ---
 
 ## Building from Source
 
 ```bash
-python build_26.py
+./gradlew build
 ```
 
-Output JAR: `dist/blocky-outline-1.1.3.jar`
+Built jars will be located in `build/libs/` and `dist/`.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE_blocky-outline) file for details.
+This project is licensed under the [MIT License](LICENSE_blocky-outline).

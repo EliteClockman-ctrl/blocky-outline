@@ -6,5 +6,5 @@ out/
 *.iml
 tools/
 .DS_Store
-.gradle-user/
 scratch/
+logs/

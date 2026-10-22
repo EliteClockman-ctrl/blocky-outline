@@ -10,11 +10,14 @@ public final class OutlineRenderer {
     private OutlineRenderer() {
     }
 
-    public static void renderOutline(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape, double dx, double dy, double dz, int argb, float lineWidth, boolean cornerMode) {
+    public static void renderOutline(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape,
+                                     double dx, double dy, double dz, int argb, float lineWidth, boolean cornerMode) {
         renderOutline(poseStack, consumer, shape, dx, dy, dz, argb, lineWidth, cornerMode, 0.28f, 0.002f);
     }
 
-    public static void renderOutline(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape, double dx, double dy, double dz, int argb, float lineWidth, boolean cornerMode, float cornerLength, float expand) {
+    public static void renderOutline(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape,
+                                     double dx, double dy, double dz, int argb, float lineWidth,
+                                     boolean cornerMode, float cornerLength, float expand) {
         int a = (argb >>> 24) & 0xFF;
         if (a == 0) return;
 
@@ -26,14 +29,13 @@ public final class OutlineRenderer {
         float cLen = Mth.clamp(cornerLength, 0.10f, 0.48f);
         float exp = Math.max(0.0f, expand);
 
-        // Highly optimized direct box outline with pre-calculated axis-aligned normals (0 sqrt calls)
         shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-            float x0 = (float)(minX - exp + dx);
-            float y0 = (float)(minY - exp + dy);
-            float z0 = (float)(minZ - exp + dz);
-            float x1 = (float)(maxX + exp + dx);
-            float y1 = (float)(maxY + exp + dy);
-            float z1 = (float)(maxZ + exp + dz);
+            float x0 = (float) (minX - exp + dx);
+            float y0 = (float) (minY - exp + dy);
+            float z0 = (float) (minZ - exp + dz);
+            float x1 = (float) (maxX + exp + dx);
+            float y1 = (float) (maxY + exp + dy);
+            float z1 = (float) (maxZ + exp + dz);
 
             renderBoxOutline(consumer, pose, x0, y0, z0, x1, y1, z1, r, g, b, a, width, cornerMode, cLen);
         });
@@ -43,19 +45,16 @@ public final class OutlineRenderer {
                                          float x0, float y0, float z0, float x1, float y1, float z1,
                                          int r, int g, int b, int a, float width, boolean cornerMode, float cLen) {
         if (!cornerMode) {
-            // 4 Bottom edges
             line(consumer, pose, x0, y0, z0, x1, y0, z0, 1.0f, 0.0f, 0.0f, r, g, b, a, width);
             line(consumer, pose, x0, y0, z1, x1, y0, z1, 1.0f, 0.0f, 0.0f, r, g, b, a, width);
             line(consumer, pose, x0, y0, z0, x0, y0, z1, 0.0f, 0.0f, 1.0f, r, g, b, a, width);
             line(consumer, pose, x1, y0, z0, x1, y0, z1, 0.0f, 0.0f, 1.0f, r, g, b, a, width);
 
-            // 4 Top edges
             line(consumer, pose, x0, y1, z0, x1, y1, z0, 1.0f, 0.0f, 0.0f, r, g, b, a, width);
             line(consumer, pose, x0, y1, z1, x1, y1, z1, 1.0f, 0.0f, 0.0f, r, g, b, a, width);
             line(consumer, pose, x0, y1, z0, x0, y1, z1, 0.0f, 0.0f, 1.0f, r, g, b, a, width);
             line(consumer, pose, x1, y1, z0, x1, y1, z1, 0.0f, 0.0f, 1.0f, r, g, b, a, width);
 
-            // 4 Vertical pillars
             line(consumer, pose, x0, y0, z0, x0, y1, z0, 0.0f, 1.0f, 0.0f, r, g, b, a, width);
             line(consumer, pose, x1, y0, z0, x1, y1, z0, 0.0f, 1.0f, 0.0f, r, g, b, a, width);
             line(consumer, pose, x0, y0, z1, x0, y1, z1, 0.0f, 1.0f, 0.0f, r, g, b, a, width);
@@ -65,19 +64,16 @@ public final class OutlineRenderer {
             float dy = (y1 - y0) * cLen;
             float dz = (z1 - z0) * cLen;
 
-            // X-axis edges
             cornerLineX(consumer, pose, x0, x1, dx, y0, z0, r, g, b, a, width);
             cornerLineX(consumer, pose, x0, x1, dx, y0, z1, r, g, b, a, width);
             cornerLineX(consumer, pose, x0, x1, dx, y1, z0, r, g, b, a, width);
             cornerLineX(consumer, pose, x0, x1, dx, y1, z1, r, g, b, a, width);
 
-            // Y-axis edges
             cornerLineY(consumer, pose, y0, y1, dy, x0, z0, r, g, b, a, width);
             cornerLineY(consumer, pose, y0, y1, dy, x1, z0, r, g, b, a, width);
             cornerLineY(consumer, pose, y0, y1, dy, x0, z1, r, g, b, a, width);
             cornerLineY(consumer, pose, y0, y1, dy, x1, z1, r, g, b, a, width);
 
-            // Z-axis edges
             cornerLineZ(consumer, pose, z0, z1, dz, x0, y0, r, g, b, a, width);
             cornerLineZ(consumer, pose, z0, z1, dz, x1, y0, r, g, b, a, width);
             cornerLineZ(consumer, pose, z0, z1, dz, x0, y1, r, g, b, a, width);
@@ -119,11 +115,13 @@ public final class OutlineRenderer {
         consumer.addVertex(pose, x, y, z1).setColor(r, g, b, a).setNormal(pose, 0.0f, 0.0f, 1.0f).setLineWidth(width);
     }
 
-    public static void renderFilledBox(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape, double dx, double dy, double dz, int colorARGB, int colorARGB2) {
+    public static void renderFilledBox(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape,
+                                       double dx, double dy, double dz, int colorARGB, int colorARGB2) {
         renderFilledBox(poseStack, consumer, shape, dx, dy, dz, colorARGB, colorARGB2, 0.002f);
     }
 
-    public static void renderFilledBox(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape, double dx, double dy, double dz, int colorARGB, int colorARGB2, float expand) {
+    public static void renderFilledBox(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape,
+                                       double dx, double dy, double dz, int colorARGB, int colorARGB2, float expand) {
         int a1 = (colorARGB >>> 24) & 0xFF;
         int a2 = (colorARGB2 >>> 24) & 0xFF;
         if ((a1 | a2) == 0) return;
@@ -140,44 +138,44 @@ public final class OutlineRenderer {
         float exp = Math.max(0.0005f, expand);
 
         shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-            float x0 = (float)(minX - exp + dx);
-            float y0 = (float)(minY - exp + dy);
-            float z0 = (float)(minZ - exp + dz);
-            float x1 = (float)(maxX + exp + dx);
-            float y1 = (float)(maxY + exp + dy);
-            float z1 = (float)(maxZ + exp + dz);
+            float x0 = (float) (minX - exp + dx);
+            float y0 = (float) (minY - exp + dy);
+            float z0 = (float) (minZ - exp + dz);
+            float x1 = (float) (maxX + exp + dx);
+            float y1 = (float) (maxY + exp + dy);
+            float z1 = (float) (maxZ + exp + dz);
 
-            // Bottom Face (Color 2)
+            // Bottom
             consumer.addVertex(pose, x0, y0, z0).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x1, y0, z0).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x1, y0, z1).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x0, y0, z1).setColor(r2, g2, b2, a2);
 
-            // Top Face (Color 1)
+            // Top
             consumer.addVertex(pose, x0, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x1, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x1, y1, z0).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x0, y1, z0).setColor(r1, g1, b1, a1);
 
-            // North Face
+            // North
             consumer.addVertex(pose, x0, y0, z0).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x0, y1, z0).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x1, y1, z0).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x1, y0, z0).setColor(r2, g2, b2, a2);
 
-            // East Face
+            // East
             consumer.addVertex(pose, x1, y0, z0).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x1, y1, z0).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x1, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x1, y0, z1).setColor(r2, g2, b2, a2);
 
-            // South Face
+            // South
             consumer.addVertex(pose, x1, y0, z1).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x1, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x0, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x0, y0, z1).setColor(r2, g2, b2, a2);
 
-            // West Face
+            // West
             consumer.addVertex(pose, x0, y0, z1).setColor(r2, g2, b2, a2);
             consumer.addVertex(pose, x0, y1, z1).setColor(r1, g1, b1, a1);
             consumer.addVertex(pose, x0, y1, z0).setColor(r1, g1, b1, a1);

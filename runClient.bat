@@ -1,10 +1,9 @@
 @echo off
-echo Building Blocky Outline mod v1.1.3 for Minecraft 26.x...
-python build_26.py
+echo Building Blocky Outline mod v1.1.4 for Minecraft 1.21.11...
+call gradlew.bat build
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed!
     pause
     exit /b %ERRORLEVEL%
 )
-echo Launching Minecraft Fabric 26.x...
-python run_test_26.py
+echo Build completed successfully! Output: dist\blocky-outline-1.1.4.jar
