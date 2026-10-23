@@ -30,31 +30,31 @@ public final class BlockyOutlineSettings {
     public boolean xrayMode = false;
     public float hitboxExpand = 0.002f;
     public boolean smoothTransition = true;
-    public float smoothSpeed = 0.85f;
-    public int motionMode = 1; // 0: Spring Physics, 1: Back (Overshoot), 2: Circ, 3: Quint, 4: Fluid Bezier, 5: Classic
-    public float springStiffness = 200.0f;
-    public float springDamping = 22.0f;
-    public float backOvershoot = 1.70158f;
-    public float motionDurationMs = 90.0f;
-    public boolean breathingEffect = true;
+    public float smoothSpeed = 0.90f;
+    public int motionMode = 1; // 0: Snappy Spring, 1: Back (Overshoot), 2: Quintic, 3: Fluid Bezier, 4: Smooth Lerp, 5: Instant (Raw)
+    public float springStiffness = 320.0f;
+    public float springDamping = 30.0f;
+    public float backOvershoot = 1.35f;
+    public float motionDurationMs = 65.0f;
+    public boolean breathingEffect = false;
     public float breathingSpeed = 1.0f;
 
     public static final String[] MOTION_MODE_NAMES = {
-        "Spring Physics",
+        "Snappy Spring",
         "Back (Overshoot)",
-        "Circ (Instant)",
-        "Quint (Snappy)",
+        "Quintic (Instant)",
         "Fluid Bezier",
-        "Classic Lerp"
+        "Smooth Lerp",
+        "Instant (Raw)"
     };
 
     public static final String[] MOTION_MODE_DESCS = {
-        "Damped harmonic spring with preserved momentum",
-        "Fast glide with subtle single-bounce overshoot",
-        "Maximum initial speed with soft landing",
-        "High-contrast fifth-degree deceleration curve",
-        "Smooth Apple & Material Design curve",
-        "Standard exponential decay interpolation"
+        "Physical spring with fast snap & preserved momentum",
+        "Fast glide with subtle 1-bounce overshoot",
+        "Ultra-fast 5th-degree curve, zero visual delay",
+        "Apple iOS fluid acceleration & soft landing",
+        "High-framerate responsive exponential glide",
+        "Immediate 0ms snap with zero smoothing"
     };
 
     public boolean fillEnabled = false;
@@ -320,8 +320,8 @@ public final class BlockyOutlineSettings {
         if (this.breathingEffect) {
             float timeFactor = (nowMs * 0.0032f) * this.breathingSpeed;
             float sinVal = (float) Math.sin(timeFactor);
-            this.cachedWaveOutline = 0.82f + 0.18f * sinVal;
-            this.cachedWaveFill = 0.78f + 0.22f * sinVal;
+            this.cachedWaveOutline = 0.90f + 0.10f * sinVal;
+            this.cachedWaveFill = 0.85f + 0.15f * sinVal;
         } else {
             this.cachedWaveOutline = 1.0f;
             this.cachedWaveFill = 1.0f;

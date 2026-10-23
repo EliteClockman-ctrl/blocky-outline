@@ -415,34 +415,42 @@ public class BlockyOutlineMenuScreen extends Screen {
         String paramTitle;
         String paramDesc;
 
+        boolean disabledSlider = !this.settings.smoothTransition;
         switch (mode) {
-            case 0 -> { // Spring Physics
-                paramPct = (this.settings.springStiffness - 60.0f) / 340.0f;
+            case 0 -> { // Snappy Spring
+                paramPct = (this.settings.springStiffness - 150.0f) / 350.0f;
                 paramStr = String.format("%.0fk", this.settings.springStiffness);
                 paramTitle = "Spring Tension";
-                paramDesc = "Oscillation stiffness";
+                paramDesc = "Snap stiffness";
             }
             case 1 -> { // Ease-Out Back (Overshoot)
-                paramPct = (this.settings.backOvershoot - 1.0f) / 2.0f;
+                paramPct = (this.settings.backOvershoot - 0.6f) / 1.4f;
                 paramStr = String.format("%.2fx", this.settings.backOvershoot);
                 paramTitle = "Overshoot Push";
                 paramDesc = "1-bounce intensity";
             }
-            case 2, 3, 4 -> { // Circ, Quint, Fluid Bezier
-                paramPct = (this.settings.motionDurationMs - 50.0f) / 200.0f;
+            case 2, 3 -> { // Quintic, Fluid Bezier
+                paramPct = (this.settings.motionDurationMs - 35.0f) / 95.0f;
                 paramStr = String.format("%dms", (int) (this.settings.motionDurationMs + 0.5f));
                 paramTitle = "Glide Duration";
                 paramDesc = "Transition length";
             }
-            default -> { // Classic Lerp
+            case 4 -> { // Smooth Lerp
                 paramPct = this.settings.smoothSpeed;
                 paramStr = String.format("%d%%", (int) (this.settings.smoothSpeed * 100 + 0.5f));
                 paramTitle = "Glide Speed";
                 paramDesc = "Movement speed";
             }
+            default -> { // Instant (Raw)
+                paramPct = 1.0f;
+                paramStr = "0ms";
+                paramTitle = "Instant Snap";
+                paramDesc = "Raw 0ms latency";
+                disabledSlider = true;
+            }
         }
         this.renderCardSlider(gui, cx, b[0], cw, b[1], paramTitle, paramDesc,
-                paramPct, paramStr, !this.settings.smoothTransition, mx, my);
+                paramPct, paramStr, disabledSlider, mx, my);
 
         // Row 3: Breathing Pulse Glow Toggle
         this.getRowBounds(3, totalRows, cy, ch, b);
@@ -491,17 +499,17 @@ public class BlockyOutlineMenuScreen extends Screen {
         float demoShiftX = 0.0f;
         if (this.activeTab == 2 && this.settings.smoothTransition) {
             long nowTime = System.currentTimeMillis();
-            long cycleMs = 1200;
+            long cycleMs = 1000;
             long phase = nowTime % cycleMs;
             float dir = ((nowTime / cycleMs) % 2 == 0) ? -1.0f : 1.0f;
-            float from = -dir * 0.25f;
-            float to = dir * 0.25f;
-            float p = Math.min(1.0f, (float) phase / 360.0f);
+            float from = -dir * 0.22f;
+            float to = dir * 0.22f;
+            float p = Math.min(1.0f, (float) phase / 200.0f);
             float ease;
             switch (this.settings.motionMode) {
                 case 0 -> {
-                    float t = phase * 0.007f;
-                    ease = 1.0f - (float) Math.exp(-t * 3.2f) * (float) Math.cos(t * 12.0f);
+                    float t = phase * 0.012f;
+                    ease = (p >= 1.0f) ? 1.0f : (1.0f - (float) Math.exp(-t * 4.5f) * (float) Math.cos(t * 14.0f));
                 }
                 case 1 -> {
                     if (p >= 1.0f) ease = 1.0f;
@@ -514,23 +522,19 @@ public class BlockyOutlineMenuScreen extends Screen {
                 case 2 -> {
                     if (p >= 1.0f) ease = 1.0f;
                     else {
-                        float p1 = p - 1.0f;
-                        ease = (float) Math.sqrt(Math.max(0.0f, 1.0f - p1 * p1));
-                    }
-                }
-                case 3 -> {
-                    if (p >= 1.0f) ease = 1.0f;
-                    else {
                         float p1 = 1.0f - p;
                         ease = 1.0f - p1 * p1 * p1 * p1 * p1;
                     }
                 }
-                case 4 -> {
+                case 3 -> {
                     float t = p;
-                    ease = 3.0f * (1.0f - t) * t * t * 0.8f + t * t * t;
+                    ease = (p >= 1.0f) ? 1.0f : (3.0f * (1.0f - t) * (1.0f - t) * t * 0.16f + 3.0f * (1.0f - t) * t * t * 1.0f + t * t * t);
+                }
+                case 4 -> {
+                    ease = (p >= 1.0f) ? 1.0f : (1.0f - (float) Math.exp(-p * 6.0f));
                 }
                 default -> {
-                    ease = 1.0f - (float) Math.exp(-p * 4.5f);
+                    ease = 1.0f;
                 }
             }
             demoShiftX = (from + (to - from) * ease) * scale;
@@ -1768,10 +1772,10 @@ public class BlockyOutlineMenuScreen extends Screen {
             switch (rowIndex) {
                 case 2 -> {
                     switch (this.settings.motionMode) {
-                        case 0 -> this.settings.springStiffness = 60.0f + pct * 340.0f;
-                        case 1 -> this.settings.backOvershoot = 1.0f + pct * 2.0f;
-                        case 2, 3, 4 -> this.settings.motionDurationMs = 50.0f + pct * 200.0f;
-                        default -> this.settings.smoothSpeed = Math.max(0.05f, pct);
+                        case 0 -> this.settings.springStiffness = 150.0f + pct * 350.0f;
+                        case 1 -> this.settings.backOvershoot = 0.6f + pct * 1.4f;
+                        case 2, 3 -> this.settings.motionDurationMs = 35.0f + pct * 95.0f;
+                        case 4 -> this.settings.smoothSpeed = Math.max(0.1f, pct);
                     }
                 }
                 case 4 -> this.settings.breathingSpeed = 0.2f + pct * 2.8f;

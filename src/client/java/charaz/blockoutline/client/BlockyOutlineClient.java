@@ -79,7 +79,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             long nowMs = System.currentTimeMillis();
             long nowNano = System.nanoTime();
 
-            boolean continuous = hasTarget && (nowMs - lastTargetTimeMs < 750);
+            long timeSinceLast = nowMs - lastTargetTimeMs;
             lastTargetTimeMs = nowMs;
 
             double diffX = tx - lastTargetX;
@@ -87,7 +87,11 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             double diffZ = tz - lastTargetZ;
             double targetDiffSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
 
-            if (!continuous || targetDiffSq > 144.0) {
+            // Snap immediately with 0ms delay if crosshair just arrived from air (>100ms air gap),
+            // or moved across a large jump (>2.5 blocks away).
+            boolean isContinuousNeighbor = hasTarget && (timeSinceLast <= 100L) && (targetDiffSq <= 6.25);
+
+            if (!isContinuousNeighbor) {
                 currX = tx;
                 currY = ty;
                 currZ = tz;
@@ -104,6 +108,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 startZ = currZ;
                 animStartTimeMs = nowMs;
             }
+
             lastTargetX = tx;
             lastTargetY = ty;
             lastTargetZ = tz;
@@ -116,7 +121,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             if (dt < 0.001) dt = 0.001;
             else if (dt > 0.05) dt = 0.05;
 
-            if (s.smoothTransition && continuous) {
+            if (s.smoothTransition && isContinuousNeighbor) {
                 updateMotion(s, tx, ty, tz, dt, nowMs);
             } else {
                 currX = tx;
@@ -170,11 +175,11 @@ public final class BlockyOutlineClient implements ClientModInitializer {
 
     private static void updateMotion(BlockyOutlineSettings s, double tx, double ty, double tz, double dt, long nowMs) {
         switch (s.motionMode) {
-            case 0 -> {
-                double k = (double) s.springStiffness;
-                double c = (double) s.springDamping;
-                double subDt = dt * 0.5;
-                for (int step = 0; step < 2; step++) {
+            case 0 -> { // Snappy Spring (4 sub-steps, ultra-stable, physical feel)
+                double k = Math.max(150.0, (double) s.springStiffness);
+                double c = Math.max(18.0, (double) s.springDamping);
+                double subDt = dt * 0.25;
+                for (int step = 0; step < 4; step++) {
                     double fx = -k * (currX - tx) - c * velX;
                     double fy = -k * (currY - ty) - c * velY;
                     double fz = -k * (currZ - tz) - c * velZ;
@@ -186,7 +191,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     currZ += velZ * subDt;
                 }
                 if (Math.abs(currX - tx) < 0.0005 && Math.abs(currY - ty) < 0.0005 && Math.abs(currZ - tz) < 0.0005
-                        && Math.abs(velX) < 0.01 && Math.abs(velY) < 0.01 && Math.abs(velZ) < 0.01) {
+                        && Math.abs(velX) < 0.005 && Math.abs(velY) < 0.005 && Math.abs(velZ) < 0.005) {
                     currX = tx;
                     currY = ty;
                     currZ = tz;
@@ -195,8 +200,8 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     velZ = 0.0;
                 }
             }
-            case 1 -> {
-                double dur = Math.max(30.0, (double) s.motionDurationMs);
+            case 1 -> { // Modern Ease-Out Back (Snappy 1-bounce overshoot)
+                double dur = Math.max(25.0, (double) s.motionDurationMs);
                 double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
                 if (progress >= 1.0) {
                     currX = tx;
@@ -204,7 +209,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     currZ = tz;
                 } else {
                     double p1 = progress - 1.0;
-                    double c1 = (double) s.backOvershoot;
+                    double c1 = Math.min(1.8, Math.max(0.5, (double) s.backOvershoot));
                     double c3 = c1 + 1.0;
                     double ease = 1.0 + c3 * p1 * p1 * p1 + c1 * p1 * p1;
                     currX = startX + (tx - startX) * ease;
@@ -212,23 +217,8 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     currZ = startZ + (tz - startZ) * ease;
                 }
             }
-            case 2 -> {
-                double dur = Math.max(30.0, (double) s.motionDurationMs);
-                double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
-                if (progress >= 1.0) {
-                    currX = tx;
-                    currY = ty;
-                    currZ = tz;
-                } else {
-                    double p1 = progress - 1.0;
-                    double ease = Math.sqrt(Math.max(0.0, 1.0 - p1 * p1));
-                    currX = startX + (tx - startX) * ease;
-                    currY = startY + (ty - startY) * ease;
-                    currZ = startZ + (tz - startZ) * ease;
-                }
-            }
-            case 3 -> {
-                double dur = Math.max(30.0, (double) s.motionDurationMs);
+            case 2 -> { // Fast Quintic (Instant eye lock-on, zero latency perception)
+                double dur = Math.max(25.0, (double) s.motionDurationMs);
                 double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
                 if (progress >= 1.0) {
                     currX = tx;
@@ -242,30 +232,35 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     currZ = startZ + (tz - startZ) * ease;
                 }
             }
-            case 4 -> {
-                double dur = Math.max(30.0, (double) s.motionDurationMs);
+            case 3 -> { // Fluid Apple Bezier
+                double dur = Math.max(25.0, (double) s.motionDurationMs);
                 double progress = Math.min(1.0, (double) (nowMs - animStartTimeMs) / dur);
                 if (progress >= 1.0) {
                     currX = tx;
                     currY = ty;
                     currZ = tz;
                 } else {
-                    double ease = solveCubicBezier(0.25, 1.0, 0.5, 1.0, progress);
+                    double ease = solveCubicBezier(0.16, 1.0, 0.3, 1.0, progress);
                     currX = startX + (tx - startX) * ease;
                     currY = startY + (ty - startY) * ease;
                     currZ = startZ + (tz - startZ) * ease;
                 }
             }
-            default -> {
+            case 4 -> { // Smooth Lerp (Exponential decay, responsive)
                 double dx = tx - currX;
                 double dy = ty - currY;
                 double dz = tz - currZ;
-                double speedFactor = Math.max(0.05, (double) s.smoothSpeed);
-                double lambda = 18.0 + speedFactor * 32.0;
+                double speedFactor = Math.max(0.1, (double) s.smoothSpeed);
+                double lambda = 30.0 + speedFactor * 45.0;
                 double blend = 1.0 - Math.exp(-lambda * dt);
                 currX += dx * blend;
                 currY += dy * blend;
                 currZ += dz * blend;
+            }
+            default -> { // Instant (Raw)
+                currX = tx;
+                currY = ty;
+                currZ = tz;
             }
         }
     }
