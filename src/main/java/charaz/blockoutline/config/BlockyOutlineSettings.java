@@ -259,10 +259,10 @@ public final class BlockyOutlineSettings {
         this.smoothTransition = other.smoothTransition;
         this.smoothSpeed = Mth.clamp(other.smoothSpeed, 0.05f, 1.0f);
         this.motionMode = (other.motionMode >= 0 && other.motionMode <= 5) ? other.motionMode : 1;
-        this.springStiffness = Mth.clamp(other.springStiffness, 60.0f, 400.0f);
-        this.springDamping = Mth.clamp(other.springDamping, 10.0f, 40.0f);
-        this.backOvershoot = Mth.clamp(other.backOvershoot, 1.0f, 3.0f);
-        this.motionDurationMs = Mth.clamp(other.motionDurationMs, 50.0f, 250.0f);
+        this.springStiffness = Mth.clamp(other.springStiffness, 60.0f, 600.0f);
+        this.springDamping = Mth.clamp(other.springDamping, 10.0f, 60.0f);
+        this.backOvershoot = Mth.clamp(other.backOvershoot, 0.5f, 3.0f);
+        this.motionDurationMs = Mth.clamp(other.motionDurationMs, 25.0f, 250.0f);
         this.breathingEffect = other.breathingEffect;
         this.breathingSpeed = Mth.clamp(other.breathingSpeed, 0.2f, 3.0f);
 

@@ -133,6 +133,10 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 velZ = 0.0;
             }
 
+            if (mc.gameRenderer == null || mc.gameRenderer.getMainCamera() == null) {
+                return false;
+            }
+
             Vec3 cam = mc.gameRenderer.getMainCamera().position();
             double ox = currX - cam.x;
             double oy = currY - cam.y;
