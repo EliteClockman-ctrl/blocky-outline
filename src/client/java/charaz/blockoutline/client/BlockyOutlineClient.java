@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.rendertype.BlockyOutlineRenderTypes;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.BlockOutlineRenderState;
@@ -137,10 +138,12 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             double oy = currY - cam.y;
             double oz = currZ - cam.z;
 
+            boolean xray = s.xrayMode;
+
             if (renderOutline) {
                 int outlineArgb = s.getOutlineArgb(nowMs);
                 if ((outlineArgb >>> 24) > 0) {
-                    RenderType lineType = RenderTypes.lines();
+                    RenderType lineType = xray ? BlockyOutlineRenderTypes.XRAY_LINES : RenderTypes.lines();
                     VertexConsumer lines = consumers.getBuffer(lineType);
                     OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
                             s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand);
@@ -148,7 +151,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             }
 
             if (renderFill) {
-                RenderType quadType = RenderTypes.debugQuads();
+                RenderType quadType = xray ? BlockyOutlineRenderTypes.XRAY_QUADS : RenderTypes.debugQuads();
                 VertexConsumer quads = consumers.getBuffer(quadType);
                 OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
                         s.getFillArgb(nowMs), s.getFillArgb2(nowMs), s.hitboxExpand);
