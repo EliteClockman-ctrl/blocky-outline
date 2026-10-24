@@ -2,10 +2,10 @@
 
 A lightweight, modern client-side Fabric mod that replaces Minecraft's default block selection outline with a fully customizable outline and optional gradient fill.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-62ba3d?style=flat-square)](https://minecraft.net)
-[![Fabric](https://img.shields.io/badge/Fabric-0.16+-b87333?style=flat-square)](https://fabricmc.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.x-62ba3d?style=flat-square)](https://minecraft.net)
+[![Fabric](https://img.shields.io/badge/Fabric-0.17+-b87333?style=flat-square)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE_blocky-outline)
-[![Version](https://img.shields.io/badge/Version-1.1.6-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.6)
+[![Version](https://img.shields.io/badge/Version-1.1.7-9333ea?style=flat-square)](https://github.com/EliteClockman-ctrl/blocky-outline/releases/tag/v1.1.7)
 
 ---
 
