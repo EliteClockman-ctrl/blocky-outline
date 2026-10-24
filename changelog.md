@@ -1,44 +1,18 @@
-# Changelog - Blocky Outline
+# Changelog - Blocky Outline v1.1.3-new
 
-## What's new in version 1.1.3-new :
-
-### 🚀 Universal Compatibility (Minecraft 1.21.x & 26.1.x – 26.3)
-- **Dual-Runtime Bridge Architecture**: Mod now dynamically adapts at runtime to both Minecraft 1.21 Legacy and Modern 26.x pipelines:
-  - **Legacy (1.21.0 – 1.21.4)**: Automatically connects legacy render buffers, event hooks, and classical OpenGL line widths.
-  - **Modern (1.21.5 – 1.21.11+ / 26.1.x – 26.3)**: Seamlessly supports `BlockOutlineRenderState`, modern `RenderTypes`, and shader-based line rendering.
-- **Zero Linking / Class-Loading Errors**: All version-volatile internal types (such as `ClickEvent`, `HoverEvent`, `RenderTypes`, `KeyMapping`) are resolved through resilient compatibility adapters, preventing crashes across all subversions.
-- **Relaxed Fabric Dependencies**: Declared broad version ranges in `fabric.mod.json` allowing immediate loading on Fabric 1.21 through Fabric 26.3.
-
----
-
-### 🐛 Bug Reporting & Feedback
-- **New In-Game Command (`/report`)**: Players can type `/report` or `/blockyoutline report` in chat to immediately open the GitHub Issues page in their browser.
-- **Interactive Chat Feedback**: Outputs an interactive message in chat with clickable URL and hover tooltip preview.
-- **Menu "Report Bug" Button**: Added a dedicated teal **Report Bug** button at the footer of the in-game settings menu (`[M]`).
+### 🛠️ Các Lỗi Đã Sửa (Bug Fixes)
+- **Fix Crash Menu (M) trên các phiên bản 1.21.x & 26.x**: Xóa bỏ hoàn toàn lỗi crash khi mở menu trên Minecraft 1.21 cũ (1.21.0 – 1.21.4) và các bản mới (1.21.11+ / 26.x) nhờ bộ chuyển đổi giao diện động (Dual-Runtime Bridge).
+- **Fix lỗi đăng ký Render Event**: Sửa lỗi `IllegalAccessException` khi đăng ký sự kiện `BEFORE_BLOCK_OUTLINE` với Fabric API.
+- **Fix lỗi không nhận diện phiên bản Minecraft 26.1.x – 26.3**: Khai báo đầy đủ dải phiên bản trong `fabric.mod.json`, cho phép mod khởi chạy trên mọi launcher Fabric 1.21.x và 26.x.
+- **Fix hiển thị sai phiên bản**: Đổi tag phiên bản hiển thị trong menu từ `v1.1.7` thành `v1.1.3-new`.
+- **Fix tràn giao diện menu**: Sửa lỗi các nút bấm và thẻ cài đặt đè lên thanh footer khi chơi ở màn hình nhỏ hoặc GUI Scale lớn (Scale 3, 4, Auto).
+- **Fix khựng giật khung hình (Micro-stutter GC)**: Loại bỏ triệt để việc cấp phát rác bộ nhớ (Zero-GC) mỗi frame khi render viền khối và di chuột.
 
 ---
 
-### ⚡ Performance & Zero-GC Rendering Overhaul
-- **Full-Cube Fast Path**: Standard cube blocks (stone, dirt, ores, wood, etc. representing >95% of world interactions) now bypass `VoxelShape` slice calculation and lambda allocations entirely.
-- **Zero-GC Consumers**: Complex shapes (stairs, fences, slabs) reuse static box consumer instances (`OutlineBoxConsumer` and `FillBoxConsumer`), eliminating heap allocations per frame and preventing GC micro-stutter at high refresh rates.
-- **Reusable Target Holder**: Liaising crosshair no longer allocates `TargetInfo` objects every frame.
-- **Reflection to `MethodHandle`**: Upgraded all per-frame reflection lookups (`PoseStack`, `MultiBufferSource`, `Camera.position`, `BlockOffset`) to JVM `MethodHandle`, boosting dispatch speed by up to 20-50x with zero boxing.
-- **Physics Rest Early-Return**: When the outline rests on the target block, spring/easing calculations are halted until the crosshair moves, saving CPU cycles.
-- **Batching Line Width**: OpenGL line width commands are batched once per frame rather than executed per edge.
-
----
-
-### 🎨 Fluid Physics & Visual Features
-- **Snappy Smooth Movement**: Rebuilt physics glide with 5 motion modes (Snappy Spring, Modern Ease-Out Back, Fast Quintic, Apple Bezier, and Smooth Lerp).
-- **Instant Snap (0ms Delay)**: The outline snaps instantly when acquiring a new target from air, eliminating visual lag when looking around.
-- **X-Ray / Through Walls Mode**: Added toggle to render block outlines and gradient fills through solid walls.
-- **Corner Accents Mode**: Futuristic corner bracket outline mode with adjustable bracket lengths.
-- **Color Customization**: Full HSV picker, quick swatches, breathing pulse wave, and RGB rainbow cycling.
-- **Profile Manager**: 3 user preset slots with instant **Load**, **Save**, and **Delete** actions.
-
----
-
-### 🖥️ UI & Usability Polish
-- **Responsive Layout**: Re-engineered modal window and card grid to dynamically adjust to any resolution and GUI Scale (Auto, 1, 2, 3, 4) without overlapping the footer.
-- **Clamped Header Navigation**: Cleaned tab navigation pills and fixed overlapping close button on narrow windows.
-- **Concise Descriptions**: Replaced long paragraphs with clean, player-friendly descriptions.
+### 🔄 Các Thay Đổi & Cải Tiến (Changes & Improvements)
+- **Thêm lệnh `/report`**: Gõ `/report` hoặc `/blockyoutline report` trong chat để mở trực tiếp trang báo lỗi GitHub trên trình duyệt.
+- **Thêm nút "Report Bug" trong Menu [M]**: Bổ sung nút màu ngọc lam cạnh nút Done để gửi phản hồi và báo lỗi nhanh chóng.
+- **Tối ưu tốc độ Render (Fast-Path)**: Khối lập phương chuẩn (>95% khối trong game) được vẽ trực tiếp qua fast-path, bỏ qua phân tích hình học phức tạp.
+- **Tối ưu Reflection sang `MethodHandle`**: Tăng tốc độ truy xuất ma trận và camera lên 20–50x, loại bỏ hoàn toàn chi phí tạo mảng tham số.
+- **Tối ưu CPU khi đứng yên**: Thuật toán vật lý tự động ngắt tính toán khi tâm ngắm đã ổn định trên khối mục tiêu.
