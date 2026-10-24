@@ -79,10 +79,20 @@ public final class LegacyRenderBufferProvider implements RenderBufferProvider {
         }
     }
 
+    private static void flushBuffer(MultiBufferSource consumers) {
+        if (consumers instanceof MultiBufferSource.BufferSource bs) {
+            try {
+                bs.endBatch();
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
     @Override
     public VertexConsumer getLineBuffer(MultiBufferSource consumers, boolean xray) {
         init();
         if (xray) {
+            flushBuffer(consumers);
             setDepthTest(false);
         }
         return invokeGetBuffer(consumers, legacyLinesType);
@@ -92,14 +102,16 @@ public final class LegacyRenderBufferProvider implements RenderBufferProvider {
     public VertexConsumer getQuadBuffer(MultiBufferSource consumers, boolean xray) {
         init();
         if (xray) {
+            flushBuffer(consumers);
             setDepthTest(false);
         }
         return invokeGetBuffer(consumers, legacyQuadsType);
     }
 
     @Override
-    public void postRender(boolean xray) {
+    public void postRender(MultiBufferSource consumers, boolean xray) {
         if (xray) {
+            flushBuffer(consumers);
             setDepthTest(true);
         }
     }

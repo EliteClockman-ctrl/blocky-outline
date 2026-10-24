@@ -8,6 +8,6 @@ public interface RenderBufferProvider {
 
     VertexConsumer getQuadBuffer(MultiBufferSource consumers, boolean xray);
 
-    default void postRender(boolean xray) {
+    default void postRender(MultiBufferSource consumers, boolean xray) {
     }
 }

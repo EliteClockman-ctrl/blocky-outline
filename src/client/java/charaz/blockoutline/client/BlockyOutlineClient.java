@@ -76,7 +76,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             }
 
             BlockState state = mc.level.getBlockState(pos);
-            Vec3 offset = state.getOffset(pos);
+            Vec3 offset = CompatBridge.getBlockOffset(state, mc.level, pos);
             double tx = (double) pos.getX() + offset.x;
             double ty = (double) pos.getY() + offset.y;
             double tz = (double) pos.getZ() + offset.z;
@@ -141,7 +141,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 return false;
             }
 
-            Vec3 cam = mc.gameRenderer.getMainCamera().position();
+            Vec3 cam = CompatBridge.getCameraPos(mc.gameRenderer.getMainCamera());
             double ox = currX - cam.x;
             double oy = currY - cam.y;
             double oz = currZ - cam.z;
@@ -168,7 +168,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             }
 
             if (CompatBridge.BUFFER_PROVIDER != null) {
-                CompatBridge.BUFFER_PROVIDER.postRender(xray);
+                CompatBridge.BUFFER_PROVIDER.postRender(consumers, xray);
             }
 
             return false;

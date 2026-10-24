@@ -19,4 +19,8 @@ public final class ModernRenderBufferProvider implements RenderBufferProvider {
         RenderType type = xray ? BlockyOutlineRenderTypes.XRAY_QUADS : RenderTypes.debugQuads();
         return consumers.getBuffer(type);
     }
+
+    @Override
+    public void postRender(MultiBufferSource consumers, boolean xray) {
+    }
 }

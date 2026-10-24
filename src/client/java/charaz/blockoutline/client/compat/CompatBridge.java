@@ -1,9 +1,14 @@
 package charaz.blockoutline.client.compat;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -18,6 +23,8 @@ public final class CompatBridge {
 
     private static Method matricesMethod;
     private static Method consumersMethod;
+    private static Method cameraPosMethod;
+    private static Method blockOffsetMethod;
 
     static {
         boolean modern = false;
@@ -107,6 +114,56 @@ public final class CompatBridge {
             t.printStackTrace();
         }
         return null;
+    }
+
+    public static Vec3 getCameraPos(Camera camera) {
+        if (camera == null) return Vec3.ZERO;
+        try {
+            if (cameraPosMethod == null) {
+                for (Method m : camera.getClass().getMethods()) {
+                    if (m.getParameterCount() == 0 && Vec3.class.isAssignableFrom(m.getReturnType())) {
+                        String name = m.getName();
+                        if ("position".equals(name) || "getPos".equals(name) || "getPosition".equals(name)
+                                || "method_71156".equals(name) || "method_19326".equals(name)) {
+                            m.setAccessible(true);
+                            cameraPosMethod = m;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (cameraPosMethod != null) {
+                return (Vec3) cameraPosMethod.invoke(camera);
+            }
+        } catch (Throwable ignored) {
+        }
+        return Vec3.ZERO;
+    }
+
+    public static Vec3 getBlockOffset(BlockState state, BlockGetter level, BlockPos pos) {
+        if (state == null || pos == null) return Vec3.ZERO;
+        try {
+            if (blockOffsetMethod == null) {
+                for (Method m : state.getClass().getMethods()) {
+                    if (Vec3.class.isAssignableFrom(m.getReturnType())) {
+                        if (m.getParameterCount() == 1 || m.getParameterCount() == 2) {
+                            m.setAccessible(true);
+                            blockOffsetMethod = m;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (blockOffsetMethod != null) {
+                if (blockOffsetMethod.getParameterCount() == 1) {
+                    return (Vec3) blockOffsetMethod.invoke(state, pos);
+                } else if (blockOffsetMethod.getParameterCount() == 2) {
+                    return (Vec3) blockOffsetMethod.invoke(state, level, pos);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return Vec3.ZERO;
     }
 
     public static void registerWorldRenderEvent(RenderOutlineCallback callback) {
