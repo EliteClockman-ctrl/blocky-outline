@@ -25,10 +25,11 @@ public final class CompatBridge {
     public static final RenderBufferProvider BUFFER_PROVIDER;
     public static final TargetExtractor TARGET_EXTRACTOR;
 
-    private static Method matricesMethod;
-    private static Method consumersMethod;
-    private static Method cameraPosMethod;
-    private static Method blockOffsetMethod;
+    private static java.lang.invoke.MethodHandle matricesHandle;
+    private static java.lang.invoke.MethodHandle consumersHandle;
+    private static java.lang.invoke.MethodHandle cameraPosHandle;
+    private static java.lang.invoke.MethodHandle blockOffsetHandle;
+    private static int blockOffsetParamCount = 0;
 
     static {
         boolean modern = false;
@@ -81,17 +82,15 @@ public final class CompatBridge {
     public static PoseStack getPoseStack(Object context) {
         if (context == null) return null;
         try {
-            if (matricesMethod == null) {
-                for (Method m : context.getClass().getMethods()) {
-                    if (m.getParameterCount() == 0 && PoseStack.class.isAssignableFrom(m.getReturnType())) {
-                        m.setAccessible(true);
-                        matricesMethod = m;
-                        break;
-                    }
-                }
+            if (matricesHandle != null) {
+                return (PoseStack) matricesHandle.invoke(context);
             }
-            if (matricesMethod != null) {
-                return (PoseStack) matricesMethod.invoke(context);
+            for (Method m : context.getClass().getMethods()) {
+                if (m.getParameterCount() == 0 && PoseStack.class.isAssignableFrom(m.getReturnType())) {
+                    m.setAccessible(true);
+                    matricesHandle = java.lang.invoke.MethodHandles.lookup().unreflect(m);
+                    return (PoseStack) matricesHandle.invoke(context);
+                }
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -102,17 +101,15 @@ public final class CompatBridge {
     public static MultiBufferSource getBufferSource(Object context) {
         if (context == null) return null;
         try {
-            if (consumersMethod == null) {
-                for (Method m : context.getClass().getMethods()) {
-                    if (m.getParameterCount() == 0 && MultiBufferSource.class.isAssignableFrom(m.getReturnType())) {
-                        m.setAccessible(true);
-                        consumersMethod = m;
-                        break;
-                    }
-                }
+            if (consumersHandle != null) {
+                return (MultiBufferSource) consumersHandle.invoke(context);
             }
-            if (consumersMethod != null) {
-                return (MultiBufferSource) consumersMethod.invoke(context);
+            for (Method m : context.getClass().getMethods()) {
+                if (m.getParameterCount() == 0 && MultiBufferSource.class.isAssignableFrom(m.getReturnType())) {
+                    m.setAccessible(true);
+                    consumersHandle = java.lang.invoke.MethodHandles.lookup().unreflect(m);
+                    return (MultiBufferSource) consumersHandle.invoke(context);
+                }
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -123,21 +120,19 @@ public final class CompatBridge {
     public static Vec3 getCameraPos(Camera camera) {
         if (camera == null) return Vec3.ZERO;
         try {
-            if (cameraPosMethod == null) {
-                for (Method m : camera.getClass().getMethods()) {
-                    if (m.getParameterCount() == 0 && Vec3.class.isAssignableFrom(m.getReturnType())) {
-                        String name = m.getName();
-                        if ("position".equals(name) || "getPos".equals(name) || "getPosition".equals(name)
-                                || "method_71156".equals(name) || "method_19326".equals(name)) {
-                            m.setAccessible(true);
-                            cameraPosMethod = m;
-                            break;
-                        }
+            if (cameraPosHandle != null) {
+                return (Vec3) cameraPosHandle.invoke(camera);
+            }
+            for (Method m : camera.getClass().getMethods()) {
+                if (m.getParameterCount() == 0 && Vec3.class.isAssignableFrom(m.getReturnType())) {
+                    String name = m.getName();
+                    if ("position".equals(name) || "getPos".equals(name) || "getPosition".equals(name)
+                            || "method_71156".equals(name) || "method_19326".equals(name)) {
+                        m.setAccessible(true);
+                        cameraPosHandle = java.lang.invoke.MethodHandles.lookup().unreflect(m);
+                        return (Vec3) cameraPosHandle.invoke(camera);
                     }
                 }
-            }
-            if (cameraPosMethod != null) {
-                return (Vec3) cameraPosMethod.invoke(camera);
             }
         } catch (Throwable ignored) {
         }
@@ -147,22 +142,25 @@ public final class CompatBridge {
     public static Vec3 getBlockOffset(BlockState state, BlockGetter level, BlockPos pos) {
         if (state == null || pos == null) return Vec3.ZERO;
         try {
-            if (blockOffsetMethod == null) {
-                for (Method m : state.getClass().getMethods()) {
-                    if (Vec3.class.isAssignableFrom(m.getReturnType())) {
-                        if (m.getParameterCount() == 1 || m.getParameterCount() == 2) {
-                            m.setAccessible(true);
-                            blockOffsetMethod = m;
-                            break;
-                        }
-                    }
+            if (blockOffsetHandle != null) {
+                if (blockOffsetParamCount == 1) {
+                    return (Vec3) blockOffsetHandle.invoke(state, pos);
+                } else if (blockOffsetParamCount == 2) {
+                    return (Vec3) blockOffsetHandle.invoke(state, level, pos);
                 }
             }
-            if (blockOffsetMethod != null) {
-                if (blockOffsetMethod.getParameterCount() == 1) {
-                    return (Vec3) blockOffsetMethod.invoke(state, pos);
-                } else if (blockOffsetMethod.getParameterCount() == 2) {
-                    return (Vec3) blockOffsetMethod.invoke(state, level, pos);
+            for (Method m : state.getClass().getMethods()) {
+                if (Vec3.class.isAssignableFrom(m.getReturnType())) {
+                    if (m.getParameterCount() == 1 || m.getParameterCount() == 2) {
+                        m.setAccessible(true);
+                        blockOffsetHandle = java.lang.invoke.MethodHandles.lookup().unreflect(m);
+                        blockOffsetParamCount = m.getParameterCount();
+                        if (blockOffsetParamCount == 1) {
+                            return (Vec3) blockOffsetHandle.invoke(state, pos);
+                        } else {
+                            return (Vec3) blockOffsetHandle.invoke(state, level, pos);
+                        }
+                    }
                 }
             }
         } catch (Throwable ignored) {

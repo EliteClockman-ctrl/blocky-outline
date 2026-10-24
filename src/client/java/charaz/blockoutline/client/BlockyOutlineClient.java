@@ -191,6 +191,10 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     }
 
     private static void updateMotion(BlockyOutlineSettings s, double tx, double ty, double tz, double dt, long nowMs) {
+        if (currX == tx && currY == ty && currZ == tz && velX == 0.0 && velY == 0.0 && velZ == 0.0) {
+            return;
+        }
+
         switch (s.motionMode) {
             case 0 -> { // Snappy Spring (4 sub-steps, ultra-stable, physical feel)
                 double k = Math.max(150.0, (double) s.springStiffness);

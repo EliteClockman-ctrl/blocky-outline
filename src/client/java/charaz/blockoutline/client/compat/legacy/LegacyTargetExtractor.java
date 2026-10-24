@@ -11,6 +11,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class LegacyTargetExtractor implements TargetExtractor {
+    private final TargetInfo cached = new TargetInfo();
+
     @Override
     public TargetInfo extract(Object targetObj, Minecraft mc) {
         if (targetObj instanceof BlockHitResult hit && mc.level != null) {
@@ -19,7 +21,8 @@ public final class LegacyTargetExtractor implements TargetExtractor {
             Entity camEntity = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
             VoxelShape shape = state.getShape(mc.level, pos,
                     camEntity != null ? CollisionContext.of(camEntity) : CollisionContext.empty());
-            return new TargetInfo(pos, shape);
+            cached.set(pos, shape);
+            return cached;
         }
         return null;
     }

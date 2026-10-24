@@ -4,17 +4,19 @@ import charaz.blockoutline.client.compat.RenderBufferProvider;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public final class LegacyRenderBufferProvider implements RenderBufferProvider {
     private static Object legacyLinesType;
     private static Object legacyQuadsType;
-    private static Method getBufferMethod;
+    private static MethodHandle getBufferHandle;
     private static boolean initialized = false;
 
-    private static Method disableDepthTestMethod;
-    private static Method enableDepthTestMethod;
+    private static MethodHandle disableDepthTestHandle;
+    private static MethodHandle enableDepthTestHandle;
     private static boolean depthMethodsInitialized = false;
 
     private static void init() {
@@ -54,14 +56,15 @@ public final class LegacyRenderBufferProvider implements RenderBufferProvider {
             depthMethodsInitialized = true;
             try {
                 Class<?> rsClass = Class.forName("com.mojang.blaze3d.systems.RenderSystem");
+                MethodHandles.Lookup lookup = MethodHandles.lookup();
                 for (Method m : rsClass.getMethods()) {
                     if (m.getParameterCount() == 0) {
                         if ("disableDepthTest".equals(m.getName())) {
                             m.setAccessible(true);
-                            disableDepthTestMethod = m;
+                            disableDepthTestHandle = lookup.unreflect(m);
                         } else if ("enableDepthTest".equals(m.getName())) {
                             m.setAccessible(true);
-                            enableDepthTestMethod = m;
+                            enableDepthTestHandle = lookup.unreflect(m);
                         }
                     }
                 }
@@ -70,10 +73,10 @@ public final class LegacyRenderBufferProvider implements RenderBufferProvider {
         }
 
         try {
-            if (enable && enableDepthTestMethod != null) {
-                enableDepthTestMethod.invoke(null);
-            } else if (!enable && disableDepthTestMethod != null) {
-                disableDepthTestMethod.invoke(null);
+            if (enable && enableDepthTestHandle != null) {
+                enableDepthTestHandle.invokeExact();
+            } else if (!enable && disableDepthTestHandle != null) {
+                disableDepthTestHandle.invokeExact();
             }
         } catch (Throwable ignored) {
         }
@@ -119,17 +122,15 @@ public final class LegacyRenderBufferProvider implements RenderBufferProvider {
     private static VertexConsumer invokeGetBuffer(MultiBufferSource consumers, Object renderType) {
         if (consumers == null || renderType == null) return null;
         try {
-            if (getBufferMethod == null) {
-                for (Method m : consumers.getClass().getMethods()) {
-                    if (m.getParameterCount() == 1 && VertexConsumer.class.isAssignableFrom(m.getReturnType())) {
-                        m.setAccessible(true);
-                        getBufferMethod = m;
-                        break;
-                    }
-                }
+            if (getBufferHandle != null) {
+                return (VertexConsumer) getBufferHandle.invoke(consumers, renderType);
             }
-            if (getBufferMethod != null) {
-                return (VertexConsumer) getBufferMethod.invoke(consumers, renderType);
+            for (Method m : consumers.getClass().getMethods()) {
+                if (m.getParameterCount() == 1 && VertexConsumer.class.isAssignableFrom(m.getReturnType())) {
+                    m.setAccessible(true);
+                    getBufferHandle = MethodHandles.lookup().unreflect(m);
+                    return (VertexConsumer) getBufferHandle.invoke(consumers, renderType);
+                }
             }
         } catch (Throwable t) {
             t.printStackTrace();
