@@ -1,78 +1,35 @@
-# Changelog
+## What's new in version v1.1.6:
 
-All notable changes to the **Blocky Outline** mod will be documented in this file.
-
----
-
-## [v1.1.6] - 2026-10-24
-
-### ✨ New Features & Gameplay
-- **Minecraft 1.21.11 Dedicated**: Native, dedicated support specifically optimized for Minecraft `1.21.11` running on Fabric Loader `0.17.3+` and Fabric API `0.141.6+1.21.11`.
-- **X-Ray / See-Through Mode**:
-  - Implemented custom Blaze3D render pipelines (`XRAY_LINES` & `XRAY_QUADS`) with `DepthTestFunction.NO_DEPTH_TEST` and disabled depth write (`withDepthWrite(false)`).
-  - When **X-Ray Mode** is enabled in the menu, both the block outline and face fill render right through opaque walls and obstacles.
-- **Overhauled Physics & Motion Engine**:
-  - **Damped Spring Physics (Harmonic Oscillator)**: Replaced static interpolation with a 4 sub-step physical mass-spring-damper simulation. Preserves cursor momentum during fast flick shots for an ultra-fluid, natural feel.
-  - **Ease-Out Back (Overshoot Engine)**: Crisp, modern UI movement inspired by macOS/iOS fluid animations. The outline snaps quickly toward the target block, overshoots with a subtle 1-bounce spring, and pulls tightly into place.
-  - **Fast Quintic (Instant Lock-On)**: 5th-degree polynomial curve delivering maximum initial burst speed to lock onto targets with zero visual delay and soft-cushion landing.
-  - **Fluid Apple Bezier**: Precision cubic-bezier easing with rapid initial acceleration and soft deceleration.
-  - **Smooth Lerp (Exponential Decay)**: High-framerate, framerate-independent smooth tracking.
-  - **Instant (Raw)**: Direct 0ms lock-on for competitive players who prefer raw responsiveness.
-- **Zero Appearance Latency**:
-  - Crosshair acquiring a block from air (>100ms air gap) or upon large camera jumps (>2.5 blocks) snaps instantly with 0ms visual delay. Smooth interpolation activates only when continuously gliding across neighboring blocks.
-
-### ⚡ Performance & Zero-GC
-- **Zero-Allocation Bounding Box Traversal**: Replaced `shape.toAabbs()` with `shape.forAllBoxes(...)` directly in `OutlineRenderer`. This completely eliminates `ArrayList` and `AABB` heap allocations on the render loop, keeping the render path 100% Zero-GC at 144+ FPS.
-- **Blaze3D Render Pipelines**: Static singleton pipeline initialization ensures zero shader re-compilation during gameplay.
-- **HSV to RGB Color Caching**: Color calculations and breathing sine waves are cached and evaluated only when settings change or per-frame intervals occur.
-
-### 🐛 Bug Fixes & Stability
-- **Missing Elements in Vertex (LineWidth)**: Resolved `IllegalStateException: Missing elements in vertex: LineWidth` on Minecraft 1.21.11 by providing `.setLineWidth(width)` on every line vertex.
-- **Settings Clamping Range Fix**: Fixed `copyFrom` clamping boundaries in `BlockyOutlineSettings` so ultra-fast animations (down to 25ms duration), subtle overshoot values (down to 0.5x), and spring stiffness values (up to 600k) persist reliably across restarts without being reset.
-- **Input System Compatibility**: Fully adapted `BlockyOutlineMenuScreen` mouse events (`mouseClicked`, `mouseDragged`, `mouseReleased`) to Minecraft 1.21.11's `MouseButtonEvent`.
-- **Missing Classpath Warning**: Added `src/client/resources/.gitkeep` to prevent FabricLoader from logging missing client resources warnings during game launch.
-- **Camera Null-Safety**: Added safety guards in `BEFORE_BLOCK_OUTLINE` to prevent rare NPEs when disconnecting or transitioning screens.
+- **Minecraft 1.21.11 Dedicated**: Native, dedicated support specifically optimized for Minecraft 1.21.11 running on Fabric Loader 0.17.3+ and Fabric API 0.141.6+1.21.11.
+- **X-Ray (See-Through) Mode**: Block outlines and face fills can now render right through walls and opaque blocks. Built using custom Blaze3D render pipelines (`XRAY_LINES` & `XRAY_QUADS`) with disabled depth testing (`NO_DEPTH_TEST`) and no depth write.
+- **Zero Appearance Latency (Instant Lock-On)**: Completely eliminated block highlight delay. Crosshair arriving from air (>100ms gap) or large camera jumps (>2.5 blocks) snaps instantly with 0ms delay. Smooth glide transitions only activate when continuously scanning adjacent blocks.
+- **Damped Spring Physics (Harmonic Oscillator)**: Replaced static time interpolation with a 4-step physical mass-spring-damper simulation. Inherits cursor velocity continuously across frames so rapid mouse flicks feel natural and fluid without jerky stops.
+- **Ease-Out Back (Overshoot Engine)**: Crisp, modern UI movement inspired by macOS/iOS fluid animations. The outline snaps quickly toward the target block, overshoots with a subtle 1-bounce spring, and pulls tightly into place.
+- **Fast Quintic (5th Degree Curve)**: Maximum initial burst velocity for instant target lock-on with zero perceived delay, terminating in a soft, gentle deceleration.
+- **Fluid Apple Bezier**: Precision cubic-bezier easing curve providing immediate response with cushioned edge landings.
+- **Zero-GC & High Performance**: Replaced `shape.toAabbs()` with `shape.forAllBoxes(...)` directly in `OutlineRenderer`, completely eliminating `ArrayList` and `AABB` heap object allocations per frame for maximum FPS stability.
+- **Blaze3D LineWidth Fix**: Fixed `IllegalStateException: Missing elements in vertex: LineWidth` crash on 1.21.11 by providing line width attributes on every line vertex.
+- **Input System Compatibility**: Fully adapted the configuration menu to Minecraft 1.21.11's `MouseButtonEvent` input API.
+- **Settings & Clamping Range Fix**: Expanded configuration clamp boundaries to match all menu sliders (25ms - 250ms motion duration, 0.5x - 3.0x overshoot, 60 - 600k spring tension), preventing fast user presets from being reset on game restart.
+- **Clean Launch**: Added client resources to eliminate FabricLoader's missing client classpath warning during startup.
 
 ---
 
-## [v1.1.5] - 2026-10-20
+## What was in previous versions:
 
-### ⚡ Performance & Quality of Life
-- **Zero-GC Lambda Optimizations**: Removed transient lambda allocations across render call sites.
-- **Block Model Offset Support**: Outlines and face fills now accurately follow model-offset blocks such as flowers, grass, ferns, and bamboo.
+### v1.1.5
+- Expanded compatibility to Minecraft 1.21 and 1.21.x releases.
+- Optimized render lambdas and added block model offset tracking (flowers, tall grass, ferns).
 
----
+### v1.1.4
+- Initial port to Minecraft 1.21.11 Blaze3D rendering system.
+- Codebase standardization and refactoring.
 
-## [v1.1.4] - 2026-10-18
+### v1.1.3
+- Cross-version runtime compatibility fixes for 26.1 through 26.3.
 
-### 🔄 Porting & Compatibility
-- **Minecraft 1.21.11 Port**: Ported rendering systems to Mojang's 1.21.11 Blaze3D pipeline.
-- **Codebase Standardization**: Refactored renderer and configuration modules for enhanced maintainability.
+### v1.1.2
+- Color picker dialog precision improvements and HEX input support.
 
----
-
-## [v1.1.3] - 2026-10-15
-
-### 🐛 Bug Fixes
-- **Cross-Version Runtime Compatibility**: Fixed class loading and runtime discrepancies across 1.21 minor revisions.
-- **Jar Packaging**: Refreshed binary distribution artifacts.
-
----
-
-## [v1.1.2] - 2026-10-12
-
-### 🎨 UI & Controls
-- **Color Picker Refinement**: Improved precision of 2D Saturation/Value picker and Hue slider in the in-game configuration menu.
-- **HEX Input Support**: Added keyboard support for direct hexadecimal color entry.
-
----
-
-## [v1.1.1] - 2026-10-09
-
-### ✨ Initial Release for Minecraft 1.21.11
-- **Customizable Outline**: Color (HSV/HEX), opacity, and outline thickness.
-- **Dual-Color Gradient Fill**: Top and bottom color blending on block faces.
-- **Rainbow RGB Mode**: Smooth cycling rainbow mode for outline and fill.
-- **Corner Accents Mode**: Sci-fi style corner brackets with adjustable edge size.
-- **In-Game Configuration Menu**: Responsive GUI opened via the **M** key.
-- **User Preset Profiles**: 3 user-customizable save slots with Load, Save, and Delete options.
+### v1.1.1
+- Initial release for Fabric 1.21.11 with custom outline width, colors, breathing animations, and user preset slots.
