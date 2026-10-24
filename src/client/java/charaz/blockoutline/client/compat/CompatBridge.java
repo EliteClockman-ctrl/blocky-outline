@@ -220,14 +220,28 @@ public final class CompatBridge {
             );
 
             Method registerMethod = null;
-            for (Method m : eventObj.getClass().getMethods()) {
-                if ("register".equals(m.getName()) && m.getParameterCount() == 1) {
-                    registerMethod = m;
-                    break;
+            try {
+                Class<?> eventInterface = Class.forName("net.fabricmc.fabric.api.event.Event");
+                for (Method m : eventInterface.getMethods()) {
+                    if ("register".equals(m.getName()) && m.getParameterCount() == 1) {
+                        registerMethod = m;
+                        break;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+
+            if (registerMethod == null) {
+                for (Method m : eventObj.getClass().getMethods()) {
+                    if ("register".equals(m.getName()) && m.getParameterCount() == 1) {
+                        registerMethod = m;
+                        break;
+                    }
                 }
             }
 
             if (registerMethod != null) {
+                registerMethod.setAccessible(true);
                 registerMethod.invoke(eventObj, proxyInstance);
                 System.out.println("[BlockyOutline] Successfully registered BEFORE_BLOCK_OUTLINE via " + eventsClass.getName());
             } else {
@@ -259,6 +273,7 @@ public final class CompatBridge {
             Class<?>[] params = ctor.getParameterTypes();
             if (params.length >= 4 && params[0] == String.class && params[1] == InputConstants.Type.class && (params[2] == int.class || params[2] == Integer.TYPE)) {
                 try {
+                    ctor.setAccessible(true);
                     if (params[3] == String.class) {
                         return (KeyMapping) ctor.newInstance(name, type, keyCode, legacyCategory);
                     } else {
