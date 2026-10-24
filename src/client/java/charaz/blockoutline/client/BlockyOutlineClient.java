@@ -174,11 +174,11 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             return false;
         });
 
-        menuKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        menuKeyBinding = KeyBindingHelper.registerKeyBinding(CompatBridge.createMenuKeyMapping(
                 "key.blocky-outline.open_menu",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_M,
-                KeyMapping.Category.MISC
+                "key.categories.misc"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {

@@ -1,7 +1,9 @@
 package charaz.blockoutline.client.compat;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -10,8 +12,10 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 
 public final class CompatBridge {
@@ -248,5 +252,40 @@ public final class CompatBridge {
             System.err.println("[BlockyOutline] Failed to open menu screen: " + t.getMessage());
             t.printStackTrace();
         }
+    }
+
+    public static KeyMapping createMenuKeyMapping(String name, InputConstants.Type type, int keyCode, String legacyCategory) {
+        for (Constructor<?> ctor : KeyMapping.class.getConstructors()) {
+            Class<?>[] params = ctor.getParameterTypes();
+            if (params.length >= 4 && params[0] == String.class && params[1] == InputConstants.Type.class && (params[2] == int.class || params[2] == Integer.TYPE)) {
+                try {
+                    if (params[3] == String.class) {
+                        return (KeyMapping) ctor.newInstance(name, type, keyCode, legacyCategory);
+                    } else {
+                        Class<?> categoryClass = params[3];
+                        Object miscCategory = null;
+                        for (Field f : categoryClass.getFields()) {
+                            if (Modifier.isStatic(f.getModifiers()) && categoryClass.isAssignableFrom(f.getType())) {
+                                if ("MISC".equalsIgnoreCase(f.getName()) || f.getName().contains("MISC") || f.getName().startsWith("field_")) {
+                                    miscCategory = f.get(null);
+                                    break;
+                                }
+                            }
+                        }
+                        if (miscCategory != null) {
+                            if (params.length == 4) {
+                                return (KeyMapping) ctor.newInstance(name, type, keyCode, miscCategory);
+                            } else if (params.length == 5 && (params[4] == int.class || params[4] == Integer.TYPE)) {
+                                return (KeyMapping) ctor.newInstance(name, type, keyCode, miscCategory, 0);
+                            }
+                        }
+                    }
+                } catch (Throwable t) {
+                    System.err.println("[BlockyOutline] Failed to invoke KeyMapping constructor: " + t.getMessage());
+                    t.printStackTrace();
+                }
+            }
+        }
+        throw new IllegalStateException("[BlockyOutline] Could not find compatible KeyMapping constructor!");
     }
 }
