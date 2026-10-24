@@ -30,9 +30,32 @@ public final class BlockyOutlineSettings {
     public boolean xrayMode = false;
     public float hitboxExpand = 0.002f;
     public boolean smoothTransition = true;
-    public float smoothSpeed = 0.85f;
-    public boolean breathingEffect = true;
+    public float smoothSpeed = 0.90f;
+    public int motionMode = 1; // 0: Snappy Spring, 1: Back (Overshoot), 2: Quintic, 3: Fluid Bezier, 4: Smooth Lerp, 5: Instant (Raw)
+    public float springStiffness = 320.0f;
+    public float springDamping = 30.0f;
+    public float backOvershoot = 1.35f;
+    public float motionDurationMs = 65.0f;
+    public boolean breathingEffect = false;
     public float breathingSpeed = 1.0f;
+
+    public static final String[] MOTION_MODE_NAMES = {
+        "Snappy Spring",
+        "Back (Overshoot)",
+        "Quintic (Instant)",
+        "Fluid Bezier",
+        "Smooth Lerp",
+        "Instant (Raw)"
+    };
+
+    public static final String[] MOTION_MODE_DESCS = {
+        "Physical spring with fast snap & preserved momentum",
+        "Fast glide with subtle 1-bounce overshoot",
+        "Ultra-fast 5th-degree curve, zero visual delay",
+        "Apple iOS fluid acceleration & soft landing",
+        "High-framerate responsive exponential glide",
+        "Immediate 0ms snap with zero smoothing"
+    };
 
     public boolean fillEnabled = false;
     public boolean fillGradientEnabled = false;
@@ -113,6 +136,11 @@ public final class BlockyOutlineSettings {
         public float hitboxExpand = 0.002f;
         public boolean smoothTransition = true;
         public float smoothSpeed = 0.85f;
+        public int motionMode = 1;
+        public float springStiffness = 200.0f;
+        public float springDamping = 22.0f;
+        public float backOvershoot = 1.70158f;
+        public float motionDurationMs = 90.0f;
         public boolean breathingEffect = true;
         public float breathingSpeed = 1.0f;
 
@@ -156,6 +184,11 @@ public final class BlockyOutlineSettings {
             this.hitboxExpand = s.hitboxExpand;
             this.smoothTransition = s.smoothTransition;
             this.smoothSpeed = s.smoothSpeed;
+            this.motionMode = s.motionMode;
+            this.springStiffness = s.springStiffness;
+            this.springDamping = s.springDamping;
+            this.backOvershoot = s.backOvershoot;
+            this.motionDurationMs = s.motionDurationMs;
             this.breathingEffect = s.breathingEffect;
             this.breathingSpeed = s.breathingSpeed;
 
@@ -188,6 +221,11 @@ public final class BlockyOutlineSettings {
             s.hitboxExpand = this.hitboxExpand;
             s.smoothTransition = this.smoothTransition;
             s.smoothSpeed = this.smoothSpeed;
+            s.motionMode = this.motionMode;
+            s.springStiffness = this.springStiffness;
+            s.springDamping = this.springDamping;
+            s.backOvershoot = this.backOvershoot;
+            s.motionDurationMs = this.motionDurationMs;
             s.breathingEffect = this.breathingEffect;
             s.breathingSpeed = this.breathingSpeed;
 
@@ -220,6 +258,11 @@ public final class BlockyOutlineSettings {
         this.hitboxExpand = Mth.clamp(other.hitboxExpand, 0.0f, 0.05f);
         this.smoothTransition = other.smoothTransition;
         this.smoothSpeed = Mth.clamp(other.smoothSpeed, 0.05f, 1.0f);
+        this.motionMode = (other.motionMode >= 0 && other.motionMode <= 5) ? other.motionMode : 1;
+        this.springStiffness = Mth.clamp(other.springStiffness, 60.0f, 600.0f);
+        this.springDamping = Mth.clamp(other.springDamping, 10.0f, 60.0f);
+        this.backOvershoot = Mth.clamp(other.backOvershoot, 0.5f, 3.0f);
+        this.motionDurationMs = Mth.clamp(other.motionDurationMs, 25.0f, 250.0f);
         this.breathingEffect = other.breathingEffect;
         this.breathingSpeed = Mth.clamp(other.breathingSpeed, 0.2f, 3.0f);
 
@@ -277,8 +320,8 @@ public final class BlockyOutlineSettings {
         if (this.breathingEffect) {
             float timeFactor = (nowMs * 0.0032f) * this.breathingSpeed;
             float sinVal = (float) Math.sin(timeFactor);
-            this.cachedWaveOutline = 0.82f + 0.18f * sinVal;
-            this.cachedWaveFill = 0.78f + 0.22f * sinVal;
+            this.cachedWaveOutline = 0.90f + 0.10f * sinVal;
+            this.cachedWaveFill = 0.85f + 0.15f * sinVal;
         } else {
             this.cachedWaveOutline = 1.0f;
             this.cachedWaveFill = 1.0f;
