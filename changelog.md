@@ -1,6 +1,6 @@
 ## What's new in version v1.1.7:
 
-- **Minecraft 1.21.x Compatibility**: Expanded compatibility metadata across all Minecraft 1.21.x releases (Fabric Loader 0.17.3+).
+- **Full 1.21.x Cross-Version Runtime Bridge**: Implemented a dynamic compatibility layer bridging Minecraft 1.21.0 - 1.21.4 (legacy hit result, VertexConsumer, and standard mouse events) and 1.21.11+ (modern render states, pipeline-based X-Ray, and MouseButtonEvent), enabling a single JAR to run natively across all 1.21.x releases without crashes.
 - **X-Ray (See-Through) Mode**: Block outlines and face fills can now render right through walls and opaque blocks. Built using custom Blaze3D render pipelines with disabled depth testing (`NO_DEPTH_TEST`).
 - **Zero Appearance Latency (Instant Lock-On)**: Completely eliminated block highlight delay. Crosshair arriving from air (>100ms gap) or large camera jumps (>2.5 blocks) snaps instantly with 0ms delay. Smooth glide transitions only activate when continuously scanning adjacent blocks.
 - **Damped Spring Physics (Harmonic Oscillator)**: Replaced static time interpolation with a 4-step physical mass-spring-damper simulation. Inherits cursor velocity continuously across frames so rapid mouse flicks feel natural and fluid without jerky stops.

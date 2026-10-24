@@ -4,8 +4,6 @@ import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -15,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 public class BlockyOutlineMenuScreen extends Screen {
 
     private static final String MOD_TITLE = "Blocky Outline";
-    private static final String MOD_VERSION = "v1.1.6";
+    private static final String MOD_VERSION = "v1.1.7";
 
     // Navigation tabs
     private static final String[] TABS = {"Outline", "Face Fill", "Smooth", "Presets"};
@@ -1227,11 +1225,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // MOUSE & KEY EVENT HANDLING
     // =========================================================================
-    @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean wasHandled) {
-        double mx = event.x();
-        double my = event.y();
-        int button = event.button();
+    public boolean handleMouseClicked(double mx, double my, int button) {
 
         // 1. Color Picker Modal Clicks
         if (this.pickerTarget != -1) {
@@ -1681,11 +1675,10 @@ public class BlockyOutlineMenuScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(event, wasHandled);
+        return false;
     }
 
-    @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
+    public boolean handleMouseReleased(double mx, double my, int button) {
         if (this.dragging2D || this.draggingHue) {
             this.dragging2D = false;
             this.draggingHue = false;
@@ -1703,13 +1696,10 @@ public class BlockyOutlineMenuScreen extends Screen {
             this.draggingCube = false;
             return true;
         }
-        return super.mouseReleased(event);
+        return false;
     }
 
-    @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        double mx = event.x();
-        double my = event.y();
+    public boolean handleMouseDragged(double mx, double my, int button, double dragX, double dragY) {
 
         if (this.draggingCube) {
             this.cubeYaw = (this.dragStartYaw + (float) (mx - this.dragStartMouseX) * 0.8f) % 360.0f;
@@ -1750,7 +1740,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             return true;
         }
 
-        return super.mouseDragged(event, dragX, dragY);
+        return false;
     }
 
     private void updateSliderValue(int tabIndex, int rowIndex, double mx, int sX, int sW) {
@@ -1783,14 +1773,12 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
     }
 
-    @Override
-    public boolean keyPressed(KeyEvent event) {
-        int keyCode = event.key();
+    public boolean handleKeyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_M) {
             this.onClose();
             return true;
         }
-        return super.keyPressed(event);
+        return false;
     }
 
     @Override

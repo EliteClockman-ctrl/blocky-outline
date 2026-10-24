@@ -3,20 +3,16 @@ package charaz.blockoutline.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import charaz.blockoutline.client.compat.CompatBridge;
+import charaz.blockoutline.client.compat.TargetInfo;
 import charaz.blockoutline.client.renderer.OutlineRenderer;
-import charaz.blockoutline.client.ui.BlockyOutlineMenuScreen;
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.BlockyOutlineRenderTypes;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.BlockOutlineRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -39,8 +35,8 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
 
-        WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outlineRenderState) -> {
-            if (outlineRenderState == null) {
+        CompatBridge.registerWorldRenderEvent((context, targetObj) -> {
+            if (targetObj == null) {
                 hasTarget = false;
                 return true;
             }
@@ -58,15 +54,23 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 return false;
             }
 
-            BlockPos pos = outlineRenderState.pos();
-            VoxelShape shape = outlineRenderState.shape();
-            if (shape == null || shape.isEmpty()) {
+            TargetInfo target = CompatBridge.TARGET_EXTRACTOR != null
+                    ? CompatBridge.TARGET_EXTRACTOR.extract(targetObj, mc)
+                    : null;
+            if (target == null) {
                 hasTarget = false;
                 return true;
             }
 
-            PoseStack matrices = context.matrices();
-            MultiBufferSource consumers = context.consumers();
+            BlockPos pos = target.pos();
+            VoxelShape shape = target.shape();
+            if (pos == null || shape == null || shape.isEmpty()) {
+                hasTarget = false;
+                return true;
+            }
+
+            PoseStack matrices = CompatBridge.getPoseStack(context);
+            MultiBufferSource consumers = CompatBridge.getBufferSource(context);
             if (matrices == null || consumers == null) {
                 return false;
             }
@@ -144,21 +148,27 @@ public final class BlockyOutlineClient implements ClientModInitializer {
 
             boolean xray = s.xrayMode;
 
-            if (renderOutline) {
+            if (renderOutline && CompatBridge.BUFFER_PROVIDER != null) {
                 int outlineArgb = s.getOutlineArgb(nowMs);
                 if ((outlineArgb >>> 24) > 0) {
-                    RenderType lineType = xray ? BlockyOutlineRenderTypes.XRAY_LINES : RenderTypes.lines();
-                    VertexConsumer lines = consumers.getBuffer(lineType);
-                    OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
-                            s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand);
+                    VertexConsumer lines = CompatBridge.BUFFER_PROVIDER.getLineBuffer(consumers, xray);
+                    if (lines != null) {
+                        OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
+                                s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand);
+                    }
                 }
             }
 
-            if (renderFill) {
-                RenderType quadType = xray ? BlockyOutlineRenderTypes.XRAY_QUADS : RenderTypes.debugQuads();
-                VertexConsumer quads = consumers.getBuffer(quadType);
-                OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
-                        s.getFillArgb(nowMs), s.getFillArgb2(nowMs), s.hitboxExpand);
+            if (renderFill && CompatBridge.BUFFER_PROVIDER != null) {
+                VertexConsumer quads = CompatBridge.BUFFER_PROVIDER.getQuadBuffer(consumers, xray);
+                if (quads != null) {
+                    OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
+                            s.getFillArgb(nowMs), s.getFillArgb2(nowMs), s.hitboxExpand);
+                }
+            }
+
+            if (CompatBridge.BUFFER_PROVIDER != null) {
+                CompatBridge.BUFFER_PROVIDER.postRender(xray);
             }
 
             return false;
@@ -174,7 +184,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             while (menuKeyBinding != null && menuKeyBinding.consumeClick()) {
                 if (mc.screen == null) {
-                    mc.setScreen(new BlockyOutlineMenuScreen());
+                    CompatBridge.openMenuScreen(mc);
                 }
             }
         });
