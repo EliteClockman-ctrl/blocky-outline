@@ -1,6 +1,5 @@
 package charaz.blockoutline.client.compat;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
@@ -268,40 +267,101 @@ public final class CompatBridge {
         }
     }
 
-    public static KeyMapping createMenuKeyMapping(String name, InputConstants.Type type, int keyCode, String legacyCategory) {
+    public static KeyMapping createMenuKeyMapping(String name, int keyCode, String legacyCategory) {
+        Object keyType = null;
+        try {
+            Class<?> typeClass = null;
+            for (String cn : new String[]{
+                    "com.mojang.blaze3d.platform.InputConstants$Type",
+                    "net.minecraft.client.util.InputUtil$Type",
+                    "net.minecraft.class_3675$class_307"
+            }) {
+                try {
+                    typeClass = Class.forName(cn);
+                    break;
+                } catch (Throwable ignored) {
+                }
+            }
+            if (typeClass != null && typeClass.isEnum()) {
+                for (Object c : typeClass.getEnumConstants()) {
+                    String s = c.toString();
+                    if ("KEYSYM".equalsIgnoreCase(s) || s.contains("KEY")) {
+                        keyType = c;
+                        break;
+                    }
+                }
+                if (keyType == null && typeClass.getEnumConstants().length > 0) {
+                    keyType = typeClass.getEnumConstants()[0];
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
+        // 1. Try 3-parameter constructor (String name, int keyCode, Category/String category)
         for (Constructor<?> ctor : KeyMapping.class.getConstructors()) {
             Class<?>[] params = ctor.getParameterTypes();
-            if (params.length >= 4 && params[0] == String.class && params[1] == InputConstants.Type.class && (params[2] == int.class || params[2] == Integer.TYPE)) {
+            if (params.length == 3 && params[0] == String.class && (params[1] == int.class || params[1] == Integer.TYPE)) {
                 try {
                     ctor.setAccessible(true);
-                    if (params[3] == String.class) {
-                        return (KeyMapping) ctor.newInstance(name, type, keyCode, legacyCategory);
+                    if (params[2] == String.class) {
+                        return (KeyMapping) ctor.newInstance(name, keyCode, legacyCategory);
                     } else {
-                        Class<?> categoryClass = params[3];
-                        Object miscCategory = null;
-                        for (Field f : categoryClass.getFields()) {
-                            if (Modifier.isStatic(f.getModifiers()) && categoryClass.isAssignableFrom(f.getType())) {
-                                if ("MISC".equalsIgnoreCase(f.getName()) || f.getName().contains("MISC") || f.getName().startsWith("field_")) {
-                                    miscCategory = f.get(null);
-                                    break;
-                                }
-                            }
-                        }
+                        Object miscCategory = getCategoryObject(params[2]);
                         if (miscCategory != null) {
-                            if (params.length == 4) {
-                                return (KeyMapping) ctor.newInstance(name, type, keyCode, miscCategory);
-                            } else if (params.length == 5 && (params[4] == int.class || params[4] == Integer.TYPE)) {
-                                return (KeyMapping) ctor.newInstance(name, type, keyCode, miscCategory, 0);
+                            return (KeyMapping) ctor.newInstance(name, keyCode, miscCategory);
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        // 2. Try 4 or 5-parameter constructor with Type parameter
+        for (Constructor<?> ctor : KeyMapping.class.getConstructors()) {
+            Class<?>[] params = ctor.getParameterTypes();
+            if (params.length >= 4 && params[0] == String.class && (params[2] == int.class || params[2] == Integer.TYPE)) {
+                try {
+                    ctor.setAccessible(true);
+                    Object typeArg = (keyType != null && params[1].isAssignableFrom(keyType.getClass())) ? keyType : null;
+                    if (typeArg == null && params[1].isEnum() && params[1].getEnumConstants().length > 0) {
+                        typeArg = params[1].getEnumConstants()[0];
+                    }
+
+                    if (typeArg != null) {
+                        if (params[3] == String.class) {
+                            return (KeyMapping) ctor.newInstance(name, typeArg, keyCode, legacyCategory);
+                        } else {
+                            Object miscCategory = getCategoryObject(params[3]);
+                            if (miscCategory != null) {
+                                if (params.length == 4) {
+                                    return (KeyMapping) ctor.newInstance(name, typeArg, keyCode, miscCategory);
+                                } else if (params.length == 5 && (params[4] == int.class || params[4] == Integer.TYPE)) {
+                                    return (KeyMapping) ctor.newInstance(name, typeArg, keyCode, miscCategory, 0);
+                                }
                             }
                         }
                     }
                 } catch (Throwable t) {
                     System.err.println("[BlockyOutline] Failed to invoke KeyMapping constructor: " + t.getMessage());
-                    t.printStackTrace();
                 }
             }
         }
         throw new IllegalStateException("[BlockyOutline] Could not find compatible KeyMapping constructor!");
+    }
+
+    private static Object getCategoryObject(Class<?> categoryClass) {
+        if (categoryClass == null) return null;
+        for (Field f : categoryClass.getFields()) {
+            if (Modifier.isStatic(f.getModifiers()) && categoryClass.isAssignableFrom(f.getType())) {
+                if ("MISC".equalsIgnoreCase(f.getName()) || f.getName().contains("MISC") || f.getName().startsWith("field_")) {
+                    try {
+                        return f.get(null);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public static void openUrl(String url) {

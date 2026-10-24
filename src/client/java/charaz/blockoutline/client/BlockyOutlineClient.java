@@ -1,6 +1,5 @@
 package charaz.blockoutline.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import charaz.blockoutline.client.compat.CompatBridge;
@@ -178,7 +177,6 @@ public final class BlockyOutlineClient implements ClientModInitializer {
 
         menuKeyBinding = KeyBindingHelper.registerKeyBinding(CompatBridge.createMenuKeyMapping(
                 "key.blocky-outline.open_menu",
-                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_M,
                 "key.categories.misc"
         ));
