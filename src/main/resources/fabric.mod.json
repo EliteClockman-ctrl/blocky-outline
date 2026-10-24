@@ -8,7 +8,8 @@
 		"CharaZ"
 	],
 	"contact": {
-		"sources": "https://github.com/EliteClockman-ctrl/blocky-outline"
+		"sources": "https://github.com/EliteClockman-ctrl/blocky-outline",
+		"issues": "https://github.com/EliteClockman-ctrl/blocky-outline/issues"
 	},
 	"license": "MIT",
 	"icon": "assets/blocky-outline/icon.png",

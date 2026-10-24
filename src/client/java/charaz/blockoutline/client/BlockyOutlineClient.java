@@ -8,6 +8,8 @@ import charaz.blockoutline.client.compat.TargetInfo;
 import charaz.blockoutline.client.renderer.OutlineRenderer;
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
@@ -187,6 +189,25 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                     CompatBridge.openMenuScreen(mc);
                 }
             }
+        });
+
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(ClientCommandManager.literal("report")
+                    .executes(context -> {
+                        CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
+                        context.getSource().sendFeedback(CompatBridge.createReportMessage());
+                        return 1;
+                    })
+            );
+            dispatcher.register(ClientCommandManager.literal("blockyoutline")
+                    .then(ClientCommandManager.literal("report")
+                            .executes(context -> {
+                                CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
+                                context.getSource().sendFeedback(CompatBridge.createReportMessage());
+                                return 1;
+                            })
+                    )
+            );
         });
     }
 

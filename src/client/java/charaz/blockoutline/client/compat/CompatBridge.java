@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -300,5 +302,83 @@ public final class CompatBridge {
             }
         }
         throw new IllegalStateException("[BlockyOutline] Could not find compatible KeyMapping constructor!");
+    }
+
+    public static void openUrl(String url) {
+        try {
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
+                if (desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
+                    desktop.browse(new java.net.URI(url));
+                    return;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            String os = System.getProperty("os.name", "").toLowerCase();
+            if (os.contains("win")) {
+                new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
+            } else if (os.contains("mac")) {
+                new ProcessBuilder("open", url).start();
+            } else {
+                new ProcessBuilder("xdg-open", url).start();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static Style createOpenUrlStyle(String url) {
+        Style style = Style.EMPTY.withUnderlined(true).withColor(0x38BDF8);
+        try {
+            if (IS_MODERN) {
+                Class<?> openUrlClass = Class.forName("net.minecraft.network.chat.ClickEvent$OpenUrl");
+                Constructor<?> ctor = openUrlClass.getConstructor(java.net.URI.class);
+                Object event = ctor.newInstance(new java.net.URI(url));
+                Method m = Style.class.getMethod("withClickEvent", Class.forName("net.minecraft.network.chat.ClickEvent"));
+                return (Style) m.invoke(style, event);
+            } else {
+                Class<?> actionClass = Class.forName("net.minecraft.network.chat.ClickEvent$Action");
+                Field openUrlField = actionClass.getField("OPEN_URL");
+                Object openUrlAction = openUrlField.get(null);
+                Class<?> clickEventClass = Class.forName("net.minecraft.network.chat.ClickEvent");
+                Constructor<?> ctor = clickEventClass.getConstructor(actionClass, String.class);
+                Object event = ctor.newInstance(openUrlAction, url);
+                return style.withClickEvent((net.minecraft.network.chat.ClickEvent) event);
+            }
+        } catch (Throwable ignored) {
+        }
+        return style;
+    }
+
+    public static Style withHoverTooltip(Style style, Component text) {
+        try {
+            if (IS_MODERN) {
+                Class<?> showTextClass = Class.forName("net.minecraft.network.chat.HoverEvent$ShowText");
+                Constructor<?> ctor = showTextClass.getConstructor(Component.class);
+                Object event = ctor.newInstance(text);
+                Method m = Style.class.getMethod("withHoverEvent", Class.forName("net.minecraft.network.chat.HoverEvent"));
+                return (Style) m.invoke(style, event);
+            } else {
+                Class<?> actionClass = Class.forName("net.minecraft.network.chat.HoverEvent$Action");
+                Field showTextField = actionClass.getField("SHOW_TEXT");
+                Object showTextAction = showTextField.get(null);
+                Class<?> hoverEventClass = Class.forName("net.minecraft.network.chat.HoverEvent");
+                Constructor<?> ctor = hoverEventClass.getConstructor(actionClass, Object.class);
+                Object event = ctor.newInstance(showTextAction, text);
+                return style.withHoverEvent((net.minecraft.network.chat.HoverEvent) event);
+            }
+        } catch (Throwable ignored) {
+        }
+        return style;
+    }
+
+    public static Component createReportMessage() {
+        Component prefix = Component.literal("[Blocky Outline] ").withStyle(Style.EMPTY.withColor(0x38BDF8).withBold(true));
+        Component body = Component.literal("Báo cáo lỗi / Góp ý: ").withStyle(Style.EMPTY.withColor(0xE2E8F0));
+        Style linkStyle = withHoverTooltip(createOpenUrlStyle("https://github.com/EliteClockman-ctrl/blocky-outline/issues"),
+                Component.literal("Nhấp để mở trang báo cáo lỗi GitHub"));
+        Component link = Component.literal("https://github.com/EliteClockman-ctrl/blocky-outline/issues").withStyle(linkStyle);
+        return Component.empty().append(prefix).append(body).append(link);
     }
 }

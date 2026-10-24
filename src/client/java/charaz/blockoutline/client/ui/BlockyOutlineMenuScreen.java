@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 public class BlockyOutlineMenuScreen extends Screen {
 
     private static final String MOD_TITLE = "Blocky Outline";
-    private static final String MOD_VERSION = "v1.1.7";
+    private static final String MOD_VERSION = "v1.1.3";
 
     // Navigation tabs
     private static final String[] TABS = {"Outline", "Face Fill", "Smooth", "Presets"};
@@ -258,6 +258,19 @@ public class BlockyOutlineMenuScreen extends Screen {
         guiGraphics.fill(doneX, doneY, doneX + doneW, doneY + doneH, doneHov ? 0xFF2563EB : PRIMARY_BLUE);
         drawBorder(guiGraphics, doneX, doneY, doneX + doneW, doneY + doneH, doneHov ? 0xFF93C5FD : 0xFF1D4ED8);
         guiGraphics.drawCenteredString(this.font, "Done", doneX + doneW / 2, doneY + (doneH - 8) / 2, TEXT_WHITE);
+
+        // Report Bug Button (Left of Done)
+        int reportW = Math.max(68, Math.min(84, this.winW / 6));
+        int reportH = doneH;
+        int reportX = doneX - reportW - 6;
+        int reportY = doneY;
+        boolean reportHov = mouseX >= reportX && mouseX <= reportX + reportW && mouseY >= reportY && mouseY <= reportY + reportH;
+        guiGraphics.fill(reportX, reportY, reportX + reportW, reportY + reportH, reportHov ? 0xFF0D9488 : 0xFF0F766E);
+        drawBorder(guiGraphics, reportX, reportY, reportX + reportW, reportY + reportH, reportHov ? 0xFF5EEAD4 : 0xFF115E59);
+        guiGraphics.drawCenteredString(this.font, "Report Bug", reportX + reportW / 2, reportY + (reportH - 8) / 2, TEXT_WHITE);
+        if (reportHov) {
+            this.tooltip = "Click to open GitHub Issues & report bugs";
+        }
 
         super.render(guiGraphics, mouseX, mouseY, delta);
 
@@ -1335,6 +1348,15 @@ public class BlockyOutlineMenuScreen extends Screen {
         if (mx >= doneX && mx <= doneX + doneW && my >= doneY && my <= doneY + doneH) {
             this.playClick();
             this.onClose();
+            return true;
+        }
+
+        // Report Bug Button
+        int reportW = Math.max(68, Math.min(84, this.winW / 6));
+        int reportX = doneX - reportW - 6;
+        if (mx >= reportX && mx <= reportX + reportW && my >= doneY && my <= doneY + doneH) {
+            this.playClick();
+            charaz.blockoutline.client.compat.CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
             return true;
         }
 
