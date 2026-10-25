@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 public class BlockyOutlineMenuScreen extends Screen {
 
     private static final String MOD_TITLE = "Blocky Outline";
-    private static final String MOD_VERSION = "v1.1.3-new";
+    private static final String MOD_VERSION = "v1.1.4";
 
     // Navigation tabs
     private static final String[] TABS = {"Outline", "Face Fill", "Smooth", "Presets"};

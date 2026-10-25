@@ -1,10 +1,10 @@
-## What's new in Blocky Outline v1.1.3-new:
+## What's new in Blocky Outline v1.1.4 (Minecraft 1.21.11):
 
 ### 🛠️ Bug Fixes
+- **Ported & Stabilized for Minecraft 1.21.11**: Fully updated build target and mappings to Minecraft 1.21.11 while maintaining full backwards and forwards compatibility across 1.21.x and 26.x.
 - **Fixed Menu (M) Crash across 1.21.x & 26.x**: Resolved all menu crashes on both legacy Minecraft 1.21 (1.21.0 – 1.21.4) and modern versions (1.21.11+ / 26.x) via the dynamic Dual-Runtime Bridge.
 - **Fixed Render Event Registration**: Resolved `IllegalAccessException` when registering `BEFORE_BLOCK_OUTLINE` with Fabric API.
-- **Fixed Minecraft Version Detection for 26.1.x – 26.3**: Added proper version range declarations in `fabric.mod.json`, enabling seamless loading across all Fabric 1.21.x and 26.x releases.
-- **Fixed Incorrect Menu Version Tag**: Corrected the version indicator displayed in the menu header from `v1.1.7` to `v1.1.3-new`.
+- **Fixed KeyMapping Crash on macOS & 26.x**: Fixed `NoSuchFieldError` (`InputConstants$Type KEYSYM`) by making keybinding registration resilient and fully dynamic.
 - **Fixed Menu Layout Overflow**: Fixed elements and cards overlapping the footer on smaller window resolutions or higher GUI Scales (Scale 3, 4, Auto).
 - **Fixed Frame Micro-Stutters (Zero-GC)**: Completely eliminated per-frame heap allocations during outline/fill rendering and crosshair tracking.
 
