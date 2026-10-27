@@ -3,7 +3,7 @@
 	"id": "blocky-outline",
 	"version": "${version}",
 	"name": "Blocky Outline",
-	"description": "Customizable block selection outline and gradient fill with physics animation for Minecraft 26.1.x.",
+	"description": "Customizable block selection outline and gradient fill with physics animation for Minecraft 26.2.",
 	"authors": [
 		"CharaZ"
 	],
@@ -26,11 +26,9 @@
 	"depends": {
 		"fabricloader": ">=0.15.0",
 		"minecraft": [
-			"26.1.x",
-			"26.1",
-			"26.1.1",
-			"26.1.2",
-			">=26.1 <26.2"
+			"26.2",
+			"26.2.x",
+			">=26.2 <26.3"
 		],
 		"java": ">=21"
 	},
