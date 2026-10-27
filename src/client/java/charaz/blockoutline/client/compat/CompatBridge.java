@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -140,7 +139,7 @@ public final class CompatBridge {
         return Vec3.ZERO;
     }
 
-    public static Vec3 getBlockOffset(BlockState state, BlockGetter level, BlockPos pos) {
+    public static Vec3 getBlockOffset(BlockState state, Object level, BlockPos pos) {
         if (state == null || pos == null) return Vec3.ZERO;
         try {
             if (blockOffsetHandle != null) {
