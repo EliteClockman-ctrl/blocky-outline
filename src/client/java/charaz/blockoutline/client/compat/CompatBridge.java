@@ -38,10 +38,15 @@ public final class CompatBridge {
             modern = true;
         } catch (Throwable t1) {
             try {
-                Class.forName("net.minecraft.class_12074");
+                Class.forName("net.minecraft.client.renderer.state.level.BlockOutlineRenderState");
                 modern = true;
-            } catch (Throwable t2) {
-                modern = false;
+            } catch (Throwable t1b) {
+                try {
+                    Class.forName("net.minecraft.class_12074");
+                    modern = true;
+                } catch (Throwable t2) {
+                    modern = false;
+                }
             }
         }
         IS_MODERN = modern;
