@@ -10,13 +10,24 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Mth;
 
 public final class BlockyOutlineSettings {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve("blocky-outline.json");
     private static final BlockyOutlineSettings INSTANCE = new BlockyOutlineSettings();
+
+    private static Path getFilePath() {
+        try {
+            return FabricLoader.getInstance().getConfigDir().resolve("blocky-outline.json");
+        } catch (Throwable t) {
+            return Paths.get("config", "blocky-outline.json");
+        }
+    }
+
+    private static float clamp(float val, float min, float max) {
+        return val < min ? min : Math.min(val, max);
+    }
 
     public boolean rainbowOutline = false;
     public float outlineRgbSpeed = 1.0f;
@@ -74,11 +85,12 @@ public final class BlockyOutlineSettings {
     }
 
     public static void load() {
-        if (!Files.exists(FILE_PATH)) {
+        Path filePath = getFilePath();
+        if (!Files.exists(filePath)) {
             save();
             return;
         }
-        try (BufferedReader reader = Files.newBufferedReader(FILE_PATH, StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
             BlockyOutlineSettings loaded = GSON.fromJson(reader, BlockyOutlineSettings.class);
             if (loaded != null) {
                 INSTANCE.copyFrom(loaded);
@@ -95,11 +107,12 @@ public final class BlockyOutlineSettings {
     public static void save() {
         INSTANCE.invalidateCache();
         try {
-            Path parent = FILE_PATH.getParent();
+            Path filePath = getFilePath();
+            Path parent = filePath.getParent();
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
             }
-            try (BufferedWriter writer = Files.newBufferedWriter(FILE_PATH, StandardCharsets.UTF_8)) {
+            try (BufferedWriter writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
                 GSON.toJson(INSTANCE, writer);
             }
         } catch (IOException e) {
@@ -109,8 +122,9 @@ public final class BlockyOutlineSettings {
 
     private static void backupCorruptedConfig() {
         try {
-            Path backupPath = FILE_PATH.resolveSibling("blocky-outline.json.bak");
-            Files.copy(FILE_PATH, backupPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            Path filePath = getFilePath();
+            Path backupPath = filePath.resolveSibling("blocky-outline.json.bak");
+            Files.copy(filePath, backupPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             BlockyOutlineMod.LOGGER.error("Failed to backup corrupted config: {}", e.getMessage());
         }
@@ -246,37 +260,37 @@ public final class BlockyOutlineSettings {
 
     public void copyFrom(BlockyOutlineSettings other) {
         this.rainbowOutline = other.rainbowOutline;
-        this.outlineRgbSpeed = Mth.clamp(other.outlineRgbSpeed, 0.1f, 5.0f);
-        this.outlineHue = Mth.clamp(other.outlineHue, 0.0f, 1.0f);
-        this.outlineSaturation = Mth.clamp(other.outlineSaturation, 0.0f, 1.0f);
-        this.outlineValue = Mth.clamp(other.outlineValue, 0.0f, 1.0f);
-        this.outlineOpacity = Mth.clamp(other.outlineOpacity, 0.0f, 1.0f);
-        this.outlineWidth = Mth.clamp(other.outlineWidth, 0.5f, 10.0f);
+        this.outlineRgbSpeed = clamp(other.outlineRgbSpeed, 0.1f, 5.0f);
+        this.outlineHue = clamp(other.outlineHue, 0.0f, 1.0f);
+        this.outlineSaturation = clamp(other.outlineSaturation, 0.0f, 1.0f);
+        this.outlineValue = clamp(other.outlineValue, 0.0f, 1.0f);
+        this.outlineOpacity = clamp(other.outlineOpacity, 0.0f, 1.0f);
+        this.outlineWidth = clamp(other.outlineWidth, 0.5f, 10.0f);
         this.cornerMode = other.cornerMode;
-        this.cornerLength = Mth.clamp(other.cornerLength, 0.10f, 0.50f);
+        this.cornerLength = clamp(other.cornerLength, 0.10f, 0.50f);
         this.xrayMode = other.xrayMode;
-        this.hitboxExpand = Mth.clamp(other.hitboxExpand, 0.0f, 0.05f);
+        this.hitboxExpand = clamp(other.hitboxExpand, 0.0f, 0.05f);
         this.smoothTransition = other.smoothTransition;
-        this.smoothSpeed = Mth.clamp(other.smoothSpeed, 0.05f, 1.0f);
+        this.smoothSpeed = clamp(other.smoothSpeed, 0.05f, 1.0f);
         this.motionMode = (other.motionMode >= 0 && other.motionMode <= 5) ? other.motionMode : 1;
-        this.springStiffness = Mth.clamp(other.springStiffness, 60.0f, 600.0f);
-        this.springDamping = Mth.clamp(other.springDamping, 10.0f, 60.0f);
-        this.backOvershoot = Mth.clamp(other.backOvershoot, 0.5f, 3.0f);
-        this.motionDurationMs = Mth.clamp(other.motionDurationMs, 25.0f, 250.0f);
+        this.springStiffness = clamp(other.springStiffness, 60.0f, 600.0f);
+        this.springDamping = clamp(other.springDamping, 10.0f, 60.0f);
+        this.backOvershoot = clamp(other.backOvershoot, 0.5f, 3.0f);
+        this.motionDurationMs = clamp(other.motionDurationMs, 25.0f, 250.0f);
         this.breathingEffect = other.breathingEffect;
-        this.breathingSpeed = Mth.clamp(other.breathingSpeed, 0.2f, 3.0f);
+        this.breathingSpeed = clamp(other.breathingSpeed, 0.2f, 3.0f);
 
         this.fillEnabled = other.fillEnabled;
         this.fillGradientEnabled = other.fillGradientEnabled;
         this.rainbowFill = other.rainbowFill;
-        this.fillRgbSpeed = Mth.clamp(other.fillRgbSpeed, 0.1f, 5.0f);
-        this.fillHue = Mth.clamp(other.fillHue, 0.0f, 1.0f);
-        this.fillSaturation = Mth.clamp(other.fillSaturation, 0.0f, 1.0f);
-        this.fillValue = Mth.clamp(other.fillValue, 0.0f, 1.0f);
-        this.fillHue2 = Mth.clamp(other.fillHue2, 0.0f, 1.0f);
-        this.fillSaturation2 = Mth.clamp(other.fillSaturation2, 0.0f, 1.0f);
-        this.fillValue2 = Mth.clamp(other.fillValue2, 0.0f, 1.0f);
-        this.fillOpacity = Mth.clamp(other.fillOpacity, 0.0f, 1.0f);
+        this.fillRgbSpeed = clamp(other.fillRgbSpeed, 0.1f, 5.0f);
+        this.fillHue = clamp(other.fillHue, 0.0f, 1.0f);
+        this.fillSaturation = clamp(other.fillSaturation, 0.0f, 1.0f);
+        this.fillValue = clamp(other.fillValue, 0.0f, 1.0f);
+        this.fillHue2 = clamp(other.fillHue2, 0.0f, 1.0f);
+        this.fillSaturation2 = clamp(other.fillSaturation2, 0.0f, 1.0f);
+        this.fillValue2 = clamp(other.fillValue2, 0.0f, 1.0f);
+        this.fillOpacity = clamp(other.fillOpacity, 0.0f, 1.0f);
 
         if (other.userPreset1 != null) this.userPreset1 = other.userPreset1;
         if (other.userPreset2 != null) this.userPreset2 = other.userPreset2;
@@ -334,7 +348,7 @@ public final class BlockyOutlineSettings {
             return this.cachedOutlineArgb;
         }
         updateWave(nowMs);
-        float baseOpac = this.breathingEffect ? Mth.clamp(this.outlineOpacity * this.cachedWaveOutline, 0.0f, 1.0f) : this.outlineOpacity;
+        float baseOpac = this.breathingEffect ? clamp(this.outlineOpacity * this.cachedWaveOutline, 0.0f, 1.0f) : this.outlineOpacity;
         int a = (int)(baseOpac * 255.0f);
         if (this.rainbowOutline) {
             float speed = Math.max(0.1f, this.outlineRgbSpeed);
@@ -351,7 +365,7 @@ public final class BlockyOutlineSettings {
             return this.cachedFillArgb;
         }
         updateWave(nowMs);
-        float baseOpac = this.breathingEffect ? Mth.clamp(this.fillOpacity * this.cachedWaveFill, 0.0f, 1.0f) : this.fillOpacity;
+        float baseOpac = this.breathingEffect ? clamp(this.fillOpacity * this.cachedWaveFill, 0.0f, 1.0f) : this.fillOpacity;
         int a = (int)(baseOpac * 255.0f);
         if (this.rainbowFill) {
             float speed = Math.max(0.1f, this.fillRgbSpeed);
@@ -371,15 +385,15 @@ public final class BlockyOutlineSettings {
             return this.cachedFillArgb2;
         }
         updateWave(nowMs);
-        float baseOpac = Mth.clamp(this.fillOpacity * this.cachedWaveFill, 0.0f, 1.0f);
+        float baseOpac = clamp(this.fillOpacity * this.cachedWaveFill, 0.0f, 1.0f);
         int a = (int)(baseOpac * 255.0f);
         return (a << 24) | (this.cachedFillArgb2 & 0x00FFFFFF);
     }
 
     public static int hsvToRgbPacked(float h, float s, float v) {
-        h = Mth.clamp(h, 0.0f, 1.0f);
-        s = Mth.clamp(s, 0.0f, 1.0f);
-        v = Mth.clamp(v, 0.0f, 1.0f);
+        h = clamp(h, 0.0f, 1.0f);
+        s = clamp(s, 0.0f, 1.0f);
+        v = clamp(v, 0.0f, 1.0f);
 
         if (s <= 0.00001f) {
             int val = (int)(v * 255.0f);

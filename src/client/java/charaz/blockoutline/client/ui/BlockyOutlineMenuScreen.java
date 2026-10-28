@@ -2,15 +2,21 @@ package charaz.blockoutline.client.ui;
 
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import charaz.blockoutline.client.Compat26;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
 public class BlockyOutlineMenuScreen extends Screen {
+
+    private static float clamp(float val, float min, float max) {
+        return val < min ? min : Math.min(val, max);
+    }
 
     private static final String MOD_TITLE = "Blocky Outline";
     private static final String MOD_VERSION = "v1.1.6";
@@ -127,7 +133,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         );
     }
 
-    private static void drawBorder(GuiGraphics gui, int x1, int y1, int x2, int y2, int color) {
+    private static void drawBorder(GuiGraphicsExtractor gui, int x1, int y1, int x2, int y2, int color) {
         gui.fill(x1, y1, x2, y1 + 1, color);
         gui.fill(x1, y2 - 1, x2, y2, color);
         gui.fill(x1, y1 + 1, x1 + 1, y2 - 1, color);
@@ -155,7 +161,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
         this.tooltip = null;
 
         // Auto rotate 3D cube preview
@@ -178,10 +184,10 @@ public class BlockyOutlineMenuScreen extends Screen {
         // Title
         String titleStr = (this.winW >= 420) ? MOD_TITLE : "Blocky Outline";
         int titleY = this.winY + (headerH - 8) / 2;
-        guiGraphics.drawString(this.font, titleStr, this.winX + 10, titleY, TEXT_WHITE, false);
+        guiGraphics.text(this.font, titleStr, this.winX + 10, titleY, TEXT_WHITE, false);
         int brandW = this.font.width(titleStr);
         if (this.winW >= 540) {
-            guiGraphics.drawString(this.font, MOD_VERSION, this.winX + 10 + brandW + 6, titleY + 1, TEXT_MUTED, false);
+            guiGraphics.text(this.font, MOD_VERSION, this.winX + 10 + brandW + 6, titleY + 1, TEXT_MUTED, false);
         }
 
         // Close '✕' Button at Top Right
@@ -191,7 +197,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         boolean closeHov = mouseX >= closeX && mouseX <= closeX + closeW && mouseY >= closeY && mouseY <= closeY + closeW;
         guiGraphics.fill(closeX, closeY, closeX + closeW, closeY + closeW, closeHov ? 0xFFDC2626 : 0xFF1E2838);
         drawBorder(guiGraphics, closeX, closeY, closeX + closeW, closeY + closeW, closeHov ? ACCENT_RED : CARD_BORDER);
-        guiGraphics.drawCenteredString(this.font, "✕", closeX + closeW / 2, closeY + (closeW - 8) / 2, closeHov ? TEXT_WHITE : TEXT_MUTED);
+        guiGraphics.centeredText(this.font, "✕", closeX + closeW / 2, closeY + (closeW - 8) / 2, closeHov ? TEXT_WHITE : TEXT_MUTED);
 
         // Navigation tabs
         int brandEndX = this.winX + 10 + brandW + 8;
@@ -210,7 +216,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             int bg = selected ? PRIMARY_BLUE : (hov ? 0xFF24344B : 0xFF141C28);
             guiGraphics.fill(tx, tabY, tx + tabW, tabY + tabH, bg);
             drawBorder(guiGraphics, tx, tabY, tx + tabW, tabY + tabH, selected ? 0xFF93C5FD : CARD_BORDER);
-            guiGraphics.drawCenteredString(this.font, TABS[i], tx + tabW / 2, tabY + (tabH - 8) / 2, selected ? TEXT_WHITE : (hov ? TEXT_WHITE : TEXT_MUTED));
+            guiGraphics.centeredText(this.font, TABS[i], tx + tabW / 2, tabY + (tabH - 8) / 2, selected ? TEXT_WHITE : (hov ? TEXT_WHITE : TEXT_MUTED));
         }
 
         // Content area
@@ -246,7 +252,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         // Shortcut hint
         int hintY = footerY + (footerH - 8) / 2;
         if (this.winW >= 360) {
-            guiGraphics.drawString(this.font, "[M] or [ESC] to save & close", this.winX + 12, hintY, TEXT_MUTED, false);
+            guiGraphics.text(this.font, "[M] or [ESC] to save & close", this.winX + 12, hintY, TEXT_MUTED, false);
         }
 
         // Done Button (Right bottom)
@@ -257,7 +263,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         boolean doneHov = mouseX >= doneX && mouseX <= doneX + doneW && mouseY >= doneY && mouseY <= doneY + doneH;
         guiGraphics.fill(doneX, doneY, doneX + doneW, doneY + doneH, doneHov ? 0xFF2563EB : PRIMARY_BLUE);
         drawBorder(guiGraphics, doneX, doneY, doneX + doneW, doneY + doneH, doneHov ? 0xFF93C5FD : 0xFF1D4ED8);
-        guiGraphics.drawCenteredString(this.font, "Done", doneX + doneW / 2, doneY + (doneH - 8) / 2, TEXT_WHITE);
+        guiGraphics.centeredText(this.font, "Done", doneX + doneW / 2, doneY + (doneH - 8) / 2, TEXT_WHITE);
 
         // Report Bug Button (Left of Done)
         int reportW = Math.max(68, Math.min(84, this.winW / 6));
@@ -267,12 +273,12 @@ public class BlockyOutlineMenuScreen extends Screen {
         boolean reportHov = mouseX >= reportX && mouseX <= reportX + reportW && mouseY >= reportY && mouseY <= reportY + reportH;
         guiGraphics.fill(reportX, reportY, reportX + reportW, reportY + reportH, reportHov ? 0xFF0D9488 : 0xFF0F766E);
         drawBorder(guiGraphics, reportX, reportY, reportX + reportW, reportY + reportH, reportHov ? 0xFF5EEAD4 : 0xFF115E59);
-        guiGraphics.drawCenteredString(this.font, "Report Bug", reportX + reportW / 2, reportY + (reportH - 8) / 2, TEXT_WHITE);
+        guiGraphics.centeredText(this.font, "Report Bug", reportX + reportW / 2, reportY + (reportH - 8) / 2, TEXT_WHITE);
         if (reportHov) {
             this.tooltip = "Click to open GitHub Issues & report bugs";
         }
 
-        super.render(guiGraphics, mouseX, mouseY, delta);
+        super.extractRenderState(guiGraphics, mouseX, mouseY, delta);
 
         // 6. Color Picker Modal Popover
         if (this.pickerTarget != -1) {
@@ -288,7 +294,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // TAB 0: OUTLINE SETTINGS CARDS
     // =========================================================================
-    private void renderOutlineCards(GuiGraphics gui, int cx, int cy, int cw, int ch, int mx, int my) {
+    private void renderOutlineCards(GuiGraphicsExtractor gui, int cx, int cy, int cw, int ch, int mx, int my) {
         int[] b = new int[2];
         int totalRows = 8;
 
@@ -351,7 +357,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // TAB 1: FACE FILL SETTINGS CARDS
     // =========================================================================
-    private void renderFaceFillCards(GuiGraphics gui, int cx, int cy, int cw, int ch, int mx, int my) {
+    private void renderFaceFillCards(GuiGraphicsExtractor gui, int cx, int cy, int cw, int ch, int mx, int my) {
         int[] b = new int[2];
         int totalRows = 6;
 
@@ -400,7 +406,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // TAB 2: SMOOTH MOVEMENT & ADVANCED PHYSICS ENGINES
     // =========================================================================
-    private void renderSmoothCards(GuiGraphics gui, int cx, int cy, int cw, int ch, int mx, int my) {
+    private void renderSmoothCards(GuiGraphicsExtractor gui, int cx, int cy, int cw, int ch, int mx, int my) {
         int[] b = new int[2];
         int totalRows = 5;
 
@@ -479,14 +485,14 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // RIGHT COLUMN: CLEAN 3D PREVIEW & TOOLBAR
     // =========================================================================
-    private void renderPreviewColumn(GuiGraphics gui, int px, int py, int pw, int ph, int mx, int my) {
+    private void renderPreviewColumn(GuiGraphicsExtractor gui, int px, int py, int pw, int ph, int mx, int my) {
         // Container Card
         gui.fill(px, py, px + pw, py + ph, CARD_BG);
         drawBorder(gui, px, py, px + pw, py + ph, CARD_BORDER);
 
         // Header Title
-        gui.drawString(this.font, "3D Preview", px + 10, py + 8, TEXT_WHITE, false);
-        gui.drawString(this.font, (this.activeTab == 2) ? "Motion preview" : "Drag to rotate", px + 10, py + 18, TEXT_MUTED, false);
+        gui.text(this.font, "3D Preview", px + 10, py + 8, TEXT_WHITE, false);
+        gui.text(this.font, (this.activeTab == 2) ? "Motion preview" : "Drag to rotate", px + 10, py + 18, TEXT_MUTED, false);
 
         // X-Ray status chip badge in preview
         if (this.settings.xrayMode) {
@@ -496,7 +502,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             int tagY = py + 8;
             gui.fill(tagX, tagY, tagX + tagW, tagY + tagH, 0x442563EB);
             drawBorder(gui, tagX, tagY, tagX + tagW, tagY + tagH, PRIMARY_BLUE);
-            gui.drawCenteredString(this.font, "👁 X-RAY", tagX + tagW / 2, tagY + 2, 0xFF93C5FD);
+            gui.centeredText(this.font, "👁 X-RAY", tagX + tagW / 2, tagY + 2, 0xFF93C5FD);
         }
 
         // Viewport bounds
@@ -643,33 +649,33 @@ public class BlockyOutlineMenuScreen extends Screen {
         boolean b1Hov = mx >= tbX && mx <= tbX + btnW && my >= tbY && my <= tbY + tbH;
         gui.fill(tbX, tbY, tbX + btnW, tbY + tbH, this.autoRotate ? 0xFF1E3A5F : (b1Hov ? 0xFF1F2937 : 0xFF111827));
         drawBorder(gui, tbX, tbY, tbX + btnW, tbY + tbH, this.autoRotate ? PRIMARY_BLUE : CARD_BORDER);
-        gui.drawCenteredString(this.font, this.autoRotate ? "⟳ Spin" : "⏸ Pause", tbX + btnW / 2, tbY + (tbH - 8) / 2, this.autoRotate ? TEXT_WHITE : TEXT_MUTED);
+        gui.centeredText(this.font, this.autoRotate ? "⟳ Spin" : "⏸ Pause", tbX + btnW / 2, tbY + (tbH - 8) / 2, this.autoRotate ? TEXT_WHITE : TEXT_MUTED);
 
         // Button 2: Shape Switch
         int b2X = tbX + btnW;
         boolean b2Hov = mx >= b2X && mx <= b2X + btnW && my >= tbY && my <= tbY + tbH;
         gui.fill(b2X, tbY, b2X + btnW, tbY + tbH, b2Hov ? 0xFF1F2937 : 0xFF111827);
         drawBorder(gui, b2X, tbY, b2X + btnW, tbY + tbH, CARD_BORDER);
-        gui.drawCenteredString(this.font, (this.previewShape == 0) ? "Cube" : "Slab", b2X + btnW / 2, tbY + (tbH - 8) / 2, TEXT_BODY);
+        gui.centeredText(this.font, (this.previewShape == 0) ? "Cube" : "Slab", b2X + btnW / 2, tbY + (tbH - 8) / 2, TEXT_BODY);
 
         // Button 3: Reset View
         int b3X = tbX + btnW * 2;
         boolean b3Hov = mx >= b3X && mx <= tbX + tbW && my >= tbY && my <= tbY + tbH;
         gui.fill(b3X, tbY, tbX + tbW, tbY + tbH, b3Hov ? 0xFF1F2937 : 0xFF111827);
         drawBorder(gui, b3X, tbY, tbX + tbW, tbY + tbH, CARD_BORDER);
-        gui.drawCenteredString(this.font, "⌂ Reset", b3X + (tbX + tbW - b3X) / 2, tbY + (tbH - 8) / 2, TEXT_BODY);
+        gui.centeredText(this.font, "⌂ Reset", b3X + (tbX + tbW - b3X) / 2, tbY + (tbH - 8) / 2, TEXT_BODY);
     }
 
     // =========================================================================
     // TAB 3: PRESETS TAB & REFINED CUSTOM USER SLOTS WITH DELETE BUTTON
     // =========================================================================
-    private void renderPresetsTab(GuiGraphics gui, int cx, int cy, int cw, int ch, int mx, int my) {
+    private void renderPresetsTab(GuiGraphicsExtractor gui, int cx, int cy, int cw, int ch, int mx, int my) {
         int halfW = (cw - 10) / 2;
 
         // Left Column: 5 Built-in Curated Themes
         gui.fill(cx, cy, cx + halfW, cy + ch, CARD_BG);
         drawBorder(gui, cx, cy, cx + halfW, cy + ch, CARD_BORDER);
-        gui.drawString(this.font, "Themes", cx + 10, cy + 8, TEXT_WHITE, false);
+        gui.text(this.font, "Themes", cx + 10, cy + 8, TEXT_WHITE, false);
 
         int curY = cy + 22;
         int tGap = (ch >= 220) ? 4 : 2;
@@ -692,16 +698,16 @@ public class BlockyOutlineMenuScreen extends Screen {
 
             int maxTextW = btnX - (cx + 20) - 4;
             if (tCardH < 25) {
-                gui.drawString(this.font, trimText(PRESET_NAMES[i], maxTextW), cx + 20, curY + (tCardH - 8) / 2, TEXT_WHITE, false);
+                gui.text(this.font, trimText(PRESET_NAMES[i], maxTextW), cx + 20, curY + (tCardH - 8) / 2, TEXT_WHITE, false);
             } else {
-                gui.drawString(this.font, trimText(PRESET_NAMES[i], maxTextW), cx + 20, curY + 3, TEXT_WHITE, false);
-                gui.drawString(this.font, trimText(PRESET_DESCS[i], maxTextW), cx + 20, curY + 13, TEXT_MUTED, false);
+                gui.text(this.font, trimText(PRESET_NAMES[i], maxTextW), cx + 20, curY + 3, TEXT_WHITE, false);
+                gui.text(this.font, trimText(PRESET_DESCS[i], maxTextW), cx + 20, curY + 13, TEXT_MUTED, false);
             }
 
             boolean bHov = mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
             gui.fill(btnX, btnY, btnX + btnW, btnY + btnH, bHov ? 0xFF1D4ED8 : PRIMARY_BLUE);
             drawBorder(gui, btnX, btnY, btnX + btnW, btnY + btnH, bHov ? 0xFF93C5FD : 0xFF1E40AF);
-            gui.drawCenteredString(this.font, "Apply", btnX + btnW / 2, btnY + (btnH - 8) / 2, TEXT_WHITE);
+            gui.centeredText(this.font, "Apply", btnX + btnW / 2, btnY + (btnH - 8) / 2, TEXT_WHITE);
 
             curY += tCardH + tGap;
         }
@@ -710,7 +716,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int rightX = cx + halfW + 10;
         gui.fill(rightX, cy, rightX + halfW, cy + ch, CARD_BG);
         drawBorder(gui, rightX, cy, rightX + halfW, cy + ch, CARD_BORDER);
-        gui.drawString(this.font, "Saved Profiles", rightX + 10, cy + 8, TEXT_WHITE, false);
+        gui.text(this.font, "Saved Profiles", rightX + 10, cy + 8, TEXT_WHITE, false);
 
         int uY = cy + 22;
         int uGap = (ch >= 220) ? 6 : 4;
@@ -733,10 +739,10 @@ public class BlockyOutlineMenuScreen extends Screen {
 
             int maxTextW = loadX - (rightX + 10) - 4;
             if (uCardH < 40) {
-                gui.drawString(this.font, trimText("Profile " + (i + 1), maxTextW), rightX + 10, uY + (uCardH - 8) / 2, TEXT_WHITE, false);
+                gui.text(this.font, trimText("Profile " + (i + 1), maxTextW), rightX + 10, uY + (uCardH - 8) / 2, TEXT_WHITE, false);
             } else {
                 int textY = uY + (uCardH - 22) / 2;
-                gui.drawString(this.font, "Profile " + (i + 1), rightX + 10, textY, TEXT_WHITE, false);
+                gui.text(this.font, "Profile " + (i + 1), rightX + 10, textY, TEXT_WHITE, false);
 
                 int chipW = slot.hasData ? 42 : 36;
                 int chipH = 10;
@@ -746,7 +752,7 @@ public class BlockyOutlineMenuScreen extends Screen {
                 int chipBorder = slot.hasData ? 0xFF059669 : 0xFF334155;
                 gui.fill(chipX, chipY, chipX + chipW, chipY + chipH, chipBg);
                 drawBorder(gui, chipX, chipY, chipX + chipW, chipY + chipH, chipBorder);
-                gui.drawCenteredString(this.font, slot.hasData ? "SAVED" : "EMPTY", chipX + chipW / 2, chipY + 1, slot.hasData ? 0xFF6EE7B7 : 0xFF94A3B8);
+                gui.centeredText(this.font, slot.hasData ? "SAVED" : "EMPTY", chipX + chipW / 2, chipY + 1, slot.hasData ? 0xFF6EE7B7 : 0xFF94A3B8);
             }
 
             // 1. Load Button
@@ -754,20 +760,20 @@ public class BlockyOutlineMenuScreen extends Screen {
             int lBg = !slot.hasData ? 0xFF141D28 : (lHov ? 0xFF059669 : ACCENT_EMERALD);
             gui.fill(loadX, bY, loadX + btnW, bY + btnH, lBg);
             drawBorder(gui, loadX, bY, loadX + btnW, bY + btnH, slot.hasData ? (lHov ? 0xFF6EE7B7 : 0xFF047857) : 0xFF1E293B);
-            gui.drawCenteredString(this.font, "Load", loadX + btnW / 2, bY + (btnH - 8) / 2, slot.hasData ? TEXT_WHITE : TEXT_DISABLED);
+            gui.centeredText(this.font, "Load", loadX + btnW / 2, bY + (btnH - 8) / 2, slot.hasData ? TEXT_WHITE : TEXT_DISABLED);
 
             // 2. Save Button
             boolean sHov = mx >= saveX && mx <= saveX + btnW && my >= bY && my <= bY + btnH;
             gui.fill(saveX, bY, saveX + btnW, bY + btnH, sHov ? 0xFF1D4ED8 : PRIMARY_BLUE);
             drawBorder(gui, saveX, bY, saveX + btnW, bY + btnH, sHov ? 0xFF93C5FD : 0xFF1E40AF);
-            gui.drawCenteredString(this.font, "Save", saveX + btnW / 2, bY + (btnH - 8) / 2, TEXT_WHITE);
+            gui.centeredText(this.font, "Save", saveX + btnW / 2, bY + (btnH - 8) / 2, TEXT_WHITE);
 
             // 3. Delete Button (Del)
             boolean dHov = slot.hasData && mx >= delX && mx <= delX + btnW && my >= bY && my <= bY + btnH;
             int dBg = !slot.hasData ? 0xFF141D28 : (dHov ? 0xFFB91C1C : ACCENT_RED);
             gui.fill(delX, bY, delX + btnW, bY + btnH, dBg);
             drawBorder(gui, delX, bY, delX + btnW, bY + btnH, slot.hasData ? (dHov ? 0xFFFCA5A5 : 0xFF991B1B) : 0xFF1E293B);
-            gui.drawCenteredString(this.font, "Del", delX + btnW / 2, bY + (btnH - 8) / 2, slot.hasData ? TEXT_WHITE : TEXT_DISABLED);
+            gui.centeredText(this.font, "Del", delX + btnW / 2, bY + (btnH - 8) / 2, slot.hasData ? TEXT_WHITE : TEXT_DISABLED);
 
             uY += uCardH + uGap;
         }
@@ -776,7 +782,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // REUSABLE CARD COMPONENTS (TOGGLE, SLIDER, COLOR, CHOICE)
     // =========================================================================
-    private void renderCardChoice(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, String choiceStr, boolean disabled, int mx, int my) {
+    private void renderCardChoice(GuiGraphicsExtractor gui, int x, int y, int w, int h, String title, String desc, String choiceStr, boolean disabled, int mx, int my) {
         boolean hov = !disabled && mx >= x && mx <= x + w && my >= y && my <= y + h;
         gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
         drawBorder(gui, x, y, x + w, y + h, hov ? CARD_BORDER_ACTIVE : CARD_BORDER);
@@ -791,19 +797,19 @@ public class BlockyOutlineMenuScreen extends Screen {
         int descCol = disabled ? 0xFF475569 : TEXT_MUTED;
 
         if (h < 25) {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
         } else {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
-            gui.drawString(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
+            gui.text(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
         }
 
         boolean btnHov = !disabled && mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
         gui.fill(btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF131D28 : (btnHov ? 0xFF2563EB : 0xFF141E2C));
         drawBorder(gui, btnX, btnY, btnX + btnW, btnY + btnH, disabled ? 0xFF162230 : (btnHov ? 0xFF93C5FD : PRIMARY_BLUE));
-        gui.drawCenteredString(this.font, trimText(choiceStr, btnW - 8), btnX + btnW / 2, btnY + (btnH - 8) / 2, disabled ? TEXT_DISABLED : (btnHov ? TEXT_WHITE : 0xFF93C5FD));
+        gui.centeredText(this.font, trimText(choiceStr, btnW - 8), btnX + btnW / 2, btnY + (btnH - 8) / 2, disabled ? TEXT_DISABLED : (btnHov ? TEXT_WHITE : 0xFF93C5FD));
     }
 
-    private void renderCardToggle(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, boolean checked, boolean disabled, int mx, int my) {
+    private void renderCardToggle(GuiGraphicsExtractor gui, int x, int y, int w, int h, String title, String desc, boolean checked, boolean disabled, int mx, int my) {
         boolean hov = !disabled && mx >= x && mx <= x + w && my >= y && my <= y + h;
         gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
         drawBorder(gui, x, y, x + w, y + h, hov ? CARD_BORDER_ACTIVE : CARD_BORDER);
@@ -819,10 +825,10 @@ public class BlockyOutlineMenuScreen extends Screen {
         int descCol = disabled ? 0xFF475569 : TEXT_MUTED;
 
         if (h < 25) {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
         } else {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
-            gui.drawString(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
+            gui.text(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
         }
 
         int trackBg = disabled ? 0xFF131D28 : (checked ? ACCENT_EMERALD : 0xFF1E293B);
@@ -835,7 +841,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         gui.fill(knobX, swY + 2, knobX + knobW, swY + swH - 2, knobCol);
     }
 
-    private void renderCardSlider(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, float pct, String badgeStr, boolean disabled, int mx, int my) {
+    private void renderCardSlider(GuiGraphicsExtractor gui, int x, int y, int w, int h, String title, String desc, float pct, String badgeStr, boolean disabled, int mx, int my) {
         boolean hov = !disabled && mx >= x && mx <= x + w && my >= y && my <= y + h;
         gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
         drawBorder(gui, x, y, x + w, y + h, hov ? CARD_BORDER_ACTIVE : CARD_BORDER);
@@ -854,15 +860,15 @@ public class BlockyOutlineMenuScreen extends Screen {
         int descCol = disabled ? 0xFF475569 : TEXT_MUTED;
 
         if (h < 25) {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
         } else {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
-            gui.drawString(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
+            gui.text(this.font, trimText(desc, maxTextW), x + 10, y + 13, descCol, false);
         }
 
         gui.fill(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH, 0xFF111A24);
         drawBorder(gui, badgeX, badgeY, badgeX + badgeW, badgeY + badgeH, disabled ? 0xFF162230 : CARD_BORDER);
-        gui.drawCenteredString(this.font, badgeStr, badgeX + badgeW / 2, badgeY + (badgeH - 8) / 2, disabled ? TEXT_DISABLED : PRIMARY_BLUE);
+        gui.centeredText(this.font, badgeStr, badgeX + badgeW / 2, badgeY + (badgeH - 8) / 2, disabled ? TEXT_DISABLED : PRIMARY_BLUE);
 
         // Slider Track
         int trackH = (h < 25) ? 4 : 5;
@@ -883,7 +889,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         gui.fill(thX - thW / 2, sY - (thH - trackH) / 2, thX + thW / 2, sY - (thH - trackH) / 2 + thH, thCol);
     }
 
-    private void renderCardColor(GuiGraphics gui, int x, int y, int w, int h, String title, String desc, int argb, boolean disabled, String lockMsg, int mx, int my) {
+    private void renderCardColor(GuiGraphicsExtractor gui, int x, int y, int w, int h, String title, String desc, int argb, boolean disabled, String lockMsg, int mx, int my) {
         boolean hov = !disabled && mx >= x && mx <= x + w && my >= y && my <= y + h;
         gui.fill(x, y, x + w, y + h, hov ? CARD_HOVER : CARD_BG);
         drawBorder(gui, x, y, x + w, y + h, hov ? CARD_BORDER_ACTIVE : CARD_BORDER);
@@ -904,15 +910,15 @@ public class BlockyOutlineMenuScreen extends Screen {
         int titleCol = disabled ? TEXT_DISABLED : TEXT_WHITE;
 
         if (disabled) {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
             return;
         }
 
         if (h < 25) {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + (h - 8) / 2, titleCol, false);
         } else {
-            gui.drawString(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
-            gui.drawString(this.font, trimText(desc, maxTextW), x + 10, y + 13, TEXT_MUTED, false);
+            gui.text(this.font, trimText(title, maxTextW), x + 10, y + 3, titleCol, false);
+            gui.text(this.font, trimText(desc, maxTextW), x + 10, y + 13, TEXT_MUTED, false);
         }
 
         gui.fill(bX, bY, bX + bSize, bY + bSize, argb);
@@ -921,13 +927,13 @@ public class BlockyOutlineMenuScreen extends Screen {
         boolean hexHov = mx >= hexX && mx <= hexX + hexW && my >= hexY && my <= hexY + hexH;
         gui.fill(hexX, hexY, hexX + hexW, hexY + hexH, hexHov ? 0xFF24344B : 0xFF111A24);
         drawBorder(gui, hexX, hexY, hexX + hexW, hexY + hexH, hexHov ? PRIMARY_BLUE : CARD_BORDER);
-        gui.drawCenteredString(this.font, hexStr, hexX + hexW / 2, hexY + (hexH - 8) / 2, hexHov ? TEXT_WHITE : TEXT_BODY);
+        gui.centeredText(this.font, hexStr, hexX + hexW / 2, hexY + (hexH - 8) / 2, hexHov ? TEXT_WHITE : TEXT_BODY);
     }
 
     // =========================================================================
     // COLOR PICKER MODAL (2D SAT/VAL BOX + HUE STRIP + QUICK SWATCHES)
     // =========================================================================
-    private void renderPickerModal(GuiGraphics gui, int mx, int my) {
+    private void renderPickerModal(GuiGraphicsExtractor gui, int mx, int my) {
         gui.fill(0, 0, this.width, this.height, 0x88000000);
 
         int mW = 210;
@@ -944,7 +950,7 @@ public class BlockyOutlineMenuScreen extends Screen {
             case 2 -> "Face Fill Color 2";
             default -> "Color Picker";
         };
-        gui.drawString(this.font, targetTitle, mX + 12, mY + 8, PRIMARY_BLUE, false);
+        gui.text(this.font, targetTitle, mX + 12, mY + 8, PRIMARY_BLUE, false);
 
         int boxX = mX + 12;
         int boxY = mY + 24;
@@ -989,7 +995,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int curCol = 0xFF000000 | BlockyOutlineSettings.hsvToRgbPacked(hue, sat, val);
         gui.fill(curSwX, boxY, curSwX + curSwW, boxY + 28, curCol);
         drawBorder(gui, curSwX, boxY, curSwX + curSwW, boxY + 28, TEXT_WHITE);
-        gui.drawString(this.font, String.format("#%06X", curCol & 0xFFFFFF), curSwX, boxY + 34, TEXT_MUTED, false);
+        gui.text(this.font, String.format("#%06X", curCol & 0xFFFFFF), curSwX, boxY + 34, TEXT_MUTED, false);
 
         // Swatches Bar
         int swY = boxY + boxSize + 8;
@@ -1009,22 +1015,22 @@ public class BlockyOutlineMenuScreen extends Screen {
         int btnY = mY + mH - btnH - 10;
         boolean bHov = mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH;
         gui.fill(btnX, btnY, btnX + btnW, btnY + btnH, bHov ? 0xFF2563EB : PRIMARY_BLUE);
-        gui.drawCenteredString(this.font, "OK", btnX + btnW / 2, btnY + 4, TEXT_WHITE);
+        gui.centeredText(this.font, "OK", btnX + btnW / 2, btnY + 4, TEXT_WHITE);
     }
 
-    private void renderTooltip(GuiGraphics gui, int mx, int my) {
+    private void renderTooltip(GuiGraphicsExtractor gui, int mx, int my) {
         int textW = this.font.width(this.tooltip);
         int tx = mx + 10;
         int ty = my - 14;
         gui.fill(tx - 6, ty - 5, tx + textW + 6, ty + 13, 0xF50A0F16);
         drawBorder(gui, tx - 6, ty - 5, tx + textW + 6, ty + 13, PRIMARY_BLUE);
-        gui.drawString(this.font, this.tooltip, tx, ty, TEXT_WHITE, false);
+        gui.text(this.font, this.tooltip, tx, ty, TEXT_WHITE, false);
     }
 
     // =========================================================================
     // 3D GEOMETRY UTILITIES
     // =========================================================================
-    private void drawConvexQuad(GuiGraphics gui, float[] v0, float[] v1, float[] v2, float[] v3, int colTop, int colBot) {
+    private void drawConvexQuad(GuiGraphicsExtractor gui, float[] v0, float[] v1, float[] v2, float[] v3, int colTop, int colBot) {
         float minY = Math.min(Math.min(v0[1], v1[1]), Math.min(v2[1], v3[1]));
         float maxY = Math.max(Math.max(v0[1], v1[1]), Math.max(v2[1], v3[1]));
         int startY = (int) Math.floor(minY);
@@ -1060,7 +1066,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private static int interpolateColor(int c1, int c2, float t) {
-        t = Mth.clamp(t, 0.0f, 1.0f);
+        t = clamp(t, 0.0f, 1.0f);
         int a1 = (c1 >>> 24) & 0xFF, r1 = (c1 >>> 16) & 0xFF, g1 = (c1 >>> 8) & 0xFF, b1 = c1 & 0xFF;
         int a2 = (c2 >>> 24) & 0xFF, r2 = (c2 >>> 16) & 0xFF, g2 = (c2 >>> 8) & 0xFF, b2 = c2 & 0xFF;
         int a = (int) (a1 + t * (a2 - a1));
@@ -1070,7 +1076,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    private void drawLine(GuiGraphics gui, float x1, float y1, float x2, float y2, int color, float width) {
+    private void drawLine(GuiGraphicsExtractor gui, float x1, float y1, float x2, float y2, int color, float width) {
         float dx = x2 - x1;
         float dy = y2 - y1;
         float len = (float) Math.sqrt(dx * dx + dy * dy);
@@ -1124,9 +1130,9 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private void updateColorFromHSV(float h, float s, float v) {
-        h = Mth.clamp(h, 0.0f, 1.0f);
-        s = Mth.clamp(s, 0.0f, 1.0f);
-        v = Mth.clamp(v, 0.0f, 1.0f);
+        h = clamp(h, 0.0f, 1.0f);
+        s = clamp(s, 0.0f, 1.0f);
+        v = clamp(v, 0.0f, 1.0f);
 
         switch (this.pickerTarget) {
             case 0 -> {
@@ -1238,7 +1244,11 @@ public class BlockyOutlineMenuScreen extends Screen {
     // =========================================================================
     // MOUSE & KEY EVENT HANDLING
     // =========================================================================
-    public boolean handleMouseClicked(double mx, double my, int button) {
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mx = event.x();
+        double my = event.y();
+        int button = event.button();
 
         // 1. Color Picker Modal Clicks
         if (this.pickerTarget != -1) {
@@ -1356,7 +1366,7 @@ public class BlockyOutlineMenuScreen extends Screen {
         int reportX = doneX - reportW - 6;
         if (mx >= reportX && mx <= reportX + reportW && my >= doneY && my <= doneY + doneH) {
             this.playClick();
-            charaz.blockoutline.client.compat.CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
+            Compat26.openUrl(Compat26.GITHUB_ISSUES_URL);
             return true;
         }
 
@@ -1697,10 +1707,11 @@ public class BlockyOutlineMenuScreen extends Screen {
             }
         }
 
-        return false;
+        return super.mouseClicked(event, doubleClick);
     }
 
-    public boolean handleMouseReleased(double mx, double my, int button) {
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
         if (this.dragging2D || this.draggingHue) {
             this.dragging2D = false;
             this.draggingHue = false;
@@ -1718,14 +1729,17 @@ public class BlockyOutlineMenuScreen extends Screen {
             this.draggingCube = false;
             return true;
         }
-        return false;
+        return super.mouseReleased(event);
     }
 
-    public boolean handleMouseDragged(double mx, double my, int button, double dragX, double dragY) {
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        double mx = event.x();
+        double my = event.y();
 
         if (this.draggingCube) {
             this.cubeYaw = (this.dragStartYaw + (float) (mx - this.dragStartMouseX) * 0.8f) % 360.0f;
-            this.cubePitch = Mth.clamp(this.dragStartPitch - (float) (my - this.dragStartMouseY) * 0.8f, -80.0f, 80.0f);
+            this.cubePitch = clamp(this.dragStartPitch - (float) (my - this.dragStartMouseY) * 0.8f, -80.0f, 80.0f);
             return true;
         }
 
@@ -1739,13 +1753,13 @@ public class BlockyOutlineMenuScreen extends Screen {
             int boxSize = 90;
 
             if (this.dragging2D) {
-                float sat = Mth.clamp((float) (mx - boxX) / (float) boxSize, 0.0f, 1.0f);
-                float val = Mth.clamp(1.0f - (float) (my - boxY) / (float) boxSize, 0.0f, 1.0f);
+                float sat = clamp((float) (mx - boxX) / (float) boxSize, 0.0f, 1.0f);
+                float val = clamp(1.0f - (float) (my - boxY) / (float) boxSize, 0.0f, 1.0f);
                 this.updateColorFromHSV(this.currentHue(), sat, val);
                 return true;
             }
             if (this.draggingHue) {
-                float hue = Mth.clamp((float) (my - boxY) / (float) boxSize, 0.0f, 1.0f);
+                float hue = clamp((float) (my - boxY) / (float) boxSize, 0.0f, 1.0f);
                 this.updateColorFromHSV(hue, this.currentSat(), this.currentVal());
                 return true;
             }
@@ -1762,11 +1776,11 @@ public class BlockyOutlineMenuScreen extends Screen {
             return true;
         }
 
-        return false;
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     private void updateSliderValue(int tabIndex, int rowIndex, double mx, int sX, int sW) {
-        float pct = Mth.clamp((float) (mx - sX) / (float) sW, 0.0f, 1.0f);
+        float pct = clamp((float) (mx - sX) / (float) sW, 0.0f, 1.0f);
 
         if (tabIndex == 0) {
             switch (rowIndex) {
@@ -1795,12 +1809,14 @@ public class BlockyOutlineMenuScreen extends Screen {
         }
     }
 
-    public boolean handleKeyPressed(int keyCode, int scanCode, int modifiers) {
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_M) {
             this.onClose();
             return true;
         }
-        return false;
+        return super.keyPressed(event);
     }
 
     @Override

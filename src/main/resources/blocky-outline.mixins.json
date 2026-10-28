@@ -1,12 +1,16 @@
 {
-	"required": true,
+	"required": false,
 	"package": "charaz.blockoutline.mixin",
+	"plugin": "charaz.blockoutline.mixin.BlockyOutlineMixinPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
+	"client": [
+		"MinecraftMixin",
+		"OptionsMixin",
+		"LevelRendererMixin26_1",
+		"LevelRendererMixin26_2"
+	],
 	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
+		"defaultRequire": 0
 	}
 }

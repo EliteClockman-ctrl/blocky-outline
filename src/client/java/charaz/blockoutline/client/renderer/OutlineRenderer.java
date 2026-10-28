@@ -1,9 +1,7 @@
 package charaz.blockoutline.client.renderer;
 
-import charaz.blockoutline.client.compat.CompatBridge;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -13,6 +11,10 @@ public final class OutlineRenderer {
     private static final FillBoxConsumer FILL_CONSUMER = new FillBoxConsumer();
 
     private OutlineRenderer() {
+    }
+
+    private static float clamp(float val, float min, float max) {
+        return val < min ? min : Math.min(val, max);
     }
 
     public static void renderOutline(PoseStack poseStack, VertexConsumer consumer, VoxelShape shape,
@@ -31,14 +33,10 @@ public final class OutlineRenderer {
         int r = (argb >> 16) & 0xFF;
         int g = (argb >> 8) & 0xFF;
         int b = argb & 0xFF;
-        float cLen = Mth.clamp(cornerLength, 0.10f, 0.48f);
+        float cLen = clamp(cornerLength, 0.10f, 0.48f);
         float exp = Math.max(0.0f, expand);
 
-        // Pre-configure line drawer once per frame batch (e.g. RenderSystem.lineWidth on legacy)
-        CompatBridge.LINE_DRAWER.prepare(width);
-
         // Ultra fast-path: Full standard cube (represents >95% of targeted blocks in game)
-        // Bypasses shape slices analysis and lambda allocations completely
         if (shape == Shapes.block()) {
             float x0 = (float) (-exp + dx);
             float y0 = (float) (-exp + dy);
@@ -102,26 +100,27 @@ public final class OutlineRenderer {
     private static void line(VertexConsumer consumer, PoseStack.Pose pose,
                              float x1, float y1, float z1, float x2, float y2, float z2,
                              float nx, float ny, float nz, int r, int g, int b, int a, float width) {
-        CompatBridge.LINE_DRAWER.line(consumer, pose, x1, y1, z1, x2, y2, z2, nx, ny, nz, r, g, b, a, width);
+        consumer.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz).setLineWidth(width);
+        consumer.addVertex(pose, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz).setLineWidth(width);
     }
 
     private static void cornerLineX(VertexConsumer consumer, PoseStack.Pose pose,
-                                     float x0, float x1, float dx, float y, float z,
-                                     int r, int g, int b, int a, float width) {
+                                    float x0, float x1, float dx, float y, float z,
+                                    int r, int g, int b, int a, float width) {
         line(consumer, pose, x0, y, z, x0 + dx, y, z, 1.0f, 0.0f, 0.0f, r, g, b, a, width);
         line(consumer, pose, x1 - dx, y, z, x1, y, z, 1.0f, 0.0f, 0.0f, r, g, b, a, width);
     }
 
     private static void cornerLineY(VertexConsumer consumer, PoseStack.Pose pose,
-                                     float y0, float y1, float dy, float x, float z,
-                                     int r, int g, int b, int a, float width) {
+                                    float y0, float y1, float dy, float x, float z,
+                                    int r, int g, int b, int a, float width) {
         line(consumer, pose, x, y0, z, x, y0 + dy, z, 0.0f, 1.0f, 0.0f, r, g, b, a, width);
         line(consumer, pose, x, y1 - dy, z, x, y1, z, 0.0f, 1.0f, 0.0f, r, g, b, a, width);
     }
 
     private static void cornerLineZ(VertexConsumer consumer, PoseStack.Pose pose,
-                                     float z0, float z1, float dz, float x, float y,
-                                     int r, int g, int b, int a, float width) {
+                                    float z0, float z1, float dz, float x, float y,
+                                    int r, int g, int b, int a, float width) {
         line(consumer, pose, x, y, z0, x, y, z0 + dz, 0.0f, 0.0f, 1.0f, r, g, b, a, width);
         line(consumer, pose, x, y, z1 - dz, x, y, z1, 0.0f, 0.0f, 1.0f, r, g, b, a, width);
     }

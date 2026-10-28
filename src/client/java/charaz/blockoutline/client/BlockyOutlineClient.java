@@ -1,212 +1,232 @@
 package charaz.blockoutline.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import charaz.blockoutline.client.compat.CompatBridge;
-import charaz.blockoutline.client.compat.TargetInfo;
+import charaz.blockoutline.client.renderer.BlockyOutlineRenderTypes;
 import charaz.blockoutline.client.renderer.OutlineRenderer;
+import charaz.blockoutline.client.ui.BlockyOutlineMenuScreen;
 import charaz.blockoutline.config.BlockyOutlineSettings;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.BlockOutlineRenderState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.glfw.GLFW;
 
 public final class BlockyOutlineClient implements ClientModInitializer {
-    private static KeyMapping menuKeyBinding;
+    private static KeyMapping openMenuKey;
+    private static boolean keyRegisteredViaFabricApi = false;
+    private static boolean tickRegisteredViaFabricApi = false;
+    private static boolean renderRegisteredViaFabricApi = false;
 
     private static double currX, currY, currZ;
     private static double velX, velY, velZ;
     private static double startX, startY, startZ;
     private static double lastTargetX, lastTargetY, lastTargetZ;
-    private static long animStartTimeMs = 0;
+    private static long animStartTimeMs = 0L;
     private static boolean hasTarget = false;
-    private static long lastTargetTimeMs = 0;
-    private static long lastFrameNano = 0;
+    private static long lastTargetTimeMs = 0L;
+    private static long lastFrameNano = 0L;
 
     @Override
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
 
-        CompatBridge.registerWorldRenderEvent((context, targetObj) -> {
-            if (targetObj == null) {
-                hasTarget = false;
-                return true;
+        // Pre-warm custom X-Ray render types early to avoid first-frame lag
+        try {
+            BlockyOutlineRenderTypes.xrayLines();
+            BlockyOutlineRenderTypes.xrayQuads();
+        } catch (Throwable ignored) {
+        }
+
+        // Create KeyMapping safely without any static reference to InputConstants$Type.KEYSYM
+        openMenuKey = Compat26.createMenuKeyMapping("key.blocky-outline.open_menu", GLFW.GLFW_KEY_M);
+
+        // Register with Fabric API if installed; otherwise Mixin fallbacks automatically handle everything
+        if (Compat26.isClassPresent("net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper")) {
+            keyRegisteredViaFabricApi = FabricApiHook.tryRegisterKeyMapping(openMenuKey);
+        }
+        if (Compat26.isClassPresent("net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents")) {
+            tickRegisteredViaFabricApi = FabricApiHook.tryRegisterTickEvent();
+        }
+        if (Compat26.isClassPresent("net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents")) {
+            renderRegisteredViaFabricApi = FabricApiHook.tryRegisterRenderEvent();
+        }
+        if (Compat26.isClassPresent("net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback")) {
+            FabricApiHook.tryRegisterReportCommand();
+        }
+    }
+
+    public static KeyMapping getOpenMenuKey() {
+        return openMenuKey;
+    }
+
+    public static boolean isKeyRegisteredViaFabricApi() {
+        return keyRegisteredViaFabricApi;
+    }
+
+    public static boolean isTickRegisteredViaFabricApi() {
+        return tickRegisteredViaFabricApi;
+    }
+
+    public static boolean isRenderRegisteredViaFabricApi() {
+        return renderRegisteredViaFabricApi;
+    }
+
+    public static void onClientTick(Minecraft mc) {
+        if (mc == null) return;
+        if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) {
+            hasTarget = false;
+        }
+        while (openMenuKey != null && openMenuKey.consumeClick()) {
+            if (Compat26.isNoScreenOpen(mc)) {
+                Compat26.openScreen(mc, new BlockyOutlineMenuScreen());
             }
+        }
+    }
 
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level == null) {
-                return true;
-            }
+    /**
+     * Unified outline render handler used by both Fabric API LevelRenderEvents and standalone Mixin fallback.
+     *
+     * @return false to cancel vanilla block outline rendering, true to allow vanilla outline.
+     */
+    public static boolean renderOutline(
+            PoseStack matrices,
+            SubmitNodeCollector collector,
+            Object bufferSource,
+            Vec3 camPos,
+            BlockOutlineRenderState outlineRenderState) {
 
-            BlockyOutlineSettings s = BlockyOutlineSettings.get();
-            boolean renderOutline = s.outlineOpacity > 0.001f;
-            boolean renderFill = s.fillEnabled && s.fillOpacity > 0.001f;
+        BlockyOutlineSettings s = BlockyOutlineSettings.get();
+        boolean drawOutline = s.outlineOpacity > 0.001f;
+        boolean drawFill = s.fillEnabled && s.fillOpacity > 0.001f;
 
-            if (!renderOutline && !renderFill) {
-                return false;
-            }
-
-            TargetInfo target = CompatBridge.TARGET_EXTRACTOR != null
-                    ? CompatBridge.TARGET_EXTRACTOR.extract(targetObj, mc)
-                    : null;
-            if (target == null) {
-                hasTarget = false;
-                return true;
-            }
-
-            BlockPos pos = target.pos();
-            VoxelShape shape = target.shape();
-            if (pos == null || shape == null || shape.isEmpty()) {
-                hasTarget = false;
-                return true;
-            }
-
-            PoseStack matrices = CompatBridge.getPoseStack(context);
-            MultiBufferSource consumers = CompatBridge.getBufferSource(context);
-            if (matrices == null || consumers == null) {
-                return false;
-            }
-
-            BlockState state = mc.level.getBlockState(pos);
-            Vec3 offset = CompatBridge.getBlockOffset(state, mc.level, pos);
-            double tx = (double) pos.getX() + offset.x;
-            double ty = (double) pos.getY() + offset.y;
-            double tz = (double) pos.getZ() + offset.z;
-
-            long nowMs = System.currentTimeMillis();
-            long nowNano = System.nanoTime();
-
-            long timeSinceLast = nowMs - lastTargetTimeMs;
-            lastTargetTimeMs = nowMs;
-
-            double diffX = tx - lastTargetX;
-            double diffY = ty - lastTargetY;
-            double diffZ = tz - lastTargetZ;
-            double targetDiffSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
-
-            // Snap immediately with 0ms delay if crosshair just arrived from air (>100ms air gap),
-            // or moved across a large jump (>2.5 blocks away).
-            boolean isContinuousNeighbor = hasTarget && (timeSinceLast <= 100L) && (targetDiffSq <= 6.25);
-
-            if (!isContinuousNeighbor) {
-                currX = tx;
-                currY = ty;
-                currZ = tz;
-                velX = 0.0;
-                velY = 0.0;
-                velZ = 0.0;
-                startX = tx;
-                startY = ty;
-                startZ = tz;
-                animStartTimeMs = nowMs;
-            } else if (targetDiffSq > 0.0001) {
-                startX = currX;
-                startY = currY;
-                startZ = currZ;
-                animStartTimeMs = nowMs;
-            }
-
-            lastTargetX = tx;
-            lastTargetY = ty;
-            lastTargetZ = tz;
-            hasTarget = true;
-
-            double dt = (lastFrameNano == 0 || (nowNano - lastFrameNano > 100_000_000L))
-                    ? 0.016
-                    : (nowNano - lastFrameNano) * 1e-9;
-            lastFrameNano = nowNano;
-            if (dt < 0.001) dt = 0.001;
-            else if (dt > 0.05) dt = 0.05;
-
-            if (s.smoothTransition && isContinuousNeighbor) {
-                updateMotion(s, tx, ty, tz, dt, nowMs);
-            } else {
-                currX = tx;
-                currY = ty;
-                currZ = tz;
-                velX = 0.0;
-                velY = 0.0;
-                velZ = 0.0;
-            }
-
-            if (mc.gameRenderer == null || mc.gameRenderer.getMainCamera() == null) {
-                return false;
-            }
-
-            Vec3 cam = CompatBridge.getCameraPos(mc.gameRenderer.getMainCamera());
-            double ox = currX - cam.x;
-            double oy = currY - cam.y;
-            double oz = currZ - cam.z;
-
-            boolean xray = s.xrayMode;
-
-            if (renderOutline && CompatBridge.BUFFER_PROVIDER != null) {
-                int outlineArgb = s.getOutlineArgb(nowMs);
-                if ((outlineArgb >>> 24) > 0) {
-                    VertexConsumer lines = CompatBridge.BUFFER_PROVIDER.getLineBuffer(consumers, xray);
-                    if (lines != null) {
-                        OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
-                                s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand);
-                    }
-                }
-            }
-
-            if (renderFill && CompatBridge.BUFFER_PROVIDER != null) {
-                VertexConsumer quads = CompatBridge.BUFFER_PROVIDER.getQuadBuffer(consumers, xray);
-                if (quads != null) {
-                    OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
-                            s.getFillArgb(nowMs), s.getFillArgb2(nowMs), s.hitboxExpand);
-                }
-            }
-
-            if (CompatBridge.BUFFER_PROVIDER != null) {
-                CompatBridge.BUFFER_PROVIDER.postRender(consumers, xray);
-            }
-
+        if (!drawOutline && !drawFill) {
             return false;
-        });
+        }
 
-        menuKeyBinding = KeyBindingHelper.registerKeyBinding(CompatBridge.createMenuKeyMapping(
-                "key.blocky-outline.open_menu",
-                GLFW.GLFW_KEY_M,
-                "key.categories.misc"
-        ));
+        if (outlineRenderState == null) {
+            hasTarget = false;
+            return true;
+        }
 
-        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            while (menuKeyBinding != null && menuKeyBinding.consumeClick()) {
-                if (mc.screen == null) {
-                    CompatBridge.openMenuScreen(mc);
+        BlockPos pos = outlineRenderState.pos();
+        VoxelShape shape = outlineRenderState.shape();
+        if (pos == null || shape == null || shape.isEmpty()) {
+            hasTarget = false;
+            return true;
+        }
+
+        if (matrices == null || (collector == null && bufferSource == null)) {
+            return false;
+        }
+
+        double tx = pos.getX();
+        double ty = pos.getY();
+        double tz = pos.getZ();
+
+        long nowMs = System.currentTimeMillis();
+        long nowNano = System.nanoTime();
+
+        long timeSinceLast = nowMs - lastTargetTimeMs;
+        lastTargetTimeMs = nowMs;
+
+        double diffX = tx - lastTargetX;
+        double diffY = ty - lastTargetY;
+        double diffZ = tz - lastTargetZ;
+        double targetDiffSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
+
+        boolean isContinuousNeighbor = hasTarget && (timeSinceLast <= 100L) && (targetDiffSq <= 6.25);
+
+        if (!isContinuousNeighbor) {
+            currX = tx;
+            currY = ty;
+            currZ = tz;
+            velX = 0.0;
+            velY = 0.0;
+            velZ = 0.0;
+            startX = tx;
+            startY = ty;
+            startZ = tz;
+            animStartTimeMs = nowMs;
+        } else if (targetDiffSq > 0.0001) {
+            startX = currX;
+            startY = currY;
+            startZ = currZ;
+            animStartTimeMs = nowMs;
+        }
+
+        lastTargetX = tx;
+        lastTargetY = ty;
+        lastTargetZ = tz;
+        hasTarget = true;
+
+        double dt = (lastFrameNano == 0L || (nowNano - lastFrameNano > 100_000_000L))
+                ? 0.016
+                : (nowNano - lastFrameNano) * 1e-9;
+        lastFrameNano = nowNano;
+        if (dt < 0.001) dt = 0.001;
+        else if (dt > 0.05) dt = 0.05;
+
+        if (s.smoothTransition && isContinuousNeighbor) {
+            updateMotion(s, tx, ty, tz, dt, nowMs);
+        } else {
+            currX = tx;
+            currY = ty;
+            currZ = tz;
+            velX = 0.0;
+            velY = 0.0;
+            velZ = 0.0;
+        }
+
+        Vec3 cam = (camPos != null) ? camPos : Vec3.ZERO;
+        double ox = currX - cam.x;
+        double oy = currY - cam.y;
+        double oz = currZ - cam.z;
+
+        if (drawOutline) {
+            int outlineArgb = s.getOutlineArgb(nowMs);
+            if ((outlineArgb >>> 24) > 0) {
+                RenderType lineType = s.xrayMode
+                        ? BlockyOutlineRenderTypes.xrayLines()
+                        : RenderTypes.lines();
+
+                if (bufferSource != null) {
+                    Compat26.drawWithBufferSource(bufferSource, lineType, lines ->
+                            OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
+                                    s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand));
+                } else if (collector != null) {
+                    collector.submitCustomGeometry(matrices, lineType, (pose, lines) ->
+                            OutlineRenderer.renderOutline(matrices, lines, shape, ox, oy, oz, outlineArgb,
+                                    s.outlineWidth, s.cornerMode, s.cornerLength, s.hitboxExpand));
                 }
             }
-        });
+        }
 
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("report")
-                    .executes(context -> {
-                        CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
-                        context.getSource().sendFeedback(CompatBridge.createReportMessage());
-                        return 1;
-                    })
-            );
-            dispatcher.register(ClientCommandManager.literal("blockyoutline")
-                    .then(ClientCommandManager.literal("report")
-                            .executes(context -> {
-                                CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
-                                context.getSource().sendFeedback(CompatBridge.createReportMessage());
-                                return 1;
-                            })
-                    )
-            );
-        });
+        if (drawFill) {
+            int fillArgb1 = s.getFillArgb(nowMs);
+            int fillArgb2 = s.getFillArgb2(nowMs);
+            RenderType quadType = s.xrayMode
+                    ? BlockyOutlineRenderTypes.xrayQuads()
+                    : RenderTypes.debugQuads();
+
+            if (bufferSource != null) {
+                Compat26.drawWithBufferSource(bufferSource, quadType, quads ->
+                        OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
+                                fillArgb1, fillArgb2, s.hitboxExpand));
+            } else if (collector != null) {
+                collector.submitCustomGeometry(matrices, quadType, (pose, quads) ->
+                        OutlineRenderer.renderFilledBox(matrices, quads, shape, ox, oy, oz,
+                                fillArgb1, fillArgb2, s.hitboxExpand));
+            }
+        }
+
+        return false;
     }
 
     private static void updateMotion(BlockyOutlineSettings s, double tx, double ty, double tz, double dt, long nowMs) {
