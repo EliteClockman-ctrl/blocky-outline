@@ -1,18 +1,32 @@
-## What's new in Blocky Outline v1.1.4 (Minecraft 1.21.11):
+# Changelog
 
-### 🛠️ Bug Fixes
-- **Ported & Stabilized for Minecraft 1.21.11**: Fully updated build target and mappings to Minecraft 1.21.11 while maintaining full backwards and forwards compatibility across 1.21.x and 26.x.
-- **Fixed Menu (M) Crash across 1.21.x & 26.x**: Resolved all menu crashes on both legacy Minecraft 1.21 (1.21.0 – 1.21.4) and modern versions (1.21.11+ / 26.x) via the dynamic Dual-Runtime Bridge.
-- **Fixed Render Event Registration**: Resolved `IllegalAccessException` when registering `BEFORE_BLOCK_OUTLINE` with Fabric API.
-- **Fixed KeyMapping Crash on macOS & 26.x**: Fixed `NoSuchFieldError` (`InputConstants$Type KEYSYM`) by making keybinding registration resilient and fully dynamic.
-- **Fixed Menu Layout Overflow**: Fixed elements and cards overlapping the footer on smaller window resolutions or higher GUI Scales (Scale 3, 4, Auto).
-- **Fixed Frame Micro-Stutters (Zero-GC)**: Completely eliminated per-frame heap allocations during outline/fill rendering and crosshair tracking.
+## What's new in Blocky Outline v1.1.6.1 (Minecraft 26.3):
+
+### 🛠️ Bug Fixes & Compatibility Overhaul
+- **Fixed `NoClassDefFoundError: net/minecraft/class_2561` (`Component`) on Client Init**: Fixed a critical crash caused by Intermediary remapping on unobfuscated Minecraft 26.3 runtime. Built directly against official Mojang mappings.
+- **Fixed `NoClassDefFoundError: net/minecraft/class_3532` (`Mth`) with Existing Configs**: Rewrote `BlockyOutlineSettings` to use pure Java mathematics, completely decoupling config loading from Minecraft internal classes.
+- **Fixed `NoSuchFieldError: InputConstants$Type KEYSYM`**: Resolved breaking changes in Mojang's input enum structure via dynamic constructor delegation.
+- **Standalone Mode (No Fabric API Required)**: Blocky Outline now runs 100% standalone on clean Fabric instances without crashing when Fabric API is not installed, powered by dynamic Mixin fallbacks (`OptionsMixin`, `MinecraftMixin`, `LevelRendererMixin`).
+- **Eliminated Package Collision & SecurityExceptions**: Moved pipeline and render type registrations to internal packages (`charaz.blockoutline.client.renderer`), preventing signer security mismatches with Mojang jars.
 
 ---
 
-### 🔄 Changes & Improvements
-- **Added `/report` Command**: Run `/report` or `/blockyoutline report` in chat to quickly open the official GitHub Issues page in your browser.
-- **Added "Report Bug" Button in Menu [M]**: Added a quick teal button next to the Done button in the settings footer for instant feedback submission.
-- **Render Fast-Path**: Standard cube blocks (>95% of world blocks) are now drawn directly via a fast-path, skipping complex shape slice evaluations.
-- **Optimized Reflection with `MethodHandle`**: Boosted per-frame matrix, camera, and offset queries by 20–50x with zero boxing overhead.
-- **Resting CPU Optimization**: Halts spring and physics calculations when the crosshair rests steadily on a target block.
+## What's new in Blocky Outline v1.1.5.1 (Minecraft 26.2):
+
+### 🛠️ Bug Fixes & Compatibility Overhaul
+- **Targeted & Optimized for Minecraft 26.2**: Fully adapted to 26.2 architecture changes, including the migration from `MultiBufferSource` to `SubmitNodeCollector`.
+- **Screen API Modernization**: Seamlessly bridges `mc.gui.screen()` / `mc.gui.setScreen()` for 26.2 GUI management.
+- **Fixed Intermediary Mapping Crashes**: Fixed missing `class_XXXX` exceptions by compiling clean unobfuscated Mojang bytecode.
+- **Full Standalone Support**: Auto-detects whether Fabric API is present at runtime. If absent, lightweight Mixins automatically take over keybinding, tick handling, and outline submission.
+- **Pure Java Config Engine**: Configuration files load with zero dependency on game classes, preventing crashes during game initialization.
+
+---
+
+## What's new in Blocky Outline v1.1.4.1 (Minecraft 26.1.x):
+
+### 🛠️ Bug Fixes & Compatibility Overhaul
+- **Dedicated Minecraft 26.1.x Build**: Tailored specifically for Minecraft 26.1, 26.1.1, and 26.1.2.
+- **Dual Render Compatibility**: Retains support for 26.1's `MultiBufferSource` block outline pipeline while isolating it from newer versions.
+- **Fixed `mc.screen` Field Differences**: Dynamically supports direct screen access without triggering missing field errors.
+- **Full Standalone & Fabric API Support**: Works out-of-the-box whether Fabric API is installed or not.
+- **Zero-GC & Fast-Path Rendering**: Retains zero-allocation standard block rendering and all 6 smooth motion physics engines.
