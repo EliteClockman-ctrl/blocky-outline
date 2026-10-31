@@ -19,7 +19,7 @@ public class BlockyOutlineMenuScreen extends Screen {
     }
 
     private static final String MOD_TITLE = "Blocky Outline";
-    private static final String MOD_VERSION = "v1.1.6";
+    private static final String MOD_VERSION = "v1.1.7";
 
     // Navigation tabs
     private static final String[] TABS = {"Outline", "Face Fill", "Smooth", "Presets"};

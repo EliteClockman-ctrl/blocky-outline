@@ -1,5 +1,15 @@
 # Changelog
 
+## What's new in Blocky Outline v1.1.7 (Minecraft 26.2):
+
+### 🛠️ Dedicated 26.2 Release & Compatibility
+- **Tailored for Minecraft 26.2**: Optimized specifically for the Minecraft 26.2 runtime architecture using `SubmitNodeCollector` custom geometry submission.
+- **Screen & GUI Modernization**: Native support for 26.2's `mc.gui.screen()` / `mc.gui.setScreen()`.
+- **Pure Java Math & Zero-GC**: Completely isolated config system and zero heap allocation rendering pipeline.
+- **Full Standalone Mode**: Works seamlessly with or without Fabric API installed via dynamic Mixin fallback plugins.
+
+---
+
 ## What's new in Blocky Outline v1.1.6.1 (Minecraft 26.3):
 
 ### 🛠️ Bug Fixes & Compatibility Overhaul

@@ -375,8 +375,9 @@ public class RuntimeVerifier {
     mod_114 = os.path.join(base_dir, "dist", "blocky-outline-1.1.4.1.jar")
     mod_115 = os.path.join(base_dir, "dist", "blocky-outline-1.1.5.1.jar")
     mod_116 = os.path.join(base_dir, "dist", "blocky-outline-1.1.6.1.jar")
+    mod_117 = os.path.join(base_dir, "dist", "blocky-outline-1.1.7.jar")
 
-    cp_compile = get_base_cp("Fabric 26.2", False) + [mod_116]
+    cp_compile = get_base_cp("Fabric 26.2", False) + [mod_117]
     res = subprocess.run([javac_exe, "--release", "21", "-cp", ";".join(cp_compile), "-d", tmp_dir, vf], capture_output=True, text=True)
     if res.returncode != 0:
         raise RuntimeError(f"RuntimeVerifier compile failed: {res.stderr}")
@@ -388,6 +389,8 @@ public class RuntimeVerifier {
         ("MC 26.2 (WITH Fabric API) + v1.1.5.1", "Fabric 26.2", True, mod_115, "false"),
         ("MC 26.3-sim (NO Fabric API - Standalone) + v1.1.6.1", "Fabric 26.2", False, mod_116, "false"),
         ("MC 26.3-sim (WITH Fabric API) + v1.1.6.1", "Fabric 26.2", True, mod_116, "false"),
+        ("MC 26.2 (NO Fabric API - Standalone) + v1.1.7", "Fabric 26.2", False, mod_117, "false"),
+        ("MC 26.2 (WITH Fabric API) + v1.1.7", "Fabric 26.2", True, mod_117, "false"),
     ]
 
     for label, vname, fapi, mod_jar, exp26_1 in scenarios:
@@ -414,6 +417,7 @@ def main():
         ("1.1.4.1", "26.1.x", ["26.1", "26.1.1", "26.1.2", "26.1.x", ">=26.1 <26.2"]),
         ("1.1.5.1", "26.2", ["26.2", "26.2.x", ">=26.2 <26.3"]),
         ("1.1.6.1", "26.3", ["26.3", "26.3.x", ">=26.3 <26.4"]),
+        ("1.1.7", "26.2", ["26.2", "26.2.x", ">=26.2 <26.3"]),
     ]
 
     built_jars = []

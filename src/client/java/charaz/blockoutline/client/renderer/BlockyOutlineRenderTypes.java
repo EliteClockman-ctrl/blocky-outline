@@ -65,3 +65,4 @@ public final class BlockyOutlineRenderTypes {
         return XRAY_QUADS;
     }
 }
+
