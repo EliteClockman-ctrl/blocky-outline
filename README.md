@@ -1,4 +1,5 @@
-# Blocky Outline
+# Blocky Outline 1.1.7 (Hydro)
+
 
 A lightweight, modern client-side Fabric mod that replaces Minecraft's default block selection outline with a fully customizable outline and optional gradient fill.
 
