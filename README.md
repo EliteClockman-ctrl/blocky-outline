@@ -1,4 +1,4 @@
-# Blocky Outline (Argon)
+# Blocky Outline 1.1.7 (Argon)
 
 A modern, high-FPS client-side Fabric mod for **Minecraft 1.21.11** that transforms vanilla block selection into a crisp, responsive 3D visual system — featuring Fresnel glass fills, dual-pass break shockwaves, tactile block-place ripples, 5 physics motion curves, 3D particles, and a live-preview configuration studio.
 
