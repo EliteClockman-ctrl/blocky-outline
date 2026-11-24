@@ -3,7 +3,7 @@ package charaz.blockoutline.client.compat.modern;
 import charaz.blockoutline.client.compat.TargetExtractor;
 import charaz.blockoutline.client.compat.TargetInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.state.BlockOutlineRenderState;
+import net.minecraft.client.renderer.state.level.BlockOutlineRenderState;
 
 public final class ModernTargetExtractor implements TargetExtractor {
     private final TargetInfo cached = new TargetInfo();

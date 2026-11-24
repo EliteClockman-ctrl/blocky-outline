@@ -3,19 +3,18 @@ package charaz.blockoutline.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import charaz.blockoutline.client.compat.CompatBridge;
-import charaz.blockoutline.client.compat.TargetInfo;
 import charaz.blockoutline.client.renderer.OutlineRenderer;
 import charaz.blockoutline.config.BlockyOutlineSettings;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.lwjgl.glfw.GLFW;
@@ -36,8 +35,8 @@ public final class BlockyOutlineClient implements ClientModInitializer {
     public void onInitializeClient() {
         BlockyOutlineSettings.load();
 
-        CompatBridge.registerWorldRenderEvent((context, targetObj) -> {
-            if (targetObj == null) {
+        LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outlineRenderState) -> {
+            if (outlineRenderState == null) {
                 hasTarget = false;
                 return true;
             }
@@ -55,32 +54,23 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 return false;
             }
 
-            TargetInfo target = CompatBridge.TARGET_EXTRACTOR != null
-                    ? CompatBridge.TARGET_EXTRACTOR.extract(targetObj, mc)
-                    : null;
-            if (target == null) {
-                hasTarget = false;
-                return true;
-            }
-
-            BlockPos pos = target.pos();
-            VoxelShape shape = target.shape();
+            BlockPos pos = outlineRenderState.pos();
+            VoxelShape shape = outlineRenderState.shape();
             if (pos == null || shape == null || shape.isEmpty()) {
                 hasTarget = false;
                 return true;
             }
 
-            PoseStack matrices = CompatBridge.getPoseStack(context);
-            MultiBufferSource consumers = CompatBridge.getBufferSource(context);
+            PoseStack matrices = context.poseStack();
+            MultiBufferSource consumers = context.bufferSource();
             if (matrices == null || consumers == null) {
                 return false;
             }
 
-            BlockState state = mc.level.getBlockState(pos);
-            Vec3 offset = CompatBridge.getBlockOffset(state, mc.level, pos);
-            double tx = (double) pos.getX() + offset.x;
-            double ty = (double) pos.getY() + offset.y;
-            double tz = (double) pos.getZ() + offset.z;
+            // On modern 26.1+ / 1.21.11+, BlockOutlineRenderState.shape() already bakes in state.getOffset(pos).
+            double tx = (double) pos.getX();
+            double ty = (double) pos.getY();
+            double tz = (double) pos.getZ();
 
             long nowMs = System.currentTimeMillis();
             long nowNano = System.nanoTime();
@@ -142,7 +132,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
                 return false;
             }
 
-            Vec3 cam = CompatBridge.getCameraPos(mc.gameRenderer.getMainCamera());
+            Vec3 cam = mc.gameRenderer.getMainCamera().position();
             double ox = currX - cam.x;
             double oy = currY - cam.y;
             double oz = currZ - cam.z;
@@ -175,7 +165,7 @@ public final class BlockyOutlineClient implements ClientModInitializer {
             return false;
         });
 
-        menuKeyBinding = KeyBindingHelper.registerKeyBinding(CompatBridge.createMenuKeyMapping(
+        menuKeyBinding = KeyMappingHelper.registerKeyMapping(CompatBridge.createMenuKeyMapping(
                 "key.blocky-outline.open_menu",
                 GLFW.GLFW_KEY_M,
                 "key.categories.misc"
@@ -190,15 +180,15 @@ public final class BlockyOutlineClient implements ClientModInitializer {
         });
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("report")
+            dispatcher.register(ClientCommands.literal("report")
                     .executes(context -> {
                         CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
                         context.getSource().sendFeedback(CompatBridge.createReportMessage());
                         return 1;
                     })
             );
-            dispatcher.register(ClientCommandManager.literal("blockyoutline")
-                    .then(ClientCommandManager.literal("report")
+            dispatcher.register(ClientCommands.literal("blockyoutline")
+                    .then(ClientCommands.literal("report")
                             .executes(context -> {
                                 CompatBridge.openUrl("https://github.com/EliteClockman-ctrl/blocky-outline/issues");
                                 context.getSource().sendFeedback(CompatBridge.createReportMessage());

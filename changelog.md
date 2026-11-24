@@ -1,3 +1,19 @@
+# What's new in 1.1.8-hydro (Fabric 26.1.x)
+
+Lightweight, high-FPS **Hydro** edition updated for **Minecraft 26.1.x** (`26.1` – `26.1.2`, Fabric + Java 25).
+
+### Updates
+- Upgraded **Blocky Outline (Hydro)** to `1.1.8-hydro` targeting **Minecraft 26.1.x** (`26.1.2`) using unobfuscated `net.fabricmc.fabric-loom`, Fabric Loader `0.20.1`, Fabric API `0.155.3+26.1.2`, and Java 25.
+- Migrated outline rendering to Fabric's `LevelRenderEvents.BEFORE_BLOCK_OUTLINE` (`context.poseStack()`, `context.bufferSource()`, and direct `Camera.position()`), removing reflection overhead from the hot render path.
+- Updated Fabric API & Minecraft 26.1.x calls: `ClientCommands`, `KeyMappingHelper.registerKeyMapping`, `GuiGraphicsExtractor` / `extractRenderState`, `renderer.state.level.BlockOutlineRenderState`, and `RenderPipeline` (`ColorTargetState` / `DepthStencilState`).
+- Updated menu header version label to `v1.1.8-hydro` and required `fabric-api` in `fabric.mod.json` `depends`.
+
+### Fixes & Packaging
+- Fixed double XZ offset misalignment on offset blocks (bamboo, flowers, tall grass, pointed dripstone) by removing duplicate `state.getOffset(pos)` addition.
+- Added `LevelRenderEvents` fallback in `CompatBridge` and excluded `.gitkeep` from the packaged JAR (`~100KB` standalone build).
+
+---
+
 ## What's new in Blocky Outline v1.1.4 (Minecraft 1.21.11):
 
 ### 🛠️ Bug Fixes

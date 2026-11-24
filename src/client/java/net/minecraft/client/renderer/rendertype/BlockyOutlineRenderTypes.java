@@ -1,8 +1,10 @@
 package net.minecraft.client.renderer.rendertype;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -21,10 +23,9 @@ public final class BlockyOutlineRenderTypes {
                 .withUniform("Projection", UniformType.UNIFORM_BUFFER)
                 .withUniform("Fog", UniformType.UNIFORM_BUFFER)
                 .withUniform("Globals", UniformType.UNIFORM_BUFFER)
-                .withBlend(BlendFunction.TRANSLUCENT)
+                .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                 .withCull(false)
-                .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-                .withDepthWrite(false)
+                .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                 .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_NORMAL_LINE_WIDTH, VertexFormat.Mode.LINES)
                 .build();
 
@@ -41,10 +42,9 @@ public final class BlockyOutlineRenderTypes {
                 .withFragmentShader("core/position_color")
                 .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
                 .withUniform("Projection", UniformType.UNIFORM_BUFFER)
-                .withBlend(BlendFunction.TRANSLUCENT)
+                .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                 .withCull(false)
-                .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-                .withDepthWrite(false)
+                .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                 .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
                 .build();
 

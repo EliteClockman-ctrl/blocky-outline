@@ -35,14 +35,19 @@ public final class CompatBridge {
     static {
         boolean modern = false;
         try {
-            Class.forName("net.minecraft.client.renderer.state.BlockOutlineRenderState");
+            Class.forName("net.minecraft.client.renderer.state.level.BlockOutlineRenderState");
             modern = true;
-        } catch (Throwable t1) {
+        } catch (Throwable t0) {
             try {
-                Class.forName("net.minecraft.class_12074");
+                Class.forName("net.minecraft.client.renderer.state.BlockOutlineRenderState");
                 modern = true;
-            } catch (Throwable t2) {
-                modern = false;
+            } catch (Throwable t1) {
+                try {
+                    Class.forName("net.minecraft.class_12074");
+                    modern = true;
+                } catch (Throwable t2) {
+                    modern = false;
+                }
             }
         }
         IS_MODERN = modern;
@@ -173,6 +178,7 @@ public final class CompatBridge {
         try {
             Class<?> eventsClass = null;
             for (String className : new String[]{
+                    "net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents",
                     "net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents",
                     "net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents"
             }) {
